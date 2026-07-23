@@ -718,14 +718,43 @@ export async function gorevUret(
   // girsin; görev soyut "birini ara" değil GERÇEK bir isme demirlensin. Gün 1-2
   // hazırlık (düşündür/planlat, kamp alanında kal), Gün 3 aksiyon (buradan ilk
   // adım — küçük mesaj/arama). Liste boşsa metin boş → davranış değişmez.
-  const sicakIsimler = mod === "kamp" ? await sicakListeAktifIsimler(db, katilimci.id) : [];
+  // [F#40] Sıcak liste artık YOLCULUKTA da enjekte edilir (eskiden yalnız kamp).
+  // Sahadaki kişi için asıl değer bu: görev "birini ara" gibi soyut kalmaz, GERÇEK
+  // bekleyen adaya demirlenir. Kampta gün 1-2 hazırlık / gün 3 aksiyon; yolculukta
+  // her zaman aksiyon (kişi zaten sahada — bekleyen adayına dokunsun).
+  const sicakIsimler =
+    mod === "kamp" || mod === "yolculuk" ? await sicakListeAktifIsimler(db, katilimci.id) : [];
+  const sicakAksiyon = mod === "yolculuk" || gun >= 3;
   const sicakListeMetni = sicakIsimler.length
     ? `SICAK LİSTE (kişinin GERÇEK aday isimleri — kullan): ${sicakIsimler.join(", ")}. ${
-        gun >= 3
-          ? "GÜN 3 AKSİYON: Uygunsa görevi bu isimlerden GERÇEK birine BUGÜN buradan atılan KÜÇÜK bir ilk adım olarak kur — tek içten bir mesaj at ya da kısa bir arama; abartma, 'satış' yaptırma, sadece ilk teması/randevu isteğini kur. Kişinin adını kullan."
+        sicakAksiyon
+          ? "AKSİYON: Uygunsa görevi bu isimlerden GERÇEK birine BUGÜN atılan KÜÇÜK bir ilk adım olarak kur — tek içten bir mesaj at ya da kısa bir arama; abartma, 'satış' yaptırma, sadece ilk teması/randevu isteğini kur. Kişinin adını kullan."
           : "GÜN 1-2 HAZIRLIK: Görevi bu isimlerden BİRİNİ düşündürecek/planlatacak biçimde kur (kampta öğrendiğinle ona nasıl gerçek değer katarsın) — eylem KAMP ALANINDA kalsın, henüz 'onu ara' DEME."
       }`
     : "";
+  // [E#39] GÖREV FAYDASI GERİ BİLDİRİMİ: kişinin "işine yaradı mı?" oyları görev
+  // üretimini besler — yararsız bulduğu biçimlerden uzaklaş, yararlıya yaklaş.
+  let faydaMetni = "";
+  {
+    const { data: oylar } = await db
+      .from("missions")
+      .select("title, yararli")
+      .eq("participant_id", katilimci.id)
+      .not("yararli", "is", null)
+      .order("scored_at", { ascending: false })
+      .limit(8);
+    const yararli = (oylar ?? []).filter((o) => o.yararli).map((o) => `"${o.title}"`);
+    const yararsiz = (oylar ?? []).filter((o) => !o.yararli).map((o) => `"${o.title}"`);
+    if (yararli.length || yararsiz.length) {
+      faydaMetni =
+        "GÖREV FAYDASI GERİ BİLDİRİMİ (kişinin kendi oyları — üretimi buna göre ayarla): " +
+        (yararli.length ? `İŞİNE YARADI dediği görevler: ${yararli.join(", ")}. ` : "") +
+        (yararsiz.length
+          ? `YARAMADI dediği görevler: ${yararsiz.join(", ")}. Bu çizgideki görevlerden UZAK dur; yararlı bulduklarına yakın, somut ve sahada işe yarayan bir görev üret.`
+          : "Yararlı bulduğu çizgide devam et.");
+    }
+  }
+
   // #4 DAVID NOTU: kişi CEO oturumundan ne götürdüyse (david_yakalama yanıtı)
   // sonraki görevlere bağlam olsun — tek seferlik anı sürekli kariyer malzemesine
   // çevir. Yalnız kamp modunda, yanıt varsa.
@@ -834,11 +863,19 @@ export async function gorevUret(
   // Karakter ANI (açık şaka/iddia) ~%15 — kod belirler ki model dozu kaçırmasın.
   const karakterAcik = await aynaKarakterAcikMi(db);
   const karakterAni = karakterAcik && Math.random() < 0.15;
-  // Faz 3 — İDDİA: karakter anlarının yarısı kamp modunda BAHİS çerçevesine
-  // döner (yalnız tik dağıtımı izin verdiğinde — bahisIzin; diğer üretim yolları
-  // bahis bayrağını yazmadığı için orada bahis metni de üretilmez).
+  // Faz 3 — İDDİA: karakter anlarının yarısı BAHİS çerçevesine döner (yalnız tik
+  // dağıtımı izin verdiğinde — bahisIzin; diğer üretim yolları bahis bayrağını
+  // yazmadığı için orada bahis metni de üretilmez).
+  // [D#30] İTİRAZCI'NIN DÖNÜŞÜ: bahis artık YOLCULUKTA da çıkar (eskiden yalnız
+  // kamp). ~%15 karakter anı × %50 = net ~%7 görev; günde 1 görevde ~2 haftada
+  // bir İtirazcı bahsi → kampın sevilen mekaniği 90 günde de yaşar. Downstream
+  // (bahis rozeti, zafer metni) mod-bağımsız; İtirazcı süresi dolarsa yalnız
+  // SKORDA kazanır (kaçırana laf edilmez — kamptaki ilkeyle aynı).
   const bahisAni =
-    karakterAni && mod === "kamp" && aktivasyon.bahisIzin === true && Math.random() < 0.5;
+    karakterAni &&
+    (mod === "kamp" || mod === "yolculuk") &&
+    aktivasyon.bahisIzin === true &&
+    Math.random() < 0.5;
   // Faz 2 — ilişki durumu (son görev yanıtından deterministik) + lakap satırı.
   const sonYanitZamani = onceki.find((o) => o.responded_at)?.responded_at ?? null;
   const { data: lakapVeri } = karakterAcik
@@ -1533,7 +1570,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir). Bağlamda "yasakDonusBicimi" doluysa bu bir KURALDIR: bu görevin donus_bicimi o biçim OLAMAZ ve görevin gövdesi de o biçimde dönüş istememeli — o biçimde üretirsen görev reddedilir; kalan biçimlerden görevin doğasına en uygun olanı seç.
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
-${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}${kapanisIlke ? `\n${kapanisIlke}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${faydaMetni ? `\n${faydaMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}${kapanisIlke ? `\n${kapanisIlke}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.

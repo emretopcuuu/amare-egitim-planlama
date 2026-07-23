@@ -56,6 +56,22 @@ export async function taahhutlerGetir(db: Db, pid: string): Promise<Taahhut[]> {
   return (data ?? []) as Taahhut[];
 }
 
+// Bir taahhüdü "yaptım/geri al" işaretle (durum: yapildi | bekliyor).
+export async function taahhutTamamla(
+  db: Db,
+  pid: string,
+  adim: number,
+  yapildi: boolean
+): Promise<boolean> {
+  if (![1, 2, 3].includes(Number(adim))) return false;
+  const { error } = await db
+    .from("taahhut")
+    .update({ durum: yapildi ? "yapildi" : "bekliyor" })
+    .eq("participant_id", pid)
+    .eq("adim", adim);
+  return !error;
+}
+
 export type TaahhutGirdi = { adim: number; metin: string; planlanan_zaman: string };
 
 // 3 taahhüdü kaydeder (upsert). Zamanlar gelecekte + 96 saat içinde olmalı.

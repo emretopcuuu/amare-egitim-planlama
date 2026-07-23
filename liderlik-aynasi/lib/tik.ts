@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tumKayitlar } from "@/lib/tumKayitlar";
-import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder, sahitDavetHatirlat, sessizDonusSesi, haftaninSahidi } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
@@ -1451,7 +1451,51 @@ export async function tikCalistir(
         .from("settings")
         .insert({ key: `soz_karnesi_${bugun}`, value: "1" });
       if (!karneKilit) await sozKarnesiGonder(db).catch(() => {});
+      // [B#17] HAFTANIN ŞAHİDİ: geçen haftanın en aktif şahidine tanınma push'u.
+      const { error: sahidiKilit } = await db
+        .from("settings")
+        .insert({ key: `haftanin_sahidi_${bugun}`, value: "1" });
+      if (!sahidiKilit) {
+        try {
+          const s = await haftaninSahidi(db);
+          if (s) {
+            await katilimciyaBildir(
+              db,
+              s.witnessId,
+              "🏅 Haftanın Şahidi sensin",
+              `Geçen hafta şahitlerine en çok sen dokundun (${s.sayi} kez). Sözünü tuttukları kadar, sen de onları tuttun. Teşekkürler.`,
+              "/sahitlik"
+            ).catch(() => {});
+          }
+        } catch {
+          // sessizce geç
+        }
+      }
     }
+  }
+
+  // [E#41] SESSİZLEŞENE AYNA'NIN SESİ: yolculuk modunda Çarşamba 12:00-12:09'da
+  // (haftalık kilit) 7+ gün sessiz kalanlara markanın sesinden sıcak dönüş daveti.
+  // Kişi başına 6 gün throttle + CAP fonksiyon içinde; TTS yoksa/karakter kapalıysa atlar.
+  if (mod === "yolculuk" && saat === 12 && dakika < 10) {
+    const carsambaMi =
+      new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(simdi) === "Wed";
+    if (carsambaMi) {
+      const { error: sesKilit } = await db
+        .from("settings")
+        .insert({ key: `sessiz_ses_tarama_${bugun}`, value: "1" });
+      if (!sesKilit) await sessizDonusSesi(db).catch(() => {});
+    }
+  }
+
+  // [B#11] ŞAHİT DAVET HATIRLATICISI: yolculuk modunda her gün 11:00-11:09'da
+  // (günlük settings kilidiyle bir kez) bekleyen davetleri tarar — 2 gün yanıtsız
+  // davet şahide, 5 gün yanıtsız sahibe hatırlatılır. Diğer pencerelerle çakışmaz.
+  if (mod === "yolculuk" && saat === 11 && dakika < 10) {
+    const { error: davetKilit } = await db
+      .from("settings")
+      .insert({ key: `sahit_davet_hatirlat_${bugun}`, value: "1" });
+    if (!davetKilit) await sahitDavetHatirlat(db).catch(() => {});
   }
 
   // 3f) HAFTALIK AKRAN CHECK-IN: yolculuk modunda Pazartesi 10:00-10:09'da
@@ -1515,6 +1559,36 @@ export async function tikCalistir(
     }
   }
 
+  // [E#37] HAFTALIK KOÇ NOTU DÜRTÜSÜ: yolculuk modunda Pazar 19:00'da (karne
+  // dürtüsünden sonra) mühürlü sözü olan herkese "koç notun hazır" push'u —
+  // kişi /takip'te bu haftanın değerlendirmesini + gelecek haftanın tek odağını
+  // görür (not deterministik, /takip'te render edilir; tik'te AI/hesap yok).
+  if (mod === "yolculuk") {
+    const pazarMiKoc =
+      new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(simdi) === "Sun";
+    if (pazarMiKoc && saat === 19 && dakika < 10) {
+      const { error: kocKilit } = await db
+        .from("settings")
+        .insert({ key: `hafta_koc_${bugun}`, value: "1" });
+      if (!kocKilit) {
+        try {
+          const { data: sozluler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+          for (const s of sozluler ?? []) {
+            await katilimciyaBildir(
+              db,
+              s.participant_id,
+              "🧭 Haftalık koç notun hazır",
+              "Bu haftanın değerlendirmesi ve gelecek haftanın tek odağı seni bekliyor. Aç, gör.",
+              "/takip"
+            ).catch(() => {});
+          }
+        } catch {
+          // sessizce geç
+        }
+      }
+    }
+  }
+
   // 3f-3) P1 KANIT DEFTERİ GERİ OKUMA: yolculuk 30/60/90. günde sabah, herkese
   // "şu kadar kanıt biriktirdin" — inanç birikmiş kanıtla değişir. Milestone
   // başına tek sefer (settings kilidi). Kendi hatasını yutar.
@@ -1529,14 +1603,59 @@ export async function tikCalistir(
         );
         const say = new Map<string, number>();
         for (const k of kanitlar) say.set(k.participant_id, (say.get(k.participant_id) ?? 0) + 1);
+        // [E#42] En parlak an — kişinin en yüksek puanlı görevi (8+). Tek sayfalı
+        // sorgu (kişi başına ek sorgu yok); mesaja somut bir gurur anı ekler.
+        const parlaklar = await tumKayitlar<{ participant_id: string; title: string; ai_score: number }>(
+          (b, s) =>
+            db
+              .from("missions")
+              .select("participant_id, title, ai_score")
+              .eq("status", "scored")
+              .gte("ai_score", 8)
+              .order("id")
+              .range(b, s)
+        );
+        const enIyi = new Map<string, { title: string; score: number }>();
+        for (const m of parlaklar) {
+          const cur = enIyi.get(m.participant_id);
+          if (m.title && (!cur || m.ai_score > cur.score))
+            enIyi.set(m.participant_id, { title: m.title, score: m.ai_score });
+        }
         for (const [pid, adet] of say) {
           if (adet < 1) continue;
+          const p = enIyi.get(pid);
+          const parlakSatir = p ? ` En parlak anın: "${p.title}" (${p.score}/10).` : "";
           await katilimciyaBildir(
             db,
             pid,
             `📓 ${gun}. gün — Kanıt Defterin`,
-            `${gun} günde ${adet} kanıt biriktirdin. Bunların hepsi senin — 'yetersizim' inancı bu defterin karşısında duramaz.`,
+            `${gun} günde ${adet} kanıt biriktirdin. Bunların hepsi senin — 'yetersizim' inancı bu defterin karşısında duramaz.${parlakSatir}`,
             "/protokol"
+          ).catch(() => {});
+        }
+      } catch {
+        // sessizce geç
+      }
+    }
+  }
+
+  // [D#33] AY DÖNÜMÜ MEKTUBU DUYURUSU: yolculuk 30/60/90. günde sabah 09:10-09:19
+  // (kanıt geri okumadan hemen sonra) mühürlü sözü olan herkese "mektubun hazır"
+  // push'u — mektup /takip'te AÇILINCA lazy üretilir (tik'te AI YOK, timeout yok).
+  if (mod === "yolculuk" && [30, 60, 90].includes(gun) && saat === 9 && dakika >= 10 && dakika < 20) {
+    const { error: mektupKilit } = await db
+      .from("settings")
+      .insert({ key: `ay_mektubu_duyuru_${gun}`, value: "1" });
+    if (!mektupKilit) {
+      try {
+        const { data: sozluler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+        for (const s of sozluler ?? []) {
+          await katilimciyaBildir(
+            db,
+            s.participant_id,
+            `📜 ${gun}. gün mektubun hazır`,
+            `AYNA, ${gun}. günü doldurduğun için sana özel bir mektup yazdı. Aç, oku.`,
+            "/takip"
           ).catch(() => {});
         }
       } catch {

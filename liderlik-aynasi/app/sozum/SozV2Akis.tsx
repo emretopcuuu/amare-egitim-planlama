@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { ayAdi } from "@/lib/planTakvim";
 import SesKaydedici from "@/app/soz/SesKaydedici";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import SahitDavetleri, { type Davet } from "@/components/SahitDavetleri";
 
 const t = tr.sozV2;
 
@@ -20,9 +21,9 @@ function ufukAyEtiket(ufuk: string, now: Date): string {
 
 type Aksiyon = { metin: string; ufuk: string };
 type Soz = { metin: string | null; aksiyonlar: Aksiyon[]; voice_path: string | null; durum: string } | null;
-type Tanik = { witness_id: string; ad: string; imzali: boolean };
+type TanikDurum = "bekliyor" | "kabul" | "ret";
+type Tanik = { witness_id: string; ad: string; imzali: boolean; durum?: TanikDurum };
 type Lider = { id: string; ad: string; takim: string | null };
-type Bekleyen = { sahibiId: string; ad: string };
 type Faz = "sekil" | "duzenle" | "ses" | "tanik" | "tamam";
 
 function ilkFaz(soz: Soz, tanikSayi: number): Faz {
@@ -53,42 +54,24 @@ export default function SozV2Akis({
 }: {
   soz: Soz;
   taniklar: Tanik[];
-  bekleyenImzalar: Bekleyen[];
+  bekleyenImzalar: Davet[];
   liderler: Lider[];
   kanit?: Kanit;
 }) {
   const router = useRouter();
-  const [faz, setFaz] = useState<Faz>(ilkFaz(soz, tanikBaslangic.length));
+  const [faz, setFaz] = useState<Faz>(
+    ilkFaz(soz, tanikBaslangic.filter((tn) => tn.durum !== "ret").length)
+  );
   const [metin, setMetin] = useState(soz?.metin ?? "");
   const [aksiyonlar] = useState<Aksiyon[]>(soz?.aksiyonlar ?? []);
   const [now] = useState(() => new Date());
   const [sesBlob, setSesBlob] = useState<Blob | null>(null);
   const [taniklar, setTaniklar] = useState<Tanik[]>(tanikBaslangic);
-  const [bekleyen, setBekleyen] = useState<Bekleyen[]>(bekleyenBaslangic);
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
 
-  // İmza bandı — kişi başkalarının sözüne şahit (her fazda görünür).
-  const imzaBandi =
-    bekleyen.length > 0 ? (
-      <div className="space-y-2 rounded-2xl border border-gold/30 bg-gold/[0.06] p-4">
-        <p className="text-sm font-semibold text-gold-light">{t.imzaBekleyenBaslik}</p>
-        {bekleyen.map((b) => (
-          <div key={b.sahibiId} className="flex items-center justify-between gap-3">
-            <span className="text-sm text-slate-200">{t.imzaBekleyenMetin(b.ad)}</span>
-            <button
-              onClick={async () => {
-                const { ok } = await istek({ imza: b.sahibiId });
-                if (ok) setBekleyen((l) => l.filter((x) => x.sahibiId !== b.sahibiId));
-              }}
-              className="shrink-0 rounded-lg bg-gold px-3 py-1.5 text-xs font-bold text-[#1a1206] hover:bg-gold-light"
-            >
-              {t.imzala}
-            </button>
-          </div>
-        ))}
-      </div>
-    ) : null;
+  // Seni şahit gösterenler — kabul/ret (her fazda görünür, kendi state'ini yönetir).
+  const imzaBandi = <SahitDavetleri davetler={bekleyenBaslangic} />;
 
   // Öneri 8 — "Bu sözü verebilirsin, çünkü…": gerçek kamp kanıt anı. Söz veren
   // her fazda görür (motivasyon: söz boşa değil, kampta zaten kanıtladın).
@@ -102,7 +85,12 @@ export default function SozV2Akis({
       </div>
     ) : null;
 
-  function Sarmal({ children }: { children: React.ReactNode }) {
+  // DÜZ FONKSİYON, JSX bileşeni DEĞİL — bilinçli. Render içinde tanımlı bir
+  // <Sarmal> bileşeni her render'da YENİ tip sayılır; React tüm alt ağacı söküp
+  // yeniden kurar → textarea her tuş vuruşunda imleci/odağı kaybeder (saha
+  // bildirimi: "bir harf yazınca imleç başa atıyor"). Fonksiyon çağrısı düz
+  // element döndürür, ağaç kimliği korunur, imleç yerinde kalır.
+  function sarmal(children: React.ReactNode) {
     return (
       <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
         {imzaBandi}
@@ -114,8 +102,8 @@ export default function SozV2Akis({
 
   // ---- ŞEKİLLENDİR ----
   if (faz === "sekil") {
-    return (
-      <Sarmal>
+    return sarmal(
+      <>
         <div className="kart-cam rounded-3xl p-7 text-center">
           <p className="text-5xl">📜</p>
           <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.sekilBaslik}</h1>
@@ -139,14 +127,14 @@ export default function SozV2Akis({
             {mesgul ? t.dusunuyor : t.sekillendir}
           </button>
         </div>
-      </Sarmal>
+      </>
     );
   }
 
   // ---- DÜZENLE ----
   if (faz === "duzenle") {
-    return (
-      <Sarmal>
+    return sarmal(
+      <>
         <header>
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.duzenleBaslik}</h1>
           <p className="mt-2 text-sm text-slate-300">{t.duzenleMetin}</p>
@@ -192,14 +180,14 @@ export default function SozV2Akis({
         >
           {t.onayla}
         </button>
-      </Sarmal>
+      </>
     );
   }
 
   // ---- SES ----
   if (faz === "ses") {
-    return (
-      <Sarmal>
+    return sarmal(
+      <>
         <header>
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.sesBaslik}</h1>
           <p className="mt-2 text-sm text-slate-300">{t.sesMetin}</p>
@@ -249,7 +237,7 @@ export default function SozV2Akis({
         >
           {t.sesAtla}
         </button>
-      </Sarmal>
+      </>
     );
   }
 
@@ -265,8 +253,10 @@ export default function SozV2Akis({
           const { ok, veri } = await istek({ tanikEkle: id });
           if (ok) {
             const l = liderler.find((x) => x.id === id);
-            if (l) setTaniklar((tl) => [...tl, { witness_id: id, ad: l.ad, imzali: false }]);
+            if (l) setTaniklar((tl) => [...tl, { witness_id: id, ad: l.ad, imzali: false, durum: "bekliyor" }]);
+            setHata(null);
           } else if (veri?.sebep === "lider_dolu") setHata(t.tanikLiderDolu);
+          else if (veri?.sebep === "reddetti") setHata(t.tanikReddettiHata);
           else if (veri?.sebep === "dolu") setHata(t.tanikDolu);
         }}
         onSil={async (id) => {
@@ -285,8 +275,8 @@ export default function SozV2Akis({
   }
 
   // ---- TAMAM ----
-  return (
-    <Sarmal>
+  return sarmal(
+    <>
       <div className="kart-cam rounded-3xl p-8 text-center">
         <p className="text-5xl">🤝</p>
         <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.tamamBaslik}</h1>
@@ -299,8 +289,20 @@ export default function SozV2Akis({
                 className="flex items-center justify-between rounded-xl bg-midnight-soft/70 px-3 py-2 text-sm"
               >
                 <span className="text-slate-200">{tn.ad}</span>
-                <span className={tn.imzali ? "text-emerald-300" : "text-slate-500"}>
-                  {tn.imzali ? t.tanikImzali : t.tanikImzaBekliyor}
+                <span
+                  className={
+                    tn.durum === "ret"
+                      ? "text-amber-400"
+                      : tn.imzali
+                        ? "text-emerald-300"
+                        : "text-slate-500"
+                  }
+                >
+                  {tn.durum === "ret"
+                    ? t.tanikReddetti
+                    : tn.imzali
+                      ? t.tanikImzali
+                      : t.tanikImzaBekliyor}
                 </span>
               </li>
             ))}
@@ -330,7 +332,7 @@ export default function SozV2Akis({
           </button>
         </div>
       </div>
-    </Sarmal>
+    </>
   );
 }
 
@@ -355,7 +357,9 @@ function TanikSecimi({
   hata: string | null;
 }) {
   const [arama, setArama] = useState("");
-  const dolu = taniklar.length >= 5;
+  // Reddedilen davetler 5'lik hedefe SAYILMAZ (yerine yeni şahit seçilmeli).
+  const aktifTaniklar = taniklar.filter((tn) => tn.durum !== "ret");
+  const dolu = aktifTaniklar.length >= 5;
   const suzulmus = arama.trim()
     ? liderler.filter((l) => l.ad.toLocaleLowerCase("tr").includes(arama.toLocaleLowerCase("tr")))
     : liderler;
@@ -366,32 +370,43 @@ function TanikSecimi({
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.tanikBaslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.tanikMetin}</p>
-        <p className="mt-2 text-sm font-semibold text-gold-light">{t.tanikSecili(taniklar.length)}</p>
+        <p className="mt-2 text-sm font-semibold text-gold-light">{t.tanikSecili(aktifTaniklar.length)}</p>
       </header>
 
       {taniklar.length > 0 && (
         <ul className="space-y-2">
-          {taniklar.map((tn) => (
-            <li
-              key={tn.witness_id}
-              className="flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2.5"
-            >
-              <span className="text-sm font-medium text-slate-100">{tn.ad}</span>
-              <span className="flex items-center gap-2">
-                <span className={`text-xs ${tn.imzali ? "text-emerald-300" : "text-slate-500"}`}>
-                  {tn.imzali ? t.tanikImzali : t.tanikImzaBekliyor}
+          {taniklar.map((tn) => {
+            const ret = tn.durum === "ret";
+            return (
+              <li
+                key={tn.witness_id}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 ${
+                  ret ? "bg-amber-500/[0.08]" : "bg-emerald-500/10"
+                }`}
+              >
+                <span className={`text-sm font-medium ${ret ? "text-slate-400" : "text-slate-100"}`}>
+                  {tn.ad}
                 </span>
-                {!tn.imzali && (
-                  <button
-                    onClick={() => onSil(tn.witness_id)}
-                    className="text-xs text-slate-500 hover:text-red-400"
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`text-xs ${
+                      ret ? "text-amber-400" : tn.imzali ? "text-emerald-300" : "text-slate-500"
+                    }`}
                   >
-                    {t.tanikSil}
-                  </button>
-                )}
-              </span>
-            </li>
-          ))}
+                    {ret ? t.tanikReddetti : tn.imzali ? t.tanikImzali : t.tanikImzaBekliyor}
+                  </span>
+                  {!tn.imzali && !ret && (
+                    <button
+                      onClick={() => onSil(tn.witness_id)}
+                      className="text-xs text-slate-500 hover:text-red-400"
+                    >
+                      {t.tanikSil}
+                    </button>
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -429,7 +444,7 @@ function TanikSecimi({
         disabled={!dolu}
         className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
       >
-        {dolu ? t.devam : t.tanikSecili(taniklar.length)}
+        {dolu ? t.devam : t.tanikSecili(aktifTaniklar.length)}
       </button>
       <button
         onClick={onSesYeniden}

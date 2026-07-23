@@ -63,7 +63,10 @@ export async function GET(req: NextRequest) {
       .select("id")
       .maybeSingle();
     if (!sahiplenilen) continue; // başka bir tik aldı
-    await katilimciyaBildir(db, t.participant_id, "⏰ Kendine söz vermiştin", t.metin, "/gorevler").catch(() => {});
+    // Taahhüt AYNA görevi DEĞİL, kişinin kendi sözü — /gorevler'de karşılığı yok
+    // (kişi "boş görev ekranı" görüp kayboluyordu). Doğru yer: İlk 72 Saat kartı,
+    // orada taahhüdünü görür ve "Yaptım ✓" ile kapatır.
+    await katilimciyaBildir(db, t.participant_id, "⏰ Kendine söz vermiştin", t.metin, "/ilk-72-saat").catch(() => {});
     taahhutPush++;
   }
 

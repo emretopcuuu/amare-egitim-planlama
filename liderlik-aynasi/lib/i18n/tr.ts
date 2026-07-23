@@ -496,8 +496,14 @@ export const tr = {
     sesAciklama: "“Temmuz'da … kayıt, Ağustos'ta … görüşme sözü veriyorum.”",
     sesKaydet: "Sesli söz kaydet",
     sesDurdur: "■ Durdur",
+    sesDurdurKaydet: "■ Durdur ve kaydet",
     sesDinle: "▶ Dinle",
-    sesTekrar: "↺ Tekrar",
+    sesTekrar: "↺ Yeniden kaydet",
+    sesKayitAktif: "KAYITTA",
+    sesIpucu: "Sözünü sakin sakin, sonuna kadar oku. Bitirdiğinde “Durdur”a bas — 5 dakikaya kadar kaydedebilirsin.",
+    sesDinliyor: "Sesini alıyorum",
+    sesSessiz: "Ses gelmiyor — mikrofona biraz daha yakın konuş",
+    sesNeredeyseDoldu: "Süre neredeyse doldu — sözünü toparla",
     mikrofonYok: "Mikrofona erişilemedi — sözünü yine de sayılarla verebilirsin.",
     gonder: "Sözümü Mühürle",
     gonderiliyor: "Mühürleniyor…",
@@ -3529,6 +3535,10 @@ export const tr = {
     momentumSatiri: (skor: number) => `📈 Momentum: ${skor}/100`,
     // #6 Seri ateşi: kesintisiz tamamlanan görev serisi
     seriAtesi: (n: number) => `${n} görev üst üste — momentum sende. Bırakma!`,
+    // [YOLCULUK] 90 günde günde tek görev → seri fiilen GÜN serisidir.
+    seriAtesiGun: (n: number) => `${n} gün üst üste — momentum sende. Bırakma!`,
+    // [YOLCULUK] Seri kayıp riski akşam saatine bağlanır (çekin çıpası).
+    seriRiskiGun: "Serin sürüyor — bugünkü görevini henüz kapatmadın.",
     // #9 Akıllı yazı ipuçları: yanıtın uzunluğuna göre nazik yönlendirme
     ipucuKisa: "Biraz daha açabilir misin? Tek satır AYNA'ya az gelir.",
     ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
@@ -3549,6 +3559,9 @@ export const tr = {
     radyoMetin: "Yayın metnini oku",
     // UX paketi #10 — önceki yayınlar arşivi
     radyoOnceki: "Önceki yayınlar",
+    // [YOLCULUK] Kamp bitince radyo yayını ana kart olmaktan çıkar, arşive iner.
+    radyoArsivBaslik: "📻 Kamp radyosu arşivi",
+    radyoArsivAcikla: "Kampta yayınlanan bültenler — dinlemek için dokun.",
     // UX paketi #8 — ilk sesli içerikte tek seferlik ipucu
     sesIpucu: "🔊 AYNA sesli konuşur — telefonun sesini açmayı unutma.",
     // UX paketi #9 — görev kartındaki AYNA'ya dokununca varsayılan yardım
@@ -3564,6 +3577,12 @@ export const tr = {
     uykuLafi: "Şşşt. Ben de şarj oluyorum. Sabah görüşürüz.",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
+    // [YOLCULUK] 90 günde görev sabah penceresinde düşer — dakika tahmini yerine
+    // doğru beklenti. Bugünkü görev geldiyse "yarın sabah", gelmediyse "bugün sabah".
+    bosYolculukBugun:
+      "Bugünün görevini aldın. Yarın sabah 09:00–11:00 arası yenisi düşecek.",
+    bosYolculukBekle:
+      "Yeni görevin sabah 09:00–11:00 penceresinde düşer. AYNA seni yolda yalnız bırakmıyor.",
     // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık
     bosSiradakiSaat: (saat: string) => `Sıradaki tur ~${saat} civarı gelebilir.`,
     bosHazirlan: "Hazırlan: telefonun sesi açık olsun, gözün çevrende.",
@@ -3579,6 +3598,16 @@ export const tr = {
       "kısa ama gerçek bir cevap",
       "gözünle gördüğün bir an",
       "sesini duyacağım bir şey",
+    ] as string[],
+    // [YOLCULUK] Saha/iş hayatı temalı fragman havuzu — kamp göndermeleri
+    // (bowling, salon) 90 gün boyunca eskir; mod'a göre bu havuz seçilir.
+    fragmanIpucuHavuzuYolculuk: [
+      "sahada atacağın küçük bir adım",
+      "bir isim ve bir teklif",
+      "erteleyip durduğun tek bir arama",
+      "ekibinden birine dokunacak bir şey",
+      "bugünü dünden ayıracak bir hamle",
+      "sözüne bir tuğla daha",
     ] as string[],
     unvanZirve: "Zirvedesin",
     gununRitmi: "Bugün",
@@ -3727,6 +3756,10 @@ export const tr = {
     filtreBos: "Bu filtrede görev yok.",
     // A4 — tamamlayınca sıradaki görev
     siradakiGorev: "Sıradaki göreve geç →",
+    // [A#1] Görev → check-in birleşik (yolculuk)
+    checkinSoru: "Bu, bugünkü adımın mı? Tek dokunuşla işaretle.",
+    checkinEvet: "✓ Evet, bugünü işaretle",
+    bugunuIsaretledin: "Bugünün adımı işaretlendi ✓",
     // A5 — benzerini tekrar dene
     gelistirYeniden: "Geliştir ve yeniden gönder",
     // "Bana ekstra görev ver" — boş zamanda puanını artırma
@@ -4237,22 +4270,85 @@ export const tr = {
     tanikSecili: (n: number) => `${n}/5 şahit seçildi`,
     tanikEkle: "Şahit yap",
     tanikSil: "Kaldır",
-    tanikImzaBekliyor: "İmza bekleniyor",
-    tanikImzali: "İmzaladı ✓",
+    tanikImzaBekliyor: "Yanıt bekleniyor",
+    tanikImzali: "Kabul etti ✓",
+    tanikReddetti: "Kabul etmedi — yerine seç",
     tanikDolu: "5 şahit seçtin.",
     tanikLiderDolu: "Bu lider en fazla 5 kişiye şahit olabilir — doldu.",
+    tanikReddettiHata: "Bu lider davetini reddetti — başka birini seç.",
     tanikAra: "İsimle ara…",
     tamamBaslik: "Sözün mühürlendi 🤝",
     tamamMetin:
-      "Sözünü verdin, sesini kaydettin, liderlerin şahit oldu. 90 gün boyunca bu sözün peşinde olacağız.",
+      "Sözünü verdin, sesini kaydettin, liderlerini şahit gösterdin. Onlar kabul ettikçe mührün güçlenir; 90 gün boyunca bu sözün peşinde olacağız.",
     devam: "Bitir",
-    // Lider: imza bekleyenler
-    imzaBekleyenBaslik: "Sana güvenenler",
+    // Lider: sana gelen şahitlik davetleri (kabul/ret — /sozum imza bandı)
+    imzaBekleyenBaslik: "Seni şahit gösterenler",
     imzaBekleyenMetin: (ad: string) => `${ad} seni sözüne şahit gösterdi.`,
-    imzala: "Sözüne şahit ol (imzala)",
-    imzalandi: "İmzaladın ✓",
+    imzala: "Kabul et 🤝",
+    reddet: "Reddet",
+    imzalandi: "Kabul ettin ✓",
+  },
+  // BENİ ŞAHİT GÖSTERENLER — davet kabul/ret modülü (ana sayfa + /sahitlik).
+  sahitDavet: {
+    baslik: "Seni Şahit Gösterenler",
+    gosterdi: "seni 90 günlük sözüne şahit gösterdi.",
+    aciklamaBaslik: "Şahit olmak ne demek?",
+    aciklama: (ad: string) =>
+      `${ad}'in sözünü göreceksin ve 90 gün boyunca ilerlemesini takip edeceksin. Takılırsa dürtüp teşvik edecek, gerekirse arayacaksın. Kabul edersen onun yolculuğuna ortak olur, sözünü tutmasına yardım edersin. Kabul etmek zorunda değilsin.`,
+    sozBaslik: (ad: string) => `${ad}'in sözü`,
+    kabul: "Kabul et 🤝",
+    reddet: "Reddet",
+    gonderiliyor: "…",
+    retOnay: (ad: string) =>
+      `${ad}'e şahit olmayacaksın. Yerine başka bir lider seçmesi için haber gidecek. Emin misin?`,
+    retEvet: "Evet, reddet",
+    retVazgec: "Vazgeç",
   },
   // FAZ B — 90 gün takip (söz sahibi günlük check-in)
+  // [YOLCULUK UX] Kamp bittikten sonra 90-gün yolculuğunu sadeleştiren,
+  // odaklayan metinler. Hepsi mod === "yolculuk" iken devreye girer; kamp
+  // deneyimini DEĞİŞTİRMEZ (gelecek kamp kopyasında aynen kalır).
+  yolculukUx: {
+    gunEtiket: (gun: number) => `🌱 90 günün ${gun}. günü`,
+    // Faz çubuğu — 6 evrenin kısa Türkçe açıklaması (fazın "ad"ına göre).
+    fazAciklama: {
+      "Kurulum ve Keşif": "Neden'ini netleştir — nereye, niçin gittiğini gör.",
+      "İlk Deneyimler": "Küçük, garantili ilk adımlar. Ritmi kur.",
+      "Aksiyona Giriş": "İlk gerçek temaslar. Her 'hayır' bir veri.",
+      "Momentum": "Biriken kazanımları görünür kıl. İlerleme sende.",
+      "Direnç": "İtiraz karşılama, sahada ustalık. Esnek iyimserlik.",
+      "Bağımsızlık": "Öğreten lider ol — kendi sistemini kur.",
+    } as Record<string, string>,
+    fazBaslik: "Yolculuğun evresi",
+    // Tek hub kapısı
+    hubBaslik: "Yolculuğun",
+    hubMetin: "Bugünün görevi, pratiğin ve check-in'in — hepsi tek yerde.",
+    hubDugme: "Yoluma Devam Et",
+    // Şahit çipi
+    sahitCip: (imzalayan: number, toplam: number) =>
+      `🤝 Şahitlerin: ${imzalayan}/${toplam} kabul etti`,
+    sahitCipTamam: (n: number) => `🤝 ${n} şahidin seninle — sözünü tutuyorlar`,
+    sahitHatirlat: "Bekleyenleri hatırlat →",
+    // 30/60/90 dönüm töreni
+    torenBaslik: (gun: number) => `${gun}. gün — bir dönüm noktası`,
+    torenMetin:
+      "Yolun bir kavşağına geldin. Kampta verdiğin sözü kendi sesinden dinle; nereden nereye geldiğini gör.",
+    torenSes: "Sözünü dinle",
+    torenRozet: (gun: number) => `${gun} gün rozeti`,
+    // Haftalık ritim takvimi
+    ritimBaslik: "Haftanın ritmi",
+    ritimPzt: "Pzt · Akran check-in",
+    ritimPazar: "Paz · Karneni ver",
+    ritimGunluk: "Her akşam · Bugünü işaretle",
+    ritimKm: "30 / 60 / 90 · Dönüm noktaları",
+    // Bu hafta çalışılan kas çipi (kör noktayı yüzüne vurmadan)
+    kasCip: (kas: string) => `Bu hafta AYNA seninle "${kas}" kasını çalışıyor`,
+    // Haftan özeti
+    haftanBaslik: "Haftan",
+    haftanGorev: (n: number) => `${n} görev`,
+    haftanKivilcim: (n: number) => `+${n} ⚡`,
+    haftanCheckin: (n: number) => `${n} gün işaretledin`,
+  },
   takip: {
     baslik: "90 Gün Yolun",
     aciklama: "Sözün artık bir plan. Her gün bir adım — birlikte takip ediyoruz.",
@@ -4268,10 +4364,20 @@ export const tr = {
     yolGun: (n: number) => `${n} / 90 gün`,
     toplam: (n: number) => `${n} gün adım attın`,
     bugunTamam: "Bugünün adımı işaretlendi ✓",
+    bugunKisa: (seri: number) =>
+      seri > 0 ? `Bugün ✓ · ${seri} günlük seri 🔥` : "Bugünün adımı işaretlendi ✓",
     son14: "Son 14 gün",
     aksiyonHatirlatma: "Sözündeki adımlar",
     gecmisGun: "—",
     anaSayfa: "← Ana sayfa",
+    // [UX] Sadeleştirme: tek özet satırı, "detaylar" akordeonu, 1. gün yumuşatma.
+    detaylar: "Yol detayları",
+    ozetGun: (n: number) => `${n}. gün`,
+    baslamaGun: "Bugün başlıyor — ilk adımını at 🌱",
+    ozetIlerleme: (n: number) => `${n}/90 gün`,
+    detayGorusmeKota: "📞 Bu hafta görüşme",
+    detayRitim: "Haftanın ritmi",
+    detayKas: (kas: string) => `Bu hafta çalıştığın kas: ${kas}`,
   },
   // FAZ B — Şahit paneli (lider, şahit olduğu kişileri takip eder)
   sahitlik: {

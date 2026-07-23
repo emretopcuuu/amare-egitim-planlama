@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import GrupUyeFoto from "@/components/GrupUyeFoto";
 import KonusanYansima from "@/components/KonusanYansima";
+import SahitDavetleri, { type Davet } from "@/components/SahitDavetleri";
 
 const t = tr.sahitlik;
 
@@ -24,7 +25,11 @@ type Kisi = {
   sozAksiyonlari: { metin: string; ufuk: string }[];
   bugunGonderildi: boolean;
   son14: { gun: string; yapildi: boolean | null }[];
+  karsilikli: boolean;
 };
+
+// [B#15] İzinli emoji tepkileri (API ile aynı küme).
+const TEPKI_EMOJILERI = ["🔥", "👏", "💪", "✨"];
 
 type KendiDurum = {
   bugunYapildi: boolean | null;
@@ -35,9 +40,13 @@ type KendiDurum = {
 export default function SahitlikPanel({
   kisiler,
   kendiDurum,
+  davetler = [],
+  haftaninSahidi = false,
 }: {
   kisiler: Kisi[];
   kendiDurum: KendiDurum;
+  davetler?: Davet[];
+  haftaninSahidi?: boolean;
 }) {
   // [Şahitlik geliştirme #5] Sunucudan gelen "bugün gönderildi" durumuyla
   // başlar — sayfa yenilense de "Gönderildi ✓" kaybolmaz, spam da önlenir.
@@ -50,6 +59,10 @@ export default function SahitlikPanel({
   // [Şahitlik geliştirme #6] İsteğe bağlı kişisel mesaj — API zaten destekliyordu,
   // UI eksikti. Boşsa durtmeGonder kendi varsayılan metnini kullanır.
   const [mesajlar, setMesajlar] = useState<Record<string, string>>({});
+
+  // [B#15] Gönderilen emoji tepkisi (kişi başına) — tekrar basmayı engeller.
+  const [tepkiler, setTepkiler] = useState<Record<string, string>>({});
+  const [hepsiAlkis, setHepsiAlkis] = useState(false);
 
   async function durt(sahibi: string, tip: string) {
     setMesgul(sahibi + tip);
@@ -65,6 +78,39 @@ export default function SahitlikPanel({
       else {
         setGonderilen((g) => ({ ...g, [sahibi]: true }));
         setMesajlar((m) => ({ ...m, [sahibi]: "" }));
+      }
+    } finally {
+      setMesgul(null);
+    }
+  }
+
+  // [B#15] Emoji tepkisi — hafif tek dokunuş (🔥/👏/💪/✨).
+  async function tepkiGonder(sahibi: string, emoji: string) {
+    setMesgul(sahibi + "tepki");
+    try {
+      const res = await fetch("/api/sahitlik", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sahibi, tip: "tepki", mesaj: emoji }),
+      });
+      if (res.ok) setTepkiler((t2) => ({ ...t2, [sahibi]: emoji }));
+    } finally {
+      setMesgul(null);
+    }
+  }
+
+  // [B#16] Hepsini alkışla — tek dokunuşla şahit olunan herkese alkış.
+  async function hepsiniAlkisla() {
+    setMesgul("hepsi");
+    try {
+      const res = await fetch("/api/sahitlik", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tip: "alkis_hepsi" }),
+      });
+      if (res.ok) {
+        setHepsiAlkis(true);
+        setAlkislanan(Object.fromEntries(kisiler.map((k) => [k.sahibiId, true])));
       }
     } finally {
       setMesgul(null);
@@ -92,7 +138,18 @@ export default function SahitlikPanel({
           {/* [Şahitlik geliştirme #1] Foto + tam ekran büyütme + WhatsApp. */}
           <GrupUyeFoto ad={k.ad} takim={null} telefon={k.telefon} fotoUrl={k.fotoUrl} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-slate-100">{k.ad}</p>
+            <p className="flex items-center gap-1.5 truncate font-semibold text-slate-100">
+              {k.ad}
+              {/* [B#18] Karşılıklı şahitlik — o da senin sözüne şahit. */}
+              {k.karsilikli && (
+                <span
+                  title="Karşılıklı şahitsiniz"
+                  className="shrink-0 rounded-full bg-royal/25 px-1.5 py-0.5 text-[0.6rem] font-bold text-royal-light"
+                >
+                  🔁 karşılıklı
+                </span>
+              )}
+            </p>
             <p className={`text-xs ${takildi ? "text-amber-300" : "text-emerald-300"}`}>
               {takildi ? t.kacirdi(k.kacirilanGun) : t.guncel} · {t.seri(k.seri)}
             </p>
@@ -224,6 +281,27 @@ export default function SahitlikPanel({
             </a>
           )}
         </div>
+
+        {/* [B#15] Hafif emoji tepkisi — tek dokunuş, mesaj yazmadan. */}
+        {tepkiler[k.sahibiId] ? (
+          <p className="mt-2 text-xs text-slate-400">
+            {tepkiler[k.sahibiId]} gönderildi
+          </p>
+        ) : (
+          <div className="mt-2 flex items-center gap-1.5">
+            {TEPKI_EMOJILERI.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => tepkiGonder(k.sahibiId, emoji)}
+                disabled={mesgul !== null}
+                aria-label={`${emoji} gönder`}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-base transition-transform hover:scale-110 hover:bg-white/[0.1] active:scale-95 disabled:opacity-50"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
       </li>
     );
   }
@@ -235,6 +313,20 @@ export default function SahitlikPanel({
         <h1 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">{t.baslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.aciklama}</p>
       </header>
+
+      {/* [B#17] HAFTANIN ŞAHİDİ rozeti — geçen hafta en aktif şahit sensen. */}
+      {haftaninSahidi && (
+        <div className="rounded-2xl border border-gold/40 bg-gold/[0.10] px-4 py-3 text-center">
+          <p className="text-sm font-bold text-gold-light">🏅 Bu haftanın Şahidi sensin</p>
+          <p className="mt-0.5 text-xs text-slate-300">
+            Şahitlerine en çok sen dokundun — onları ayakta tutan sensin.
+          </p>
+        </div>
+      )}
+
+      {/* SENİ ŞAHİT GÖSTERENLER — bekleyen davetler (kabul/ret). En üstte, çünkü
+          önce kabul edip etmeyeceğine karar vermelisin. */}
+      <SahitDavetleri davetler={davetler} />
 
       {/* [Şahitlik geliştirme #9] Önce kendi adımın — başkasını dürtmeden önce
           şahit kendi aynasına baksın. */}
@@ -249,6 +341,21 @@ export default function SahitlikPanel({
         <p className="text-center text-xs text-slate-400">
           Senin serin: <span className="font-semibold text-emerald-300">{kendiDurum.seri} gün</span> ✓
         </p>
+      )}
+
+      {/* [B#16] Hepsini alkışla — 2+ kişiye şahitse tek dokunuşla herkesi alkışla. */}
+      {kisiler.length > 1 && (
+        hepsiAlkis ? (
+          <p className="text-center text-sm font-medium text-gold-light">👏 Herkesi alkışladın</p>
+        ) : (
+          <button
+            onClick={() => void hepsiniAlkisla()}
+            disabled={mesgul !== null}
+            className="w-full rounded-xl border border-emerald-400/30 bg-emerald-500/[0.08] py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/[0.15] disabled:opacity-50"
+          >
+            👏 Hepsini alkışla ({kisiler.length})
+          </button>
+        )
       )}
 
       {kisiler.length === 0 ? (

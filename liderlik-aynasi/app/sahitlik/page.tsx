@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { takipEttiklerim, takipDurum } from "@/lib/sozTakip";
+import { takipEttiklerim, takipDurum, haftaninSahidi } from "@/lib/sozTakip";
+import { bekleyenImzalar } from "@/lib/soz";
 import SahitlikPanel from "./SahitlikPanel";
 
 export const metadata = { title: "Şahitliğin — Liderlik Aynası" };
@@ -16,10 +17,15 @@ export default async function SahitlikSayfa() {
   const db = supabaseAdmin();
   // [Şahitlik geliştirme #9] Önce kendi adımın — başkasını dürtmeden önce
   // şahidin kendi aynasına baksın.
-  const [kisiler, kendiDurum] = await Promise.all([
+  const [kisiler, kendiDurum, davetler, sahidi] = await Promise.all([
     takipEttiklerim(db, session.sub),
     takipDurum(db, session.sub),
+    // Seni şahit gösteren, henüz yanıtlamadığın davetler (kabul/ret için).
+    bekleyenImzalar(db, session.sub),
+    // [B#17] Bu haftanın şahidi ben miyim?
+    haftaninSahidi(db),
   ]);
+  const haftaninSahidiBenim = sahidi?.witnessId === session.sub;
 
   // [Şahitlik geliştirme #1 + #2] Foto + söz sesi — storage path'leri imzalı
   // URL'e çevrilir (client'a çıplak path sızmaz). N+1 ama şahit listesi küçük
@@ -44,7 +50,12 @@ export default async function SahitlikSayfa() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <SahitlikPanel kisiler={kisilerZengin} kendiDurum={kendiDurum} />
+      <SahitlikPanel
+        kisiler={kisilerZengin}
+        kendiDurum={kendiDurum}
+        davetler={davetler}
+        haftaninSahidi={haftaninSahidiBenim}
+      />
     </main>
   );
 }

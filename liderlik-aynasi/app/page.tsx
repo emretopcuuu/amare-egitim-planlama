@@ -8,7 +8,8 @@ import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim, secilenSahitSayisi } from "@/lib/sozTakip";
-import { sozV2KapisiAcik, TANIK_HEDEF } from "@/lib/soz";
+import { sozV2KapisiAcik, TANIK_HEDEF, bekleyenImzalar } from "@/lib/soz";
+import SahitDavetleri from "@/components/SahitDavetleri";
 import { planOnayliMi } from "@/lib/oyunPlani";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -47,6 +48,13 @@ import RadyoKitlik from "./RadyoKitlik";
 import SandikKarti from "./SandikKarti";
 import CiftAlevi from "./CiftAlevi";
 import { okunmamisMesaj } from "@/lib/icMesaj";
+// [YOLCULUK] Kamp sonrası 90-gün deneyimini sadeleştiren parçalar — hepsi
+// sistem_modu === "yolculuk" bayrağına koşullu; kamp deneyimini değiştirmez.
+import YolculukFazSeridi from "@/components/YolculukFazSeridi";
+import YolculukToren from "@/components/YolculukToren";
+import KurulumErtele from "@/components/KurulumErtele";
+import { fazBul, YOLCULUK_FAZLARI, yolculukGunuHesapla } from "@/lib/davranis";
+import { sozGetir } from "@/lib/soz";
 
 const t = tr.anaSayfa;
 
@@ -55,12 +63,16 @@ function Sayfa({
   children,
   program,
   kurulum = true,
+  yolculuk = false,
 }: {
   ust: React.ReactNode;
   children: React.ReactNode;
   // "Günün Programın" kartı — ana kartın HEMEN ALTINDA, saatleri net gösterir.
   program?: React.ReactNode;
   kurulum?: boolean;
+  // [YOLCULUK #15] Yolculukta kurulum koçu kartları 7-gün snooze'lu sarmalanır
+  // (her gün nag yok). Kamp öncesinde/kampta doğrudan gösterilir (kurulum kritik).
+  yolculuk?: boolean;
 }) {
   // Mobil öncelikli düzen: başlık üstte, içerik onun ALTINDA üstten hizalı.
   // (Eskiden `my-auto` ile dikey ortalanıyordu; içerik ekrandan uzunsa Chrome
@@ -75,12 +87,22 @@ function Sayfa({
           {program}
         </div>
       </div>
-      {kurulum && (
-        <div className="mx-auto w-full max-w-md shrink-0 space-y-4 px-5 pb-5">
-          <TelefonaKurKocu />
-          <AynaKurulum />
-        </div>
-      )}
+      {kurulum &&
+        (yolculuk ? (
+          <div className="mx-auto w-full max-w-md shrink-0 space-y-4 px-5 pb-5">
+            <KurulumErtele>
+              <div className="space-y-4">
+                <TelefonaKurKocu />
+                <AynaKurulum />
+              </div>
+            </KurulumErtele>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-md shrink-0 space-y-4 px-5 pb-5">
+            <TelefonaKurKocu />
+            <AynaKurulum />
+          </div>
+        ))}
     </main>
   );
 }
@@ -190,8 +212,14 @@ export default async function AnaSayfa({
   const OYUN_BAYRAK_ANAHTARLARI = [
     "market_acik", "rekorlar_acik", "sandik_acik", "cift_serisi_acik",
     "fisilti_acik", "hamle_acik", "radyo_kitlik_acik", "bugu_acik",
+    "sistem_modu", "yolculuk_baslangic",
   ];
   let elmasRengi: string | null = null;
+  let modYolculuk = false; // 90 gün yolculuk modu → /protokol kartı
+  // [YOLCULUK #6] Faz çubuğu + gün etiketi için yolculuk günü (1-90) ve o günün
+  // evresi. yolculuk_baslangic set edilmemişse gün 0 kalır → çubuk gösterilmez.
+  let yolGun = 0;
+  let yolcuFaz: { ad: string; index: number } | null = null;
   let marketAcik = false;
   let rekorAcik = false;
   let sandikBekleyen = 0;
@@ -209,17 +237,32 @@ export default async function AnaSayfa({
       elmasRengiGetir(db, session.sub),
     ]);
     const bayrak = new Map((bayrakSonuc.data ?? []).map((s) => [s.key, s.value === "true"]));
+    modYolculuk = (bayrakSonuc.data ?? []).find((s) => s.key === "sistem_modu")?.value === "yolculuk";
+    // Yolculuk günü + evre: yalnız yolculuk modunda ve başlangıç set edilmişse.
+    const yolBas = (bayrakSonuc.data ?? []).find((s) => s.key === "yolculuk_baslangic")?.value;
+    if (modYolculuk && yolBas) {
+      yolGun = Math.max(1, Math.min(90, yolculukGunuHesapla(yolBas, new Date())));
+      const faz = fazBul(yolGun);
+      yolcuFaz = { ad: faz.ad, index: YOLCULUK_FAZLARI.findIndex((f) => f.ad === faz.ad) };
+    }
     elmasRengi = elmasRengiSonuc;
-    marketAcik = bayrak.get("market_acik") ?? false;
-    rekorAcik = bayrak.get("rekorlar_acik") ?? false;
-    fisiltiAcik = bayrak.get("fisilti_acik") ?? false;
-    hamleAcik = bayrak.get("hamle_acik") ?? false;
-    radyoKitlikAcik = bayrak.get("radyo_kitlik_acik") ?? false;
+    // [YOLCULUK #11] Kamp oyun mekanikleri (Market/Rekorlar/Sandık/Çift/Fısıltı/
+    // Hamle/Radyo Kıtlık) yolculukta gizlenir — admin bayrağı açık unutulsa bile
+    // saf kamp-içi mekaniği 90-gün ekranına sızmaz. Bayrak değerleri SİLİNMEZ;
+    // yalnız görüntülenmez (kamp kopyasında aynen geri gelir). Gereksiz detay
+    // sorguları da yolculukta hiç çalışmaz.
+    // [C#26] Market yolculukta da açık (yolculuk rafı: kıvılcım hediye). Kampta
+    // eski bayrak. Diğer kamp-mekaniği girişleri (rekor/sandık/fısıltı) yolculukta gizli kalır.
+    marketAcik = modYolculuk ? true : (bayrak.get("market_acik") ?? false);
+    rekorAcik = !modYolculuk && (bayrak.get("rekorlar_acik") ?? false);
+    fisiltiAcik = !modYolculuk && (bayrak.get("fisilti_acik") ?? false);
+    hamleAcik = !modYolculuk && (bayrak.get("hamle_acik") ?? false);
+    radyoKitlikAcik = !modYolculuk && (bayrak.get("radyo_kitlik_acik") ?? false);
 
     // Bayrağı açık olanların detay sorguları PARALEL — yalnız gerekenler çalışır.
     const [sandikSonuc, ciftSonuc, fisiltiSonuc, hamleSonuc] = await Promise.all([
-      bayrak.get("sandik_acik") ? sandikDurumu(db, session.sub) : Promise.resolve(null),
-      bayrak.get("cift_serisi_acik") ? ciftSeriDurum(db, session.sub) : Promise.resolve(null),
+      !modYolculuk && bayrak.get("sandik_acik") ? sandikDurumu(db, session.sub) : Promise.resolve(null),
+      !modYolculuk && bayrak.get("cift_serisi_acik") ? ciftSeriDurum(db, session.sub) : Promise.resolve(null),
       fisiltiAcik ? bekleyenFisiltiSayisi(db, session.sub) : Promise.resolve(0),
       hamleAcik ? bekleyenHamleSayisi(db, session.sub) : Promise.resolve(0),
     ]);
@@ -414,18 +457,41 @@ export default async function AnaSayfa({
     ]);
   // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
   // kişi başkalarına şahitse şahit paneline erişir.
-  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli, secilenSahit] = await Promise.all([
-    sozTakipAktif(db, session.sub),
-    sahitSayim(db, session.sub),
-    // FAZ 1 (tek söz): kapanış artık SÖZ v2 (plandan doğan söz) üstünden yürür.
-    sozV2KapisiAcik(db),
-    planOnayliMi(db, session.sub),
-    secilenSahitSayisi(db, session.sub),
-  ]);
+  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli, secilenSahit, imzalayanSahit, sahitDavetleri] =
+    await Promise.all([
+      sozTakipAktif(db, session.sub),
+      sahitSayim(db, session.sub),
+      // FAZ 1 (tek söz): kapanış artık SÖZ v2 (plandan doğan söz) üstünden yürür.
+      sozV2KapisiAcik(db),
+      planOnayliMi(db, session.sub),
+      secilenSahitSayisi(db, session.sub),
+      // [YOLCULUK #8] Kişinin KENDİ şahitlerinden kaçı KABUL etti — ana ekran çipi.
+      db
+        .from("soz_tanik")
+        .select("id", { count: "exact", head: true })
+        .eq("soz_sahibi", session.sub)
+        .eq("durum", "kabul")
+        .then((r) => r.count ?? 0),
+      // SENİ ŞAHİT GÖSTERENLER — bekleyen davetler (kabul/ret kartı, her durumda üstte).
+      bekleyenImzalar(db, session.sub),
+    ]);
   // Şahit adımı ZORUNLU: söz mühürlü ama 5 şahit seçilmemişse 90 gün yolculuğu
   // açılmaz; kişi şahit seçimine geri gönderilir (/sozum tanik fazına düşer).
   const sahitEksik = takipAktif && secilenSahit < TANIK_HEDEF;
   const takim = kisi?.team ?? null;
+
+  // [YOLCULUK #10] 30/60/90. gün töreni: o gün mühürlü sözü kendi sesinden
+  // dinlet. Yalnız milestone gününde + takip aktifken sesi imzala (ekstra
+  // sorgu diğer günlerde çalışmaz).
+  const torenGun = modYolculuk && [30, 60, 90].includes(yolGun) ? yolGun : 0;
+  let torenSesUrl: string | null = null;
+  if (torenGun && takipAktif) {
+    const soz = await sozGetir(db, session.sub);
+    if (soz?.voice_path) {
+      const { data } = await db.storage.from("sesler").createSignedUrl(soz.voice_path, 3600);
+      torenSesUrl = data?.signedUrl ?? null;
+    }
+  }
 
   // Ayna Eşin görüşmeleri (canlı "şimdi görüşmen" şeridi için) — yalnız açıkken.
   let gorusmeListe: { slot: string; esAd: string; benimTamam: boolean }[] = [];
@@ -614,17 +680,43 @@ export default async function AnaSayfa({
           muhurZinciriAcik={muhurZinciriAcik}
           grupOdevVar={grupOdevVar}
           planOnayli={planOnayli}
+          yolculuk={modYolculuk}
         />
       </header>
+      {/* [YOLCULUK #4/#6] Kamp bitince kamp gün/saat HUD'u yerine sade "90 günün
+          N. günü" etiketi + evre çubuğu — kişi yolun neresinde olduğunu görür. */}
+      {modYolculuk && yolGun > 0 && (
+        <div className="mt-3">
+          <p className="inline-block rounded-full bg-gold/12 px-3 py-1 text-sm font-semibold text-gold-light">
+            {tr.yolculukUx.gunEtiket(yolGun)}
+          </p>
+          {yolcuFaz && (
+            <YolculukFazSeridi
+              fazlar={YOLCULUK_FAZLARI.map((f) => ({ ad: f.ad }))}
+              aktifIndex={yolcuFaz.index}
+              aktifAd={yolcuFaz.ad}
+            />
+          )}
+        </div>
+      )}
       {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
           kartı. Kampın kalbi push; bu kişiyi altta küçük kartla değil burada
           yakalarız. Abone olunca / desteklenmeyen ortamda kendini gizler. */}
       <div className="mt-3">
         <BildirimAcUyari />
       </div>
+      {/* SENİ ŞAHİT GÖSTERENLER — bir söz sahibi seni şahit gösterdiyse, önce
+          burada kabul/ret edersin (neyi kabul ettiğinin açıklamasıyla). Hangi
+          durumda olursan ol en üstte görünür — kaçırılmasın. */}
+      {sahitDavetleri.length > 0 && (
+        <div className="mt-3">
+          <SahitDavetleri davetler={sahitDavetleri} />
+        </div>
+      )}
       {/* Grup ödevi promptu — menüde gömülü kalmasın; aktif ödev varken burada
-          öne çıkar, dokununca /grup'a gider. */}
-      {grupOdevVar && (
+          öne çıkar, dokununca /grup'a gider. [YOLCULUK #12] Saf kamp-içi mekanik;
+          yolculukta gizli. */}
+      {grupOdevVar && !modYolculuk && (
         <Link
           href="/grup"
           className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-royal-light/40 bg-gradient-to-br from-royal/20 to-midnight-card/60 px-4 py-3.5 ring-1 ring-royal/30 transition-colors hover:from-royal/30"
@@ -667,21 +759,58 @@ export default async function AnaSayfa({
           )}
         </div>
       )}
-      {/* KİMLİK ELMASI — kampın kalbi: her görevle parlayan canlı 3B artefakt */}
+      {/* KİMLİK ELMASI — kampın kalbi: her görevle parlayan canlı 3B artefakt.
+          [YOLCULUK #19] Elmas yolculuk görevleriyle de parlar (lib/elmas ayrı
+          yolculuk kalibrasyonu) — ölü değil. Ama 90-gün ekranının kalbi artık faz
+          çubuğu; elmas domine etmesin diye yolculukta katlanır (canlı ama ikincil). */}
       {elmasVeri && (
         <div className="mt-3">
-          <KimlikElmasi
-            tamamlanan={elmasVeri.tamamlanan}
-            parlaklik={elmasVeri.parlaklik}
-            ortalamaPuan={elmasVeri.ortalamaPuan}
-            facetler={elmasVeri.facetler}
-            sonFacet={elmasVeri.sonFacet}
-            asama={elmasVeri.asama}
-            isikRengi={elmasRengi ?? undefined}
-            bugulu={elmasBugulu}
-          />
+          {modYolculuk ? (
+            <details className="rounded-2xl border border-gold/20 bg-white/[0.02] p-1">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gold-light">
+                💎 Kimlik Elması — ilerlemen
+              </summary>
+              <div className="mt-1">
+                <KimlikElmasi
+                  tamamlanan={elmasVeri.tamamlanan}
+                  parlaklik={elmasVeri.parlaklik}
+                  ortalamaPuan={elmasVeri.ortalamaPuan}
+                  facetler={elmasVeri.facetler}
+                  sonFacet={elmasVeri.sonFacet}
+                  asama={elmasVeri.asama}
+                  isikRengi={elmasRengi ?? undefined}
+                  bugulu={elmasBugulu}
+                />
+              </div>
+            </details>
+          ) : (
+            <KimlikElmasi
+              tamamlanan={elmasVeri.tamamlanan}
+              parlaklik={elmasVeri.parlaklik}
+              ortalamaPuan={elmasVeri.ortalamaPuan}
+              facetler={elmasVeri.facetler}
+              sonFacet={elmasVeri.sonFacet}
+              asama={elmasVeri.asama}
+              isikRengi={elmasRengi ?? undefined}
+              bugulu={elmasBugulu}
+            />
+          )}
           {/* G7 — Canlı radyo kıtlık kartı (5 dk, sonra kaybolur) */}
           {radyoKitlikAcik && <RadyoKitlik />}
+          {/* 90 GÜN PROTOKOLÜ — yolculuk modunda kişinin pratik sayfası kapısı. */}
+          {modYolculuk && (
+            <Link
+              href="/protokol"
+              className="mt-3 flex items-center gap-3 rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/[0.12] to-transparent p-4 transition-colors hover:from-gold/20"
+            >
+              <span className="text-3xl" aria-hidden>🌱</span>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-gold-light">90 Gün Protokolün</p>
+                <p className="text-sm text-slate-300">Bugünün pratiklerini gör — kampta başlayan yolculuk sürüyor.</p>
+              </div>
+              <span className="ml-auto text-gold-light" aria-hidden>→</span>
+            </Link>
+          )}
           {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
           <SandikKarti bekleyen={sandikBekleyen} />
           {/* G4 — Çift serisi ortak alevi */}
@@ -740,11 +869,15 @@ export default async function AnaSayfa({
           <OnboardingRayi />
         </div>
       )}
-      {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}
-      <div className="space-y-1.5">
-        <KampHud takim={takim} baslangic={kampBaslangic} />
-        <GorusmeSimdi gorusmeler={gorusmeListe} />
-      </div>
+      {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu. [YOLCULUK #4/#12] Kamp
+          gün/saat HUD'u ve Ayna Eşi görüşme şeridi saf kamp mekaniği — yolculukta
+          gizli (yerini yukarıdaki "90 günün N. günü" + faz çubuğu alır). */}
+      {!modYolculuk && (
+        <div className="space-y-1.5">
+          <KampHud takim={takim} baslangic={kampBaslangic} />
+          <GorusmeSimdi gorusmeler={gorusmeListe} />
+        </div>
+      )}
       {/* S2: Pano sadeleşti — sadece Günün Cümlesi (admin seçimi) inline kalır */}
       {gununCumlesi && (
         <div className="mt-3 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
@@ -788,7 +921,7 @@ export default async function AnaSayfa({
   if (sozV2Acik && !takipAktif) {
     if (!planOnayli) {
       return (
-        <Sayfa ust={ust}>
+        <Sayfa ust={ust} yolculuk={modYolculuk}>
           <BuyukKart
             baslik="90 Günlük Oyun Planını Kur"
             metin="Raporunu okudun. Şimdi kamptan sonrası için planını birlikte kuralım — kararlar senin, ben danışmanın."
@@ -802,7 +935,7 @@ export default async function AnaSayfa({
       );
     }
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <BuyukKart
           baslik="Sözünü Ver"
           metin="Planın hazır. Şimdi onu kendi sözüne dönüştür — sesinle mühürle."
@@ -819,7 +952,7 @@ export default async function AnaSayfa({
   // Pusulasını kuran kişiyi, pencere açıkken rapordan ÖNCE yüzleşmeye davet eder.
   if (boslukGoster) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <BuyukKart
           baslik={t.boslukBaslik}
           metin={t.boslukMetin}
@@ -837,7 +970,7 @@ export default async function AnaSayfa({
   // doğrudan tanik (şahit seçimi) fazını açar.
   if (sahitEksik) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <BuyukKart
           baslik="Şahitlerini Seç"
           metin="Sözünü verdin. 90 güne başlamadan önce 5 lider şahit seç — onlar sözünü görecek, imzalayacak ve yolda seni takip edip gerektiğinde dürtecek. Bu adım zorunlu."
@@ -854,7 +987,9 @@ export default async function AnaSayfa({
   // Rapor hâlâ üst menüden + buradaki linkten erişilir.
   if (takipAktif) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
+        {/* [YOLCULUK #10] 30/60/90. gün dönüm töreni — afiş olarak hub'ın üstünde. */}
+        {torenGun > 0 && <YolculukToren gun={torenGun} sozSesUrl={torenSesUrl} />}
         <BuyukKart
           baslik={t.takipBaslik}
           metin={t.takipMetin}
@@ -863,6 +998,25 @@ export default async function AnaSayfa({
           ikon="🧭"
           vurgu
         />
+        {/* [YOLCULUK #8] Şahit çipi — kişinin KENDİ sözüne kaç şahit imzaladı.
+            Şahit mekaniği görünür kalsın; imzalamayanlar için /sozum'a köprü. */}
+        {secilenSahit > 0 && (
+          <Link
+            href="/sozum"
+            className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-gold/30 bg-gold/[0.06] px-4 py-3 transition-colors hover:bg-gold/[0.12]"
+          >
+            <span className="text-sm font-semibold text-gold-light">
+              {imzalayanSahit >= secilenSahit
+                ? tr.yolculukUx.sahitCipTamam(imzalayanSahit)
+                : tr.yolculukUx.sahitCip(imzalayanSahit, secilenSahit)}
+            </span>
+            {imzalayanSahit < secilenSahit && (
+              <span className="shrink-0 text-xs text-slate-400">
+                {tr.yolculukUx.sahitHatirlat}
+              </span>
+            )}
+          </Link>
+        )}
         <div className="mt-4 space-y-3">
           {/* Kişinin KENDİ sözü + seçtiği şahitler (imza durumu, QR ile toplama,
               düzenleme) — yolculuğa geçtikten sonra da erişilebilir olmalı. */}
@@ -879,7 +1033,7 @@ export default async function AnaSayfa({
   // 3) RAPOR — Gün 3 finali: aynan açıldı
   if (raporlarAcik) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <BuyukKart
           baslik={t.raporBaslik}
           metin={t.raporMetin}
@@ -895,7 +1049,7 @@ export default async function AnaSayfa({
   // 4) KİŞİSEL SES — yansımandan taze bir mesaj varsa o an onundur
   if (sesKart) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <div className="kart-cam relative overflow-hidden rounded-3xl p-6 text-center">
           <p className={`text-xl font-bold ${sesKart.renk}`}>{sesKart.baslik}</p>
           <KonusanYansima
@@ -911,7 +1065,7 @@ export default async function AnaSayfa({
   // 5) DEĞERLENDİRME — dalga açık ve kendini puanladın: başkalarını puanla
   if (dalga) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <BuyukKart
           baslik={t.dalgaDevamBaslik(dalga.name)}
           metin={t.dalgaDevamMetin}
@@ -927,7 +1081,7 @@ export default async function AnaSayfa({
   // 6) GÖREV — açık dalga yok ama AYNA'nın görevi var
   if (gorevSayisi > 0) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} yolculuk={modYolculuk}>
         <BuyukKart
           baslik={t.gorevTekBaslik}
           metin={siradakiGorevBasligi ? `"${siradakiGorevBasligi}"` : t.gorevTekMetin}
@@ -982,7 +1136,7 @@ export default async function AnaSayfa({
     };
   }
   return (
-    <Sayfa ust={ust}>
+    <Sayfa ust={ust} yolculuk={modYolculuk}>
       {/* Program artık alt menüdeki "Program" sekmesinde (kişisel, katlanır).
           Ana ekran sadeleşti — burada tekrar gösterilmiyor. */}
 

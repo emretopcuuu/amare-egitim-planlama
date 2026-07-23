@@ -61,12 +61,14 @@ export type SozKaydi = {
   aksiyonlar: SozAksiyon[];
   voice_path: string | null;
   durum: string;
+  revize_at: string | null; // [B#13] doluysa söz bir kez yenilendi
+  duvarda: boolean; // [B#14] söz duvarında görünmeyi kabul etti mi
 };
 
 export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
   const { data } = await db
     .from("soz")
-    .select("metin, aksiyonlar, voice_path, durum")
+    .select("metin, aksiyonlar, voice_path, durum, revize_at, duvarda")
     .eq("participant_id", pid)
     .maybeSingle();
   if (!data) return null;
@@ -75,7 +77,28 @@ export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
     aksiyonlar: (data.aksiyonlar as SozAksiyon[]) ?? [],
     voice_path: data.voice_path,
     durum: data.durum,
+    revize_at: (data as { revize_at?: string | null }).revize_at ?? null,
+    duvarda: !!(data as { duvarda?: boolean }).duvarda,
   };
+}
+
+// [B#13] SÖZ REVİZYONU — mühürlü sözün metnini BİR KEZ günceller (revize_at boşsa).
+// Ses korunur; yalnız metin değişir. Şahitlere haber çağıran taraf verir.
+export async function sozRevizeEt(db: Db, pid: string, metin: string): Promise<boolean> {
+  const temiz = (metin ?? "").trim().slice(0, 4000);
+  if (!temiz) return false;
+  const { data, error } = await db
+    .from("soz")
+    .update({
+      metin: temiz,
+      revize_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("participant_id", pid)
+    .eq("durum", "sesli")
+    .is("revize_at", null)
+    .select("participant_id");
+  return !error && (data?.length ?? 0) > 0;
 }
 
 export type SekilSonucu =
@@ -229,26 +252,34 @@ export async function sozMetinKaydet(
 
 // ---- 5 LİDER ŞAHİT ----
 
+export type TanikDurum = "bekliyor" | "kabul" | "ret";
 export type TanikSatiri = {
   witness_id: string;
   ad: string;
-  imzali: boolean;
+  imzali: boolean; // durum === "kabul" (geriye dönük uyumluluk için korunur)
+  durum: TanikDurum;
 };
 
 export async function taniklar(db: Db, sahibiId: string): Promise<TanikSatiri[]> {
   const { data } = await db
     .from("soz_tanik")
-    .select("witness_id, imza_at, tanik:participants!soz_tanik_witness_id_fkey(full_name)")
+    .select("witness_id, imza_at, durum, tanik:participants!soz_tanik_witness_id_fkey(full_name)")
     .eq("soz_sahibi", sahibiId)
     .order("created_at");
-  return (data ?? []).map((r) => ({
-    witness_id: r.witness_id,
-    ad: (r.tanik as { full_name: string } | null)?.full_name ?? "—",
-    imzali: !!r.imza_at,
-  }));
+  return (data ?? []).map((r) => {
+    const durum = ((r as { durum?: string }).durum ?? (r.imza_at ? "kabul" : "bekliyor")) as TanikDurum;
+    return {
+      witness_id: r.witness_id,
+      ad: (r.tanik as { full_name: string } | null)?.full_name ?? "—",
+      imzali: durum === "kabul",
+      durum,
+    };
+  });
 }
 
-// Şahit ekle: kural — her söze en fazla 5; her lider en fazla 5 kişiye.
+// Şahit ekle: kural — her söze en fazla 5 (ret HARİÇ); her lider en fazla 5
+// kişiye. Reddedilmiş bir davet slot tutmaz; ama aynı kişi tekrar davet edilemez
+// (reddettiyse başkası seçilmeli). Yeni davet "bekliyor" durumunda başlar.
 export async function tanikEkle(
   db: Db,
   sahibiId: string,
@@ -256,16 +287,35 @@ export async function tanikEkle(
 ): Promise<{ ok: boolean; sebep?: string }> {
   if (witnessId === sahibiId) return { ok: false, sebep: "kendine" };
   const [{ count: sahipSayi }, { count: witnessSayi }] = await Promise.all([
-    db.from("soz_tanik").select("id", { count: "exact", head: true }).eq("soz_sahibi", sahibiId),
-    db.from("soz_tanik").select("id", { count: "exact", head: true }).eq("witness_id", witnessId),
+    // Sahibin doluluk sayısı: reddedilenler sayılmaz (slot boşalır).
+    db
+      .from("soz_tanik")
+      .select("id", { count: "exact", head: true })
+      .eq("soz_sahibi", sahibiId)
+      .neq("durum", "ret"),
+    // Liderin kotası: reddettikleri kotasını doldurmaz.
+    db
+      .from("soz_tanik")
+      .select("id", { count: "exact", head: true })
+      .eq("witness_id", witnessId)
+      .neq("durum", "ret"),
   ]);
   if ((sahipSayi ?? 0) >= TANIK_HEDEF) return { ok: false, sebep: "dolu" };
   if ((witnessSayi ?? 0) >= TANIK_LIMIT) return { ok: false, sebep: "lider_dolu" };
   const { error } = await db
     .from("soz_tanik")
-    .insert({ soz_sahibi: sahibiId, witness_id: witnessId });
+    .insert({ soz_sahibi: sahibiId, witness_id: witnessId, durum: "bekliyor" });
   if (error) {
-    if (error.code === "23505") return { ok: false, sebep: "zaten" };
+    if (error.code === "23505") {
+      // Zaten bir kayıt var: reddettiyse "reddetti" (tekrar seçilemez), yoksa "zaten".
+      const { data: mevcut } = await db
+        .from("soz_tanik")
+        .select("durum")
+        .eq("soz_sahibi", sahibiId)
+        .eq("witness_id", witnessId)
+        .maybeSingle();
+      return { ok: false, sebep: (mevcut as { durum?: string } | null)?.durum === "ret" ? "reddetti" : "zaten" };
+    }
     return { ok: false, sebep: "hata" };
   }
   return { ok: true };
@@ -275,31 +325,68 @@ export async function tanikSil(db: Db, sahibiId: string, witnessId: string): Pro
   await db.from("soz_tanik").delete().eq("soz_sahibi", sahibiId).eq("witness_id", witnessId);
 }
 
-// Şahit imzası (lider, kendisini şahit gösteren kişinin sözünü onaylar).
-export async function tanikImzala(db: Db, sahibiId: string, witnessId: string): Promise<boolean> {
+// Şahit KABUL eder (davet → gerçek şahit). imza_at damgalanır, durum "kabul".
+// Yalnız "bekliyor" davetler kabul edilebilir (idempotent — çift tıklama güvenli).
+export async function tanikKabul(db: Db, sahibiId: string, witnessId: string): Promise<boolean> {
   const { error } = await db
     .from("soz_tanik")
-    .update({ imza_at: new Date().toISOString() })
+    .update({ imza_at: new Date().toISOString(), durum: "kabul" })
     .eq("soz_sahibi", sahibiId)
     .eq("witness_id", witnessId)
-    .is("imza_at", null);
+    .eq("durum", "bekliyor");
   return !error;
 }
 
-// Bir liderin şahit gösterildiği, henüz imzalamadığı sözler (lider görünümü).
-export async function bekleyenImzalar(
-  db: Db,
-  witnessId: string
-): Promise<{ sahibiId: string; ad: string }[]> {
+// Şahit REDDEDER (davet → ret). Slot boşalır; sahibi yerine yeni birini seçer.
+export async function tanikRet(db: Db, sahibiId: string, witnessId: string): Promise<boolean> {
+  const { error } = await db
+    .from("soz_tanik")
+    .update({ durum: "ret", imza_at: null })
+    .eq("soz_sahibi", sahibiId)
+    .eq("witness_id", witnessId)
+    .eq("durum", "bekliyor");
+  return !error;
+}
+
+// Geriye dönük uyumluluk: eski "imza" akışı = kabul (aynı davranış).
+export async function tanikImzala(db: Db, sahibiId: string, witnessId: string): Promise<boolean> {
+  return tanikKabul(db, sahibiId, witnessId);
+}
+
+export type SahitDaveti = {
+  sahibiId: string;
+  ad: string;
+  sozMetni: string | null;
+  ilkAksiyon: string | null;
+};
+
+// Bir lidere gelen, henüz yanıtlanmamış (bekliyor) şahitlik davetleri — kabul/ret
+// ekranı için söz önizlemesiyle birlikte. Reddedilmiş davetler burada görünmez.
+// (soz_tanik.soz_sahibi FK'i participants'a bakar; sözü ayrı sorguyla çekiyoruz.)
+export async function bekleyenImzalar(db: Db, witnessId: string): Promise<SahitDaveti[]> {
   const { data } = await db
     .from("soz_tanik")
     .select("soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name)")
     .eq("witness_id", witnessId)
-    .is("imza_at", null);
-  return (data ?? []).map((r) => ({
-    sahibiId: r.soz_sahibi,
-    ad: (r.sahip as { full_name: string } | null)?.full_name ?? "—",
-  }));
+    .eq("durum", "bekliyor");
+  const satirlar = data ?? [];
+  if (satirlar.length === 0) return [];
+  const sahipIdler = satirlar.map((r) => r.soz_sahibi);
+  const { data: sozler } = await db
+    .from("soz")
+    .select("participant_id, metin, aksiyonlar")
+    .in("participant_id", sahipIdler);
+  const sozMap = new Map((sozler ?? []).map((s) => [s.participant_id, s]));
+  return satirlar.map((r) => {
+    const s = sozMap.get(r.soz_sahibi);
+    const aksiyonlar = Array.isArray(s?.aksiyonlar) ? (s!.aksiyonlar as { metin?: string }[]) : [];
+    return {
+      sahibiId: r.soz_sahibi,
+      ad: (r.sahip as { full_name: string } | null)?.full_name ?? "—",
+      sozMetni: s?.metin ?? null,
+      ilkAksiyon: aksiyonlar[0]?.metin ?? null,
+    };
+  });
 }
 
 export async function sozV2KapisiAcik(db: Db): Promise<boolean> {

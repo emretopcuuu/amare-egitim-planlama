@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      yol_arkadasi: {
+        Row: {
+          arkadas_id: string
+          created_at: string
+          secen_id: string
+        }
+        Insert: {
+          arkadas_id: string
+          created_at?: string
+          secen_id: string
+        }
+        Update: {
+          arkadas_id?: string
+          created_at?: string
+          secen_id?: string
+        }
+        Relationships: []
+      }
+      ara_360: {
+        Row: {
+          created_at: string
+          gun: number
+          id: string
+          kor_nokta: string | null
+          p_enerji: number | null
+          p_gelisim: number | null
+          p_netlik: number | null
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          gun: number
+          id?: string
+          kor_nokta?: string | null
+          p_enerji?: number | null
+          p_gelisim?: number | null
+          p_netlik?: number | null
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          gun?: number
+          id?: string
+          kor_nokta?: string | null
+          p_enerji?: number | null
+          p_gelisim?: number | null
+          p_netlik?: number | null
+          participant_id?: string
+        }
+        Relationships: []
+      }
+      haftalik_tahmin: {
+        Row: {
+          created_at: string
+          hafta_basi: string
+          id: string
+          participant_id: string
+          tahmin: number
+        }
+        Insert: {
+          created_at?: string
+          hafta_basi: string
+          id?: string
+          participant_id: string
+          tahmin: number
+        }
+        Update: {
+          created_at?: string
+          hafta_basi?: string
+          id?: string
+          participant_id?: string
+          tahmin?: number
+        }
+        Relationships: []
+      }
+      ay_mektubu: {
+        Row: {
+          created_at: string
+          id: string
+          metin: string
+          milestone: number
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metin: string
+          milestone: number
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metin?: string
+          milestone?: number
+          participant_id?: string
+        }
+        Relationships: []
+      }
       ai_istek_log: {
         Row: {
           created_at: string
@@ -2081,6 +2180,7 @@ export type Database = {
           due_at: string
           ertelenme_sayisi: number
           fayda: string | null
+          yararli: boolean | null
           gec_tamamlandi: boolean
           id: string
           ipuclari: string[] | null
@@ -2134,6 +2234,7 @@ export type Database = {
           due_at: string
           ertelenme_sayisi?: number
           fayda?: string | null
+          yararli?: boolean | null
           gec_tamamlandi?: boolean
           id?: string
           ipuclari?: string[] | null
@@ -2187,6 +2288,7 @@ export type Database = {
           due_at?: string
           ertelenme_sayisi?: number
           fayda?: string | null
+          yararli?: boolean | null
           gec_tamamlandi?: boolean
           id?: string
           ipuclari?: string[] | null
@@ -3441,9 +3543,11 @@ export type Database = {
           aksiyonlar: Json
           created_at: string
           durum: string
+          duvarda: boolean
           kayit_at: string | null
           metin: string | null
           participant_id: string
+          revize_at?: string | null
           sekillendi_at: string | null
           son_durtme_at: string | null
           son_tanik_uyari_at: string | null
@@ -3454,9 +3558,11 @@ export type Database = {
           aksiyonlar?: Json
           created_at?: string
           durum?: string
+          duvarda?: boolean
           kayit_at?: string | null
           metin?: string | null
           participant_id: string
+          revize_at?: string | null
           sekillendi_at?: string | null
           son_durtme_at?: string | null
           son_tanik_uyari_at?: string | null
@@ -3467,9 +3573,11 @@ export type Database = {
           aksiyonlar?: Json
           created_at?: string
           durum?: string
+          duvarda?: boolean
           kayit_at?: string | null
           metin?: string | null
           participant_id?: string
+          revize_at?: string | null
           sekillendi_at?: string | null
           son_durtme_at?: string | null
           son_tanik_uyari_at?: string | null
@@ -3601,6 +3709,7 @@ export type Database = {
       soz_tanik: {
         Row: {
           created_at: string
+          durum: string
           id: string
           imza_at: string | null
           soz_sahibi: string
@@ -3608,6 +3717,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          durum?: string
           id?: string
           imza_at?: string | null
           soz_sahibi: string
@@ -3615,6 +3725,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          durum?: string
           id?: string
           imza_at?: string | null
           soz_sahibi?: string

@@ -2,6 +2,7 @@ import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
 import { yazAuditLog } from "@/lib/auditLog";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 
 // FAZ 6 — ADMIN OTOMASYONU veri katmanı. Üç karar yüzeyi:
 //  [6.1] pazartesiRaporu  — haftalık kohort sağlık özeti
@@ -9,12 +10,12 @@ import { yazAuditLog } from "@/lib/auditLog";
 //  [6.3] eylulKapisi      — Eylül kapısı: kişi başına "devam/izle/risk" kararı
 // Hepsi salt-okunur agregat; ~29 kişi ölçeğinde uygulama katmanında hesaplanır.
 
-type Kisi = { id: string; full_name: string; team: string | null };
+type Kisi = { id: string; full_name: string; team: string | null; phone: string | null };
 
 async function kisiler(db: Db): Promise<Kisi[]> {
   const { data } = await db
     .from("participants")
-    .select("id, full_name, team")
+    .select("id, full_name, team, phone")
     .eq("role", "participant");
   return (data ?? []) as Kisi[];
 }
@@ -101,6 +102,7 @@ export type ChurnSatiri = {
   id: string;
   ad: string;
   takim: string | null;
+  telefon: string | null; // [F#43] tek-tık WhatsApp için (E.164)
   sessizGun: number | null; // null = hiç görev tamamlamamış
   basamak: 0 | 1 | 2 | 3;
   oneri: string;
@@ -127,12 +129,40 @@ export async function churnMerdiveni(db: Db): Promise<ChurnSatiri[]> {
     const t = son.get(k.id);
     const sessizGun = t == null ? null : Math.floor((now - t) / 86_400_000);
     const basamak = churnBasamak(sessizGun);
-    return { id: k.id, ad: k.full_name, takim: k.team, sessizGun, basamak, oneri: CHURN_ONERI[basamak] };
+    return { id: k.id, ad: k.full_name, takim: k.team, telefon: k.phone, sessizGun, basamak, oneri: CHURN_ONERI[basamak] };
   });
   // En riskliden en aktife (basamak desc, sonra sessizGun desc).
   return satirlar.sort(
     (a, b) => b.basamak - a.basamak || (b.sessizGun ?? 9999) - (a.sessizGun ?? 9999)
   );
+}
+
+// [F#46] DÖNÜM NOKTASI ANONS LİSTESİ — kişilerin ADIM ATTIĞI GÜN sayısına göre
+// 30/60/90 eşiklerini geçenler. Emre sahnede/Zoom'da onları gerçek dünyada
+// tanısın diye. Eşikler DIŞLAYAN (en yüksek ulaşılan seviye): 90+ / 60-89 / 30-59.
+// Tek soruşturmayla (sayfalı soz_takip agregatı) — kişi başına sorgu yok.
+export type MilestoneAnons = { esik: 30 | 60 | 90; adlar: string[] };
+
+export async function milestoneDurumu(db: Db): Promise<MilestoneAnons[]> {
+  const [ks, takipler] = await Promise.all([
+    kisiler(db),
+    tumKayitlar<{ participant_id: string; yapildi: boolean | null }>((b, s) =>
+      db.from("soz_takip").select("participant_id, yapildi").order("participant_id").range(b, s)
+    ),
+  ]);
+  const say = new Map<string, number>();
+  for (const t of takipler) if (t.yapildi) say.set(t.participant_id, (say.get(t.participant_id) ?? 0) + 1);
+  const adMap = new Map(ks.map((k) => [k.id, k.full_name]));
+  const adlar = (min: number, max: number) =>
+    [...say.entries()]
+      .filter(([, n]) => n >= min && n < max)
+      .map(([id]) => adMap.get(id) ?? "—")
+      .sort((a, b) => a.localeCompare(b, "tr"));
+  return [
+    { esik: 90, adlar: adlar(90, Infinity) },
+    { esik: 60, adlar: adlar(60, 90) },
+    { esik: 30, adlar: adlar(30, 60) },
+  ];
 }
 
 // ---- [6.3] EYLÜL KAPISI KARAR PANOSU ----

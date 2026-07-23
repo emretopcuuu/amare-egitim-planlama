@@ -21,6 +21,15 @@ export async function marketAcikMi(db: Db): Promise<boolean> {
   return data?.value === "true";
 }
 
+// [C#26] Market erişimi: kampta market_acik bayrağı; yolculukta HER ZAMAN açık
+// (yalnız yolculuk-rafı ürünleriyle). Sayfa bununla hem açılışı hem rafı seçer.
+export async function marketErisim(db: Db): Promise<{ acik: boolean; yolculuk: boolean }> {
+  const { data } = await db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle();
+  const yolculuk = data?.value === "yolculuk";
+  const kampAcik = await marketAcikMi(db);
+  return { acik: yolculuk || kampAcik, yolculuk };
+}
+
 // KAZANÇ TOPLAMI (rank-only) — scored görev kıvılcımı + rozet kıvılcımı +
 // (G2) sandık kıvılcımı. Hepsi AKTİVİTEyle kazanılır; harcama bunu ASLA düşürmez.
 export async function kazancToplami(db: Db, pid: string): Promise<number> {
@@ -63,9 +72,21 @@ export async function satinAl(
   varyant?: string | null,
   aliciId?: string | null
 ): Promise<SatinAlmaSonuc> {
-  if (!(await marketAcikMi(db))) return { ok: false, sebep: "kapali" };
   const urun = urunBul(kod);
   if (!urun) return { ok: false, sebep: "urun_yok" };
+  // [C#26] Mod-farkında kapı: yolculukta yalnız yolculuk-rafı ürünleri satılır
+  // (kamp market_acik bayrağından bağımsız); kampta eski davranış (market_acik).
+  const { data: modAyar } = await db
+    .from("settings")
+    .select("value")
+    .eq("key", "sistem_modu")
+    .maybeSingle();
+  const modYolculuk = modAyar?.value === "yolculuk";
+  if (modYolculuk) {
+    if (!urun.yolculuk) return { ok: false, sebep: "urun_yok" };
+  } else if (!(await marketAcikMi(db))) {
+    return { ok: false, sebep: "kapali" };
+  }
   // Satıştan kaldırılan ürün (ör. emre_birebir): sunucu tarafı da reddeder —
   // yalnız listeden gizlemek yetmez, eski sekmeden/istekten satın alınamasın.
   if (urun.satistaDegil) return { ok: false, sebep: "urun_yok" };

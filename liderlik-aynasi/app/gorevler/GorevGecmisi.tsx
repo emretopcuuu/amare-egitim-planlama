@@ -37,6 +37,8 @@ export type GecmisGorev = {
   // zaten görünüyordu; tekrar ziyarette kaybolmasın diye geçmişte de gösterilir.
   reflection_text: string | null;
   reflection_reply: string | null;
+  // [E#39] Kullanıcının "işine yaradı mı?" oyu (null = henüz oy yok).
+  yararli: boolean | null;
 };
 
 type Filtre = "tum" | "yuksek" | "kacan";
@@ -57,6 +59,22 @@ export default function GorevGecmisi({
   // — her biri backdrop-blur — düşük bellekli uygulama-içi tarayıcıyı çökertir.
   // Varsayılan ilk N kart; gerisi "daha fazla" ile açılır.
   const [hepsiGoster, setHepsiGoster] = useState(false);
+  // [E#39] "İşine yaradı mı?" oyları — sunucudan gelen başlangıç + tıklayınca güncelle.
+  const [faydaOy, setFaydaOy] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(gorevler.filter((g) => g.yararli != null).map((g) => [g.id, g.yararli as boolean]))
+  );
+  async function faydaVer(id: string, yararli: boolean) {
+    setFaydaOy((m) => ({ ...m, [id]: yararli }));
+    try {
+      await fetch("/api/gorev-fayda", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ gorevId: id, yararli }),
+      });
+    } catch {
+      // sessiz — oy görsel olarak kaldı; kritik değil
+    }
+  }
 
   // Özet: tamamlanan (scored) sayısı + ortalama puan + kaçan sayısı.
   const ozet = useMemo(() => {
@@ -310,6 +328,34 @@ export default function GorevGecmisi({
                                     {g.status === "expired" ? t.gecmisNotYokKacan : t.gecmisNotYok}
                                   </p>
                                 )}
+                              {/* [E#39] İşine yaradı mı? — tek dokunuş; görev üretimini besler. */}
+                              {g.status === "scored" && g.kind !== "soz" && g.kind !== "senkron" && (
+                                g.id in faydaOy ? (
+                                  <p className="text-center text-xs text-slate-500">
+                                    {faydaOy[g.id] ? "👍 İşine yaradığını not aldım." : "👎 Not aldım — daha iyisini üreteceğim."}
+                                  </p>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-2 pt-1">
+                                    <span className="text-xs text-slate-500">İşine yaradı mı?</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => void faydaVer(g.id, true)}
+                                      aria-label="İşine yaradı"
+                                      className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-sm hover:bg-emerald-500/20"
+                                    >
+                                      👍
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void faydaVer(g.id, false)}
+                                      aria-label="İşine yaramadı"
+                                      className="rounded-lg bg-white/5 px-2.5 py-1 text-sm hover:bg-white/10"
+                                    >
+                                      👎
+                                    </button>
+                                  </div>
+                                )
+                              )}
                               {/* Geliştir ve yeniden gönder — puanı artırmak için aynı görevi
                                   tekrar dene (söz/senkron hariç puanlanmış görevler). */}
                               {g.status === "scored" && g.kind !== "soz" && g.kind !== "senkron" && (

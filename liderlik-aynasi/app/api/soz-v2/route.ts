@@ -8,7 +8,8 @@ import {
   taniklar,
   tanikEkle,
   tanikSil,
-  tanikImzala,
+  tanikKabul,
+  tanikRet,
   bekleyenImzalar,
   sozV2KapisiAcik,
   TANIK_HEDEF,
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
     tanikEkle?: unknown;
     tanikSil?: unknown;
     imza?: unknown;
+    kabul?: unknown; // şahit daveti KABUL (sahibiId)
+    ret?: unknown; // şahit daveti RET (sahibiId)
   };
   try {
     g = await req.json();
@@ -95,27 +98,46 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
-  // İmza: oturum sahibi (lider), kendisini şahit gösteren kişinin sözünü imzalar.
-  if (typeof g.imza === "string") {
-    const ok = await tanikImzala(db, g.imza, session.sub);
-    // [FAZ 8 · Madde 15] İMZA ANI: imza başarılıysa söz SAHİBİNE haber ver —
-    // en güçlü sosyal-taahhüt anı eskiden sessiz geçiyordu. 5/5 imza tamamlanınca
+  // KABUL: oturum sahibi (lider), kendisini şahit gösteren kişinin davetini kabul
+  // eder → gerçek şahit olur, imza damgalanır. ("imza" eski isim, aynı işi yapar.)
+  const kabulHedef =
+    typeof g.kabul === "string" ? g.kabul : typeof g.imza === "string" ? g.imza : null;
+  if (kabulHedef) {
+    const ok = await tanikKabul(db, kabulHedef, session.sub);
+    // [FAZ 8 · Madde 15] KABUL ANI: söz SAHİBİNE haber ver. 5/5 kabul tamamlanınca
     // "sözün tam mühürlendi" töreni push'u.
     if (ok) {
       const ilkAd = session.ad.split(" ")[0];
-      const { count: imzali } = await db
+      const { count: kabulEden } = await db
         .from("soz_tanik")
         .select("id", { count: "exact", head: true })
-        .eq("soz_sahibi", g.imza)
-        .not("imza_at", "is", null);
-      const tumu = (imzali ?? 0) >= TANIK_HEDEF;
+        .eq("soz_sahibi", kabulHedef)
+        .eq("durum", "kabul");
+      const tumu = (kabulEden ?? 0) >= TANIK_HEDEF;
       await katilimciyaBildir(
         db,
-        g.imza,
-        tumu ? "🔒 Sözün mühürlendi" : "🤝 Bir şahidin imza attı",
+        kabulHedef,
+        tumu ? "🔒 Sözün mühürlendi" : "🤝 Bir şahidin kabul etti",
         tumu
-          ? `${ilkAd} de imzaladı — ${TANIK_HEDEF} şahidin tamamlandı. Sözün artık tam mühürlü.`
-          : `${ilkAd} sözüne şahit oldu ve imza attı. Mührün güçleniyor.`,
+          ? `${ilkAd} de kabul etti — ${TANIK_HEDEF} şahidin tamamlandı. Sözün artık tam mühürlü.`
+          : `${ilkAd} sözüne şahit olmayı kabul etti. Mührün güçleniyor.`,
+        "/sozum"
+      ).catch(() => {});
+    }
+    return Response.json({ ok });
+  }
+
+  // RET: lider daveti reddeder → slot boşalır. Söz sahibine "yerine yeni şahit
+  // seç" haberi gider; sahibin yolculuk kapısı yeniden şahit seçimine döner.
+  if (typeof g.ret === "string") {
+    const ok = await tanikRet(db, g.ret, session.sub);
+    if (ok) {
+      const ilkAd = session.ad.split(" ")[0];
+      await katilimciyaBildir(
+        db,
+        g.ret,
+        "🤝 Bir şahit yerine yeni birini seç",
+        `${ilkAd} şu an şahidin olamadı. Yerine başka bir lider seç — sözün 5 şahitle mühürlensin.`,
         "/sozum"
       ).catch(() => {});
     }
