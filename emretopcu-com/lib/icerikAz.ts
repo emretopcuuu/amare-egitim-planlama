@@ -358,6 +358,8 @@ export const AZ: Icerik = {
     simSon: "Budur qatlama. Mən bunu 250.000 dəfə yaşadım.",
     mektupNot: "Ön görüş üçün tək mesaj yetər.",
     footerFelsefe: "Heç kim, amma heç kim tək başına uğur qazanmayıb.",
+    populerBaslik: "Ən çox baxılanlar",
+    populerAlt: "YouTube-da ən çox baxılan videolarım.",
     fasillar: [
       "Haqqımda",
       "Nəzəriyyə",
