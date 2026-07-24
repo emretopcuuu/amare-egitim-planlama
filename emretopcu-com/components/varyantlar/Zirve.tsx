@@ -45,6 +45,7 @@ import { useTema } from "@/lib/tema";
 import { sozKartiPaylas, sozStoryPaylas, projKartiPaylas } from "@/lib/sozKart";
 import { soruCevaplar, enIyiCevap } from "@/lib/soruCevap";
 import { olcum } from "@/lib/olcum";
+import { POPULER } from "@/lib/populer";
 import {
   EPOSTA,
   INSTAGRAM_URL,
@@ -1919,6 +1920,69 @@ function VideoKart({
 }
 
 /* Kamera karşısında — gerçek eğitim videoları (Vimeo/YouTube). */
+/* Popüler bir YouTube videosu kartı — kalıcı thumbnail, tıklayınca oynatıcı. */
+function PopulerKart({ id, baslik }: { id: string; baslik: string }) {
+  const [oynat, setOynat] = useState(false);
+  return (
+    <div className="w-[76vw] shrink-0 snap-start sm:w-[340px]">
+      <div className="relative aspect-video overflow-hidden rounded-2xl border border-black/10 bg-abanoz-2">
+        {oynat ? (
+          <iframe
+            className="absolute inset-0 h-full w-full"
+            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
+            title={baslik}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setOynat(true);
+              olcum("populer-izle");
+            }}
+            className="group absolute inset-0 h-full w-full cursor-pointer"
+            aria-label={baslik}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+              alt={baslik}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+            <span className="absolute top-1/2 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-altin/90 text-fildisi transition-transform group-hover:scale-110">
+              <PlayCircle size={30} weight="fill" />
+            </span>
+          </button>
+        )}
+      </div>
+      <p className="mt-3 font-medium text-fildisi">{baslik}</p>
+    </div>
+  );
+}
+
+/* "En çok izlenenler" — YouTube kanalının popülerliğe göre ilk videoları,
+   yatay kaydırmalı şerit. */
+function PopulerStrip() {
+  const c = useC();
+  return (
+    <div className="mt-12">
+      <div className="flex items-baseline gap-3">
+        <span className="text-xs font-medium tracking-[0.2em] text-altin uppercase">
+          {c.ui.populerBaslik}
+        </span>
+        <span className="text-sm text-duman">{c.ui.populerAlt}</span>
+      </div>
+      <div className="mt-5 flex snap-x gap-5 overflow-x-auto pb-4 [scrollbar-width:thin]">
+        {POPULER.map((v) => (
+          <PopulerKart key={v.id} id={v.id} baslik={v.baslik} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* En yeni YouTube videosu — /son-video.json'dan (haftalık GitHub Action tazeler).
    Boşsa hiç görünmez; site "kendi kendine yaşar". */
 function SonVideo() {
@@ -1995,6 +2059,7 @@ function Videolar() {
         >
           {c.videolar.altMetin}
         </motion.p>
+        <PopulerStrip />
         <SonVideo />
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           {c.videolar.liste.map((v, i) => (

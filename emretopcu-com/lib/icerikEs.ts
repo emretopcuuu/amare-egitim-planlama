@@ -358,6 +358,8 @@ export const ES: Icerik = {
     simSon: "Esto es multiplicar. Lo he vivido 250.000 veces.",
     mektupNot: "Para una charla previa basta un solo mensaje.",
     footerFelsefe: "Nadie, absolutamente nadie, lo logró en solitario.",
+    populerBaslik: "Más vistos",
+    populerAlt: "Mis vídeos más vistos en YouTube.",
     fasillar: [
       "Sobre mí",
       "Teoría",

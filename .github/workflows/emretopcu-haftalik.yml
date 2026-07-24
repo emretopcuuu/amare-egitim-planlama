@@ -25,10 +25,12 @@ jobs:
       - run: npm ci
       - name: En yeni videoyu çek
         run: node scripts/son-video.mjs
+      - name: En çok izlenenleri tazele
+        run: node scripts/populer-video.mjs
       - name: Değişiklik var mı
         id: fark
         run: |
-          if git diff --quiet public/son-video.json; then
+          if git diff --quiet public/son-video.json lib/populer.ts; then
             echo "degisti=false" >> "$GITHUB_OUTPUT"
           else
             echo "degisti=true" >> "$GITHUB_OUTPUT"
@@ -40,11 +42,11 @@ jobs:
         run: |
           npm run build
           npx wrangler pages deploy out --project-name=emretopcu-ai --branch=main
-      - name: son-video.json'u commit'le
+      - name: Değişiklikleri commit'le
         if: steps.fark.outputs.degisti == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/son-video.json
-          git commit -m "emretopcu.ai: en yeni video güncellendi"
+          git add public/son-video.json lib/populer.ts
+          git commit -m "emretopcu.ai: video listeleri güncellendi"
           git push

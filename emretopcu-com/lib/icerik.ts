@@ -429,6 +429,8 @@ const TR = {
     simSon: "İşte katlama. Ben bunu 250.000 kez yaşadım.",
     mektupNot: "Ön görüşme için tek mesaj yeter.",
     footerFelsefe: "Kimse, ama kimse tek başına başarmadı.",
+    populerBaslik: "En çok izlenenler",
+    populerAlt: "YouTube'da en çok izlenen videolarım.",
     fasillar: [
       "Hakkımda",
       "Teori",
@@ -864,6 +866,8 @@ const EN: Icerik = {
     simSon: "That's multiplying. I lived it 250,000 times.",
     mektupNot: "One message is all it takes.",
     footerFelsefe: "No one, but no one, ever made it alone.",
+    populerBaslik: "Most watched",
+    populerAlt: "My most-watched videos on YouTube.",
     fasillar: [
       "About",
       "Theory",
