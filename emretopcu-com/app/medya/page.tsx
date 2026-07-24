@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Image from "next/image";
 import {
   EPOSTA,
@@ -51,15 +50,15 @@ export default function MedyaKiti() {
     <main className="min-h-[100dvh] bg-abanoz font-sahne text-fildisi">
       <header className="border-b border-black/10">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
-          <Link href="/" className="text-base font-semibold tracking-tight">
+          <a href="/" className="text-base font-semibold tracking-tight">
             Emre Topçu
-          </Link>
-          <Link
+          </a>
+          <a
             href="/"
             className="text-sm text-duman transition-colors hover:text-altin"
           >
             ← Ana sayfa
-          </Link>
+          </a>
         </div>
       </header>
 

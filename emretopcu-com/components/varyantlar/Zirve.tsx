@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import Link from "next/link";
 import {
   AnimatePresence,
   animate,
@@ -27,14 +34,19 @@ import {
   Moon,
   PlayCircle,
   ShareNetwork,
+  SpeakerHigh,
+  SpeakerSimpleX,
   Sun,
   WhatsappLogo,
   X,
   YoutubeLogo,
 } from "@phosphor-icons/react";
 import { useTema } from "@/lib/tema";
-import { sozKartiPaylas } from "@/lib/sozKart";
+import { sozKartiPaylas, sozStoryPaylas, projKartiPaylas } from "@/lib/sozKart";
+import { soruCevaplar, enIyiCevap } from "@/lib/soruCevap";
+import { olcum } from "@/lib/olcum";
 import {
+  EPOSTA,
   INSTAGRAM_URL,
   LIDER_PROFIL_URL,
   TRIBUTE_VIDEO_ID,
@@ -43,6 +55,8 @@ import {
   whatsappUrl,
   kitapHaberUrl,
   bultenMailto,
+  DIL_YOL,
+  DIL_ETIKET,
   type Dil,
   type Icerik,
 } from "@/lib/icerik";
@@ -409,14 +423,28 @@ function KatlamaSim() {
 
 // 3D sahne yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
 const Ag3D = dynamic(() => import("./Ag3D"), { ssr: false });
-const Dunya = dynamic(() => import("./Dunya"), { ssr: false });
 
-/* "4 kıta, 38 ülke" — İstanbul merkezli erişim küresi. */
+// Arka plandaki tek sahnenin "ağ → dünya" morf değerini bölümler arası paylaşır.
+const MorfContext = createContext<MotionValue<number> | null>(null);
+
+/* "4 kıta, 38 ülke" — arka plandaki ağ küresi burada dünyaya DÖNÜŞÜR.
+   Bölüm yüksek tutulur; scroll ilerlemesi morf değerine (0→1→0) yazılır,
+   böylece küre girişte dünyaya akar, çıkışta ağa geri döner. */
 function DunyaBolum() {
   const c = useC();
+  const morf = useContext(MorfContext);
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  // Üçgen zarf: 0 (giriş) → 1 (orta) → 0 (çıkış).
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    if (morf) morf.set(1 - Math.abs(p - 0.5) * 2);
+  });
   return (
-    <section className="relative overflow-hidden py-20 md:py-28">
-      <div className="mx-auto max-w-5xl px-6 text-center">
+    <section ref={ref} className="relative h-[170vh]">
+      <div className="sticky top-0 flex h-[100dvh] flex-col items-center justify-center px-6 text-center">
         <H2Perde className="mx-auto max-w-[16ch] font-lux text-3xl font-semibold tracking-tight md:text-5xl">
           {c.dunya.baslik}
         </H2Perde>
@@ -429,41 +457,36 @@ function DunyaBolum() {
         >
           {c.dunya.altMetin}
         </motion.p>
-        <div className="relative mt-6 h-[360px] md:h-[520px]">
-          <Dunya />
-          <span className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-medium tracking-[0.15em] text-altin uppercase">
-            {c.dunya.merkez}
-          </span>
-        </div>
+        <span className="mt-6 text-xs font-medium tracking-[0.15em] text-altin uppercase">
+          {c.dunya.merkez}
+        </span>
       </div>
     </section>
   );
 }
 
-/* Dil değiştirici: TR / EN arasında geçiş (statik route'lara link). */
+/* Dil değiştirici: TR / EN / RU / AZ (statik route'lara link). */
+const DILLER: Dil[] = ["tr", "en", "ru", "az"];
 function DilSecici() {
   const dil = useDil();
   return (
     <div className="flex items-center gap-1 text-sm">
-      <a
-        href="/"
-        aria-current={dil === "tr" ? "true" : undefined}
-        className={
-          dil === "tr" ? "font-semibold text-altin" : "text-duman hover:text-fildisi"
-        }
-      >
-        TR
-      </a>
-      <span className="text-black/20">/</span>
-      <a
-        href="/en"
-        aria-current={dil === "en" ? "true" : undefined}
-        className={
-          dil === "en" ? "font-semibold text-altin" : "text-duman hover:text-fildisi"
-        }
-      >
-        EN
-      </a>
+      {DILLER.map((d, i) => (
+        <span key={d} className="flex items-center gap-1">
+          {i > 0 && <span className="text-black/20">/</span>}
+          <a
+            href={DIL_YOL[d]}
+            aria-current={dil === d ? "true" : undefined}
+            className={
+              dil === d
+                ? "font-semibold text-altin"
+                : "text-duman hover:text-fildisi"
+            }
+          >
+            {DIL_ETIKET[d]}
+          </a>
+        </span>
+      ))}
     </div>
   );
 }
@@ -713,6 +736,36 @@ function PerdeSatir({
   );
 }
 
+/* Kinetik başlık satırı: Outfit variable ekseninde harf harf ağırlık dalgası.
+   İmleç harfe yaklaştıkça kalınlaşır; reduced-motion'da sabit kalır. */
+function KinetikSatir({
+  metin,
+  className = "",
+}: {
+  metin: string;
+  className?: string;
+}) {
+  const azalt = useReducedMotion();
+  const harfler = Array.from(metin);
+  if (azalt) return <span className={className}>{metin}</span>;
+  return (
+    <span className={className}>
+      {harfler.map((h, i) => (
+        <motion.span
+          key={i}
+          className="inline-block"
+          style={{ fontWeight: 600 }}
+          initial={{ fontWeight: 600 }}
+          whileHover={{ fontWeight: 900, scaleY: 1.04 }}
+          transition={{ type: "spring", stiffness: 320, damping: 18 }}
+        >
+          {h === " " ? " " : h}
+        </motion.span>
+      ))}
+    </span>
+  );
+}
+
 function Hero() {
   const c = useC();
   const azalt = useReducedMotion();
@@ -747,9 +800,11 @@ function Hero() {
           {c.hero.isim} <span className="text-duman">— {c.hero.rol}</span>
         </motion.p>
         <h1 className="text-[16vw] leading-[0.9] font-semibold tracking-tighter uppercase md:text-[9.5rem]">
-          <PerdeSatir gecikme={0.15}>{c.hero.baslikSatir1}</PerdeSatir>
+          <PerdeSatir gecikme={0.15}>
+            <KinetikSatir metin={c.hero.baslikSatir1} />
+          </PerdeSatir>
           <PerdeSatir gecikme={0.28}>
-            <span className="text-altin">{c.hero.baslikSatir2}</span>
+            <KinetikSatir metin={c.hero.baslikSatir2} className="text-altin" />
           </PerdeSatir>
         </h1>
         <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
@@ -805,6 +860,84 @@ function Hero() {
   );
 }
 
+/* 2.5D derinlik portresi: imleç/eğime göre iki katman (portre + altın halka)
+   zıt yönde kayar; hafif perspektif eğim "nefes alan" derinlik verir.
+   Tek fotoğrafla; reduced-motion'da sabit. */
+function DerinlikPortre() {
+  const azalt = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rx = useSpring(useTransform(my, [-0.5, 0.5], [7, -7]), {
+    stiffness: 140,
+    damping: 18,
+  });
+  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-9, 9]), {
+    stiffness: 140,
+    damping: 18,
+  });
+  const px = useSpring(useTransform(mx, [-0.5, 0.5], [-14, 14]), {
+    stiffness: 120,
+    damping: 20,
+  });
+  const py = useSpring(useTransform(my, [-0.5, 0.5], [-14, 14]), {
+    stiffness: 120,
+    damping: 20,
+  });
+
+  const hareket = (e: React.PointerEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  const cikis = () => {
+    mx.set(0);
+    my.set(0);
+  };
+
+  if (azalt) {
+    return (
+      <Image
+        src="/portre-duotone.webp"
+        alt="Emre Topçu"
+        width={640}
+        height={800}
+        className="w-full max-w-[280px] rounded-3xl border border-altin/25 shadow-[0_18px_50px_rgba(26,26,29,0.12)]"
+      />
+    );
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      onPointerMove={hareket}
+      onPointerLeave={cikis}
+      style={{ perspective: 900 }}
+      className="w-full max-w-[280px]"
+    >
+      <motion.div
+        style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
+        className="relative"
+      >
+        <motion.span
+          aria-hidden
+          style={{ x: px, y: py, translateZ: -40 }}
+          className="absolute -inset-3 rounded-[2rem] border border-altin/25"
+        />
+        <Image
+          src="/portre-duotone.webp"
+          alt="Emre Topçu"
+          width={640}
+          height={800}
+          className="relative w-full rounded-3xl border border-altin/25 shadow-[0_18px_50px_rgba(26,26,29,0.14)]"
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* Scroll ilerledikçe kelime kelime beliren manifesto. */
 function Kelime({
   kelime,
@@ -853,13 +986,7 @@ function Manifesto() {
           transition={{ duration: 0.8, ease: GECIS }}
           className="md:sticky md:top-28 md:self-start"
         >
-          <Image
-            src="/portre-duotone.webp"
-            alt="Emre Topçu"
-            width={640}
-            height={800}
-            className="w-full max-w-[280px] rounded-3xl border border-altin/25 shadow-[0_18px_50px_rgba(26,26,29,0.12)]"
-          />
+          <DerinlikPortre />
           <p className="mt-5 text-xl font-semibold tracking-tight">
             Emre Topçu
           </p>
@@ -1114,11 +1241,79 @@ function Gercekler() {
 }
 
 /* SSS — akordeon, en çok sorulan sorular. */
+/* "Emre'ye sor" — sitedeki gerçek metinlerden bulanık aramalı Q&A. */
+function EmreyeSor() {
+  const c = useC();
+  const havuz = useMemo(() => soruCevaplar(c), [c]);
+  const [sorgu, setSorgu] = useState("");
+  const [cevap, setCevap] = useState<{ bulundu: boolean; metin: string } | null>(
+    null,
+  );
+  const sor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sorgu.trim()) return;
+    const sc = enIyiCevap(sorgu, havuz);
+    olcum("emreye-sor");
+    setCevap(sc ? { bulundu: true, metin: sc.cevap } : { bulundu: false, metin: c.ui.sorBos });
+  };
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-3xl px-6">
+        <H2Perde className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
+          {c.ui.sorBaslik}
+        </H2Perde>
+        <p className="mt-4 max-w-[52ch] text-duman">{c.ui.sorAlt}</p>
+        <form onSubmit={sor} className="mt-8 flex gap-3">
+          <input
+            value={sorgu}
+            onChange={(e) => setSorgu(e.target.value)}
+            placeholder={c.ui.sorYaz}
+            className="w-full rounded-full border border-black/15 bg-abanoz-2 px-5 py-3.5 text-fildisi outline-none focus:border-altin/60"
+          />
+          <button
+            type="submit"
+            className="shrink-0 rounded-full bg-altin px-6 py-3.5 font-medium text-fildisi active:scale-[0.98]"
+          >
+            {c.ui.sorBaslik}
+          </button>
+        </form>
+        <AnimatePresence mode="wait">
+          {cevap && (
+            <motion.div
+              key={cevap.metin}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: GECIS }}
+              className="mt-8 rounded-2xl border border-altin/20 bg-abanoz-2/60 p-6"
+            >
+              <p className="text-lg leading-relaxed text-fildisi/90">
+                {cevap.metin}
+              </p>
+              {!cevap.bulundu && (
+                <a
+                  href={whatsappUrl("emreye-sor")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 font-medium text-altin underline-offset-2 hover:underline"
+                >
+                  <WhatsappLogo size={16} weight="fill" />
+                  {c.ui.calis}
+                </a>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
 function Sss() {
   const c = useC();
   const [acik, setAcik] = useState<number | null>(0);
   return (
-    <section className="py-16 md:py-24">
+    <section id="sss" className="scroll-mt-24 py-16 md:py-24">
       <div className="mx-auto max-w-4xl px-6">
         <H2Perde className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
           {c.sss.baslik}
@@ -1327,6 +1522,99 @@ function Yolculuk() {
 }
 
 /* Kanıt: büyük sayan rakamlar. Arkadaki ağ görünür kalsın diye yarı saydam. */
+/* Katlama projeksiyonu: ziyaretçi kendi aylık el sıkışma sayısını girer,
+   ekleme (doğrusal) ile katlama (üstel) farkını kendi rakamıyla görür ve
+   paylaşır. Açıkça matematik projeksiyonu; kazanç vaadi değil. */
+function KatlamaProjeksiyon() {
+  const c = useC();
+  const dil = useDil();
+  const [n, setN] = useState(5);
+  const aylar = Array.from({ length: 12 }, (_, i) => i + 1);
+  const katlama = aylar.map((m) => Math.round(n * Math.pow(1.4, m - 1)));
+  const ekleme = aylar.map((m) => n * m);
+  const maks = katlama[katlama.length - 1];
+  const ay6 = katlama[5];
+  const ay12 = katlama[11];
+  const nokta = (arr: number[]) =>
+    arr
+      .map((v, i) => `${(i / 11) * 100},${60 - (v / maks) * 56}`)
+      .join(" ");
+  return (
+    <section className="scroll-mt-24 py-20 md:py-28">
+      <div className="mx-auto max-w-4xl px-6">
+        <H2Perde className="max-w-[18ch] font-lux text-3xl font-semibold tracking-tight md:text-5xl">
+          {c.proj.baslik}
+        </H2Perde>
+        <p className="mt-4 max-w-[52ch] text-duman">{c.proj.alt}</p>
+        <div className="mt-10 rounded-3xl border border-altin/15 bg-abanoz-2/50 p-6 backdrop-blur-sm md:p-10">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="font-lux text-5xl text-altin md:text-6xl">{n}</span>
+            <span className="text-duman">{c.proj.kisiEtiket}</span>
+            <input
+              type="range"
+              min={1}
+              max={20}
+              step={1}
+              value={n}
+              onChange={(e) => setN(Number(e.target.value))}
+              aria-label={c.proj.kisiEtiket}
+              className="mt-2 w-full cursor-pointer accent-altin sm:mt-0 sm:ml-auto sm:w-56"
+            />
+          </div>
+          <svg
+            viewBox="0 0 100 60"
+            preserveAspectRatio="none"
+            className="mt-8 h-48 w-full md:h-64"
+            aria-hidden
+          >
+            <polyline
+              points={nokta(ekleme)}
+              fill="none"
+              stroke="var(--color-duman)"
+              strokeOpacity="0.5"
+              strokeWidth="0.8"
+              strokeDasharray="2 2"
+              vectorEffect="non-scaling-stroke"
+            />
+            <polyline
+              points={nokta(katlama)}
+              fill="none"
+              stroke="var(--color-altin)"
+              strokeWidth="1.4"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <div>
+              <p className="font-lux text-3xl text-fildisi md:text-4xl">
+                {ay6.toLocaleString(dil === "en" ? "en-US" : "tr-TR")}
+              </p>
+              <p className="text-sm text-duman">{c.proj.ay6}</p>
+            </div>
+            <div>
+              <p className="font-lux text-3xl text-altin md:text-4xl">
+                {ay12.toLocaleString(dil === "en" ? "en-US" : "tr-TR")}
+              </p>
+              <p className="text-sm text-duman">{c.proj.ay12}</p>
+            </div>
+          </div>
+          <p className="mt-6 text-xs leading-relaxed text-duman/80">
+            {c.proj.uyari}
+          </p>
+          <button
+            type="button"
+            onClick={() => { projKartiPaylas(n, ay6, ay12, dil); olcum("proj-paylas"); }}
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi"
+          >
+            <ShareNetwork size={15} weight="bold" />
+            {c.proj.kartPaylas}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Rakamlar() {
   const c = useC();
   return (
@@ -1542,16 +1830,27 @@ function Sozler() {
                     )}
                   </AnimatePresence>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => sozKartiPaylas(s.soz)}
-                  className={`mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin ${
+                <div
+                  className={`mt-4 flex gap-4 ${
                     i % 2 === 1 ? "flex-row-reverse" : ""
                   }`}
                 >
-                  <ShareNetwork size={15} weight="bold" />
-                  {c.ui.sozKartPaylas}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => { sozKartiPaylas(s.soz); olcum("soz-paylas"); }}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin"
+                  >
+                    <ShareNetwork size={15} weight="bold" />
+                    {c.ui.sozKartPaylas}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { sozStoryPaylas(s.soz); olcum("soz-story"); }}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin"
+                  >
+                    {c.ui.sozKartStory}
+                  </button>
+                </div>
               </motion.blockquote>
             );
           })}
@@ -1620,6 +1919,65 @@ function VideoKart({
 }
 
 /* Kamera karşısında — gerçek eğitim videoları (Vimeo/YouTube). */
+/* En yeni YouTube videosu — /son-video.json'dan (haftalık GitHub Action tazeler).
+   Boşsa hiç görünmez; site "kendi kendine yaşar". */
+function SonVideo() {
+  const c = useC();
+  const [v, setV] = useState<{ id: string; baslik: string } | null>(null);
+  const [oynat, setOynat] = useState(false);
+  useEffect(() => {
+    fetch("/son-video.json")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && typeof d.id === "string" && d.id) setV(d);
+      })
+      .catch(() => {});
+  }, []);
+  if (!v) return null;
+  return (
+    <div className="mt-12 overflow-hidden rounded-3xl border border-altin/30 bg-abanoz-2">
+      <div className="grid md:grid-cols-[1.4fr_1fr]">
+        <div className="relative aspect-video">
+          {oynat ? (
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src={`https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0`}
+              title={v.baslik}
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setOynat(true)}
+              className="absolute inset-0 h-full w-full cursor-pointer"
+              aria-label={v.baslik}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`}
+                alt={v.baslik}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <span className="absolute top-1/2 left-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-altin/90 text-fildisi">
+                <PlayCircle size={34} weight="fill" />
+              </span>
+            </button>
+          )}
+        </div>
+        <div className="flex flex-col justify-center p-6 md:p-8">
+          <span className="text-xs font-medium tracking-[0.2em] text-altin uppercase">
+            {c.ui.sonEtiket}
+          </span>
+          <h3 className="mt-3 font-lux text-2xl font-semibold tracking-tight text-fildisi">
+            {v.baslik}
+          </h3>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Videolar() {
   const c = useC();
   return (
@@ -1637,6 +1995,7 @@ function Videolar() {
         >
           {c.videolar.altMetin}
         </motion.p>
+        <SonVideo />
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           {c.videolar.liste.map((v, i) => (
             <motion.div
@@ -2007,20 +2366,80 @@ function KitapBulten() {
             <ArrowUpRight size={16} weight="bold" />
           </a>
         </div>
-        <div className="rounded-3xl border border-altin/20 bg-abanoz-2/60 p-8">
-          <h3 className="font-lux text-2xl font-semibold tracking-tight md:text-3xl">
-            {c.bulten.baslik}
-          </h3>
-          <p className="mt-3 text-duman">{c.bulten.metin}</p>
-          <a
-            href={bultenMailto(c.bulten.konu, c.bulten.govde)}
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-altin px-5 py-2.5 text-sm font-medium text-fildisi active:scale-[0.98]"
-          >
-            {c.bulten.dugme}
-          </a>
-        </div>
+        <BultenForm />
       </div>
     </section>
+  );
+}
+
+/* Pazartesi Notları kaydı — /api/bulten'e POST; yapılandırılmamışsa (Turnstile/
+   KV yoksa) sessizce e-posta (mailto) yedeğine düşer. */
+function BultenForm() {
+  const c = useC();
+  const [eposta, setEposta] = useState("");
+  const [durum, setDurum] = useState<"bos" | "gonderiliyor" | "ok" | "hata">(
+    "bos",
+  );
+  const gonder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(eposta)) return;
+    setDurum("gonderiliyor");
+    try {
+      const r = await fetch("/api/bulten", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ eposta, token: "" }),
+      });
+      if (r.ok) {
+        setDurum("ok");
+        return;
+      }
+      setDurum("hata");
+    } catch {
+      setDurum("hata");
+    }
+  };
+  return (
+    <div className="rounded-3xl border border-altin/20 bg-abanoz-2/60 p-8">
+      <h3 className="font-lux text-2xl font-semibold tracking-tight md:text-3xl">
+        {c.bulten.baslik}
+      </h3>
+      <p className="mt-3 text-duman">{c.bulten.metin}</p>
+      {durum === "ok" ? (
+        <p className="mt-6 font-medium text-altin">{c.bulten.tesekkur}</p>
+      ) : (
+        <>
+          <form onSubmit={gonder} className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="email"
+              required
+              value={eposta}
+              onChange={(e) => setEposta(e.target.value)}
+              placeholder={c.bulten.eposta}
+              className="w-full rounded-full border border-black/15 bg-abanoz px-5 py-3 text-fildisi outline-none focus:border-altin/60"
+            />
+            <button
+              type="submit"
+              disabled={durum === "gonderiliyor"}
+              className="shrink-0 rounded-full bg-altin px-6 py-3 text-sm font-medium text-fildisi active:scale-[0.98] disabled:opacity-60"
+            >
+              {c.bulten.dugme}
+            </button>
+          </form>
+          {durum === "hata" && (
+            <p className="mt-3 text-sm text-duman">
+              {c.bulten.hata}{" "}
+              <a
+                href={bultenMailto(c.bulten.konu, c.bulten.govde)}
+                className="font-medium text-altin underline-offset-2 hover:underline"
+              >
+                {EPOSTA}
+              </a>
+            </p>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -2066,13 +2485,17 @@ function Footer() {
           </a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-duman">
-          <Link href="/dusunuyorum" className="transition-colors hover:text-altin">
+          <a href="/dusunuyorum" className="transition-colors hover:text-altin">
             {c.ui.dusunuyorumLink}
-          </Link>
+          </a>
           <span className="text-black/15">·</span>
-          <Link href="/medya" className="transition-colors hover:text-altin">
+          <a href="/plan" className="transition-colors hover:text-altin">
+            {c.ui.planLink}
+          </a>
+          <span className="text-black/15">·</span>
+          <a href="/medya" className="transition-colors hover:text-altin">
             {c.ui.medyaLink}
-          </Link>
+          </a>
         </div>
         <p className="text-sm text-duman">© 2026 Emre Topçu</p>
       </div>
@@ -2099,11 +2522,250 @@ function BasaDon() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.25, ease: GECIS }}
-          className="fixed right-5 bottom-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-altin/40 bg-abanoz/80 text-altin shadow-lg backdrop-blur transition-colors hover:bg-altin hover:text-fildisi md:right-8 md:bottom-8"
+          className="fixed right-5 bottom-20 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-altin/40 bg-abanoz/80 text-altin shadow-lg backdrop-blur transition-colors hover:bg-altin hover:text-fildisi md:right-8 md:bottom-24"
         >
           <ArrowUp size={20} weight="bold" />
         </motion.button>
       )}
+    </AnimatePresence>
+  );
+}
+
+/* Ortam sesi — Web Audio ile sentezlenmiş yumuşak salon uğultusu (dosya yok).
+   Kapalı başlar; açılınca hafif bir oda tonu, teori bölümünde sessizliğe düşer. */
+function AmbiyansDugme() {
+  const c = useC();
+  const [acik, setAcik] = useState(false);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const kaynakRef = useRef<AudioBufferSourceNode | null>(null);
+
+  const kur = () => {
+    const AC =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    const ctx = new AC();
+    // 2 sn'lik pembe-benzeri gürültü tamponu (döngü).
+    const uzunluk = ctx.sampleRate * 2;
+    const tampon = ctx.createBuffer(1, uzunluk, ctx.sampleRate);
+    const veri = tampon.getChannelData(0);
+    let b0 = 0,
+      b1 = 0,
+      b2 = 0;
+    for (let i = 0; i < uzunluk; i++) {
+      const beyaz = Math.sin(i * 0.0007) * 0.2 + (((i * 9301 + 49297) % 233280) / 233280 - 0.5);
+      b0 = 0.99 * b0 + beyaz * 0.05;
+      b1 = 0.96 * b1 + beyaz * 0.05;
+      b2 = 0.9 * b2 + beyaz * 0.05;
+      veri[i] = (b0 + b1 + b2) * 0.5;
+    }
+    const kaynak = ctx.createBufferSource();
+    kaynak.buffer = tampon;
+    kaynak.loop = true;
+    const alcak = ctx.createBiquadFilter();
+    alcak.type = "lowpass";
+    alcak.frequency.value = 380;
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    kaynak.connect(alcak).connect(gain).connect(ctx.destination);
+    kaynak.start();
+    ctxRef.current = ctx;
+    gainRef.current = gain;
+    kaynakRef.current = kaynak;
+  };
+
+  const cevir = async () => {
+    if (!acik) {
+      if (!ctxRef.current) kur();
+      await ctxRef.current?.resume();
+      gainRef.current?.gain.linearRampToValueAtTime(
+        0.05,
+        (ctxRef.current?.currentTime ?? 0) + 1.2,
+      );
+      setAcik(true);
+    } else {
+      gainRef.current?.gain.linearRampToValueAtTime(
+        0,
+        (ctxRef.current?.currentTime ?? 0) + 0.6,
+      );
+      setAcik(false);
+    }
+  };
+
+  // Teori bölümü ekranda ortadayken sesi kıs (sinematik sessizlik).
+  useEffect(() => {
+    if (!acik) return;
+    const el = document.getElementById("teori");
+    if (!el) return;
+    const goz = new IntersectionObserver(
+      ([g]) => {
+        const hedef = g.isIntersecting ? 0.008 : 0.05;
+        gainRef.current?.gain.linearRampToValueAtTime(
+          hedef,
+          (ctxRef.current?.currentTime ?? 0) + 0.8,
+        );
+      },
+      { rootMargin: "-35% 0px -35% 0px" },
+    );
+    goz.observe(el);
+    return () => goz.disconnect();
+  }, [acik]);
+
+  useEffect(() => () => {
+    kaynakRef.current?.stop();
+    ctxRef.current?.close();
+  }, []);
+
+  return (
+    <button
+      type="button"
+      onClick={cevir}
+      aria-label={acik ? c.ui.ambiyansKapat : c.ui.ambiyansAc}
+      aria-pressed={acik}
+      className="fixed right-5 bottom-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-altin/40 bg-abanoz/80 text-altin shadow-lg backdrop-blur transition-colors hover:bg-altin hover:text-fildisi md:right-8 md:bottom-8"
+    >
+      {acik ? (
+        <SpeakerHigh size={20} weight="fill" />
+      ) : (
+        <SpeakerSimpleX size={20} weight="regular" />
+      )}
+    </button>
+  );
+}
+
+/* Seç-alıntıla: sayfada bir cümle seçince minik "kartla paylaş" balonu —
+   paylaşım motoru 5 sözden tüm siteye genişler. */
+function SecAlintila() {
+  const c = useC();
+  const [poz, setPoz] = useState<{ x: number; y: number; metin: string } | null>(
+    null,
+  );
+  useEffect(() => {
+    const kontrol = () => {
+      const s = window.getSelection?.();
+      const metin = s?.toString().trim() ?? "";
+      if (metin.length >= 20 && metin.length <= 240 && s && s.rangeCount) {
+        const r = s.getRangeAt(0).getBoundingClientRect();
+        if (r.width || r.height) {
+          setPoz({ x: r.left + r.width / 2, y: r.top, metin });
+          return;
+        }
+      }
+      setPoz(null);
+    };
+    const kapat = () => setPoz(null);
+    document.addEventListener("mouseup", kontrol);
+    document.addEventListener("touchend", kontrol);
+    window.addEventListener("scroll", kapat, true);
+    return () => {
+      document.removeEventListener("mouseup", kontrol);
+      document.removeEventListener("touchend", kontrol);
+      window.removeEventListener("scroll", kapat, true);
+    };
+  }, []);
+  if (!poz) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        sozKartiPaylas(poz.metin);
+        setPoz(null);
+        window.getSelection?.()?.removeAllRanges();
+      }}
+      style={{ left: poz.x, top: Math.max(12, poz.y - 46) }}
+      className="fixed z-[80] inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-fildisi px-3.5 py-2 text-xs font-medium text-abanoz shadow-lg"
+    >
+      <ShareNetwork size={14} weight="bold" />
+      {c.ui.alintila}
+    </button>
+  );
+}
+
+/* Dönen ziyaretçiye "kaldığın yer" şeridi — açılış perdesinin akıllı hali. */
+function DevamSeridi() {
+  const c = useC();
+  const [bolum, setBolum] = useState<string | null>(null);
+  const [idx, setIdx] = useState(0);
+
+  // Aktif fasılı sürekli sakla; dönüşte teklif et.
+  useEffect(() => {
+    const goz = new IntersectionObserver(
+      (girisler) => {
+        const g = girisler
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (g) {
+          const i = FASIL_IDLERI.indexOf(
+            g.target.id as (typeof FASIL_IDLERI)[number],
+          );
+          if (i >= 0) {
+            try {
+              localStorage.setItem("emretopcu_sonBolum", g.target.id);
+            } catch {
+              /* yoksay */
+            }
+          }
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.5, 1] },
+    );
+    for (const id of FASIL_IDLERI) {
+      const el = document.getElementById(id);
+      if (el) goz.observe(el);
+    }
+    return () => goz.disconnect();
+  }, []);
+
+  // Dönen ziyaretçi (açılış görülmüş) + anlamlı bir konum varsa teklif göster.
+  useEffect(() => {
+    try {
+      const gorulmus = localStorage.getItem("emretopcu_acilis");
+      const son = localStorage.getItem("emretopcu_sonBolum");
+      if (gorulmus && son && son !== "manifesto") {
+        const i = FASIL_IDLERI.indexOf(son as (typeof FASIL_IDLERI)[number]);
+        if (i > 0) {
+          setIdx(i);
+          setBolum(son);
+        }
+      }
+    } catch {
+      /* yoksay */
+    }
+  }, []);
+
+  if (!bolum) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.4, delay: 1, ease: GECIS }}
+        className="fixed inset-x-0 top-20 z-40 flex justify-center px-4"
+      >
+        <div className="flex items-center gap-3 rounded-full border border-altin/30 bg-abanoz-2/95 py-2 pr-2 pl-5 text-sm shadow-lg backdrop-blur">
+          <span className="text-duman">
+            {c.ui.devamBaslik}{" "}
+            <span className="font-medium text-fildisi">{c.ui.fasillar[idx]}</span>
+          </span>
+          <a
+            href={`#${bolum}`}
+            onClick={() => setBolum(null)}
+            className="rounded-full bg-altin px-4 py-1.5 font-medium text-fildisi"
+          >
+            {c.ui.devamDugme}
+          </a>
+          <button
+            type="button"
+            onClick={() => setBolum(null)}
+            aria-label={c.ui.menuKapat}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-duman hover:bg-black/5 hover:text-fildisi"
+          >
+            <X size={14} weight="bold" />
+          </button>
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 }
@@ -2214,12 +2876,24 @@ function DilSeridi() {
     setTeklif(false);
   };
 
-  // Hedef dil = mevcut olmayan; metin hedef dile göre.
-  const hedef = dil === "tr" ? "en" : "tr";
-  const link = hedef === "en" ? "/en" : "/";
-  const metin =
-    hedef === "en" ? "Continue in English?" : "Türkçe devam edilsin mi?";
-  const devam = hedef === "en" ? "Continue" : "Devam et";
+  // Hedef dil = kayıtlı tercih (mevcut dilden farklı). Metin hedef dile göre.
+  let kayitli: Dil = "tr";
+  try {
+    const k = localStorage.getItem(DIL_ANAHTAR);
+    if (k === "tr" || k === "en" || k === "ru" || k === "az") kayitli = k;
+  } catch {
+    /* yoksay */
+  }
+  const hedef = kayitli;
+  const link = DIL_YOL[hedef];
+  const METIN: Record<Dil, { soru: string; devam: string }> = {
+    tr: { soru: "Türkçe devam edilsin mi?", devam: "Devam et" },
+    en: { soru: "Continue in English?", devam: "Continue" },
+    ru: { soru: "Продолжить на русском?", devam: "Продолжить" },
+    az: { soru: "Azərbaycanca davam edilsin?", devam: "Davam et" },
+  };
+  const metin = METIN[hedef].soru;
+  const devam = METIN[hedef].devam;
 
   return (
     <AnimatePresence>
@@ -2368,8 +3042,10 @@ function ZirveIc() {
   const dil = useDil();
   const azalt = useReducedMotion();
   const { scrollYProgress } = useScroll();
+  const morf = useMotionValue(0); // ağ → dünya morfu (DunyaBolum sürer)
 
   return (
+    <MorfContext.Provider value={morf}>
     <div
       lang={dil}
       className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-fildisi"
@@ -2377,10 +3053,14 @@ function ZirveIc() {
     >
       {/* İlk ziyarette sinematik açılış perdesi */}
       <Acilis />
+      {/* Dönen ziyaretçiye "kaldığın yer" şeridi */}
+      <DevamSeridi />
       {/* Masaüstünde imleci izleyen altın ışık */}
       <ImlecIsigi />
+      {/* Ortam sesi düğmesi (kapalı başlar) */}
+      <AmbiyansDugme />
       {/* Tüm sayfanın arkasında yaşayan sinematik 3D sahne */}
-      <Ag3D ilerleme={scrollYProgress} hareket={!azalt} />
+      <Ag3D ilerleme={scrollYProgress} morf={morf} hareket={!azalt} />
       {/* İnce altın scroll-ilerleme çizgisi */}
       <motion.div
         aria-hidden
@@ -2394,6 +3074,7 @@ function ZirveIc() {
         <Hero />
         <Manifesto />
         <Teori />
+        <KatlamaProjeksiyon />
         <Rakamlar />
         <DunyaBolum />
         <Yolculuk />
@@ -2403,6 +3084,7 @@ function ZirveIc() {
         <Arsiv />
         <Videolar />
         <Vaat />
+        <EmreyeSor />
         <Sss />
         <Deyince />
         <KapanisCumlesi />
@@ -2412,7 +3094,9 @@ function ZirveIc() {
       <Footer />
       <BasaDon />
       <SaatSayaci />
+      <SecAlintila />
     </div>
+    </MorfContext.Provider>
   );
 }
 
