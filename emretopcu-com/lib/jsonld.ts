@@ -44,7 +44,7 @@ export function jsonLd() {
     "@id": `${SITE}/#site`,
     url: SITE,
     name: "Emre Topçu",
-    inLanguage: ["tr", "en", "ru", "az"],
+    inLanguage: ["tr", "en", "de", "es", "ru", "az"],
     about: { "@id": `${SITE}/#emretopcu` },
     // Sesli asistanlar için okunabilir bölümler.
     speakable: {
