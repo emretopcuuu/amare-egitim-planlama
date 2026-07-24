@@ -1,6 +1,8 @@
 // Sitedeki tüm metin ve veri içeriği tek yerde, dört dilli (tr/en/ru/az).
 // Dile bağlı olmayan sabitler üstte; dile bağlı içerik ICERIK altında.
 // RU/AZ içerikleri ayrı dosyalarda (tip-yalnız döngü; sorun değil).
+import { DE } from "./icerikDe";
+import { ES } from "./icerikEs";
 import { RU } from "./icerikRu";
 import { AZ } from "./icerikAz";
 
@@ -39,14 +41,16 @@ export const LIDER_PROFIL_URL =
 // Resmi YouTube kanalı (haftalık kısa videolar).
 export const YOUTUBE_KANAL_URL = "https://www.youtube.com/@emretopcuofficial";
 
-export type Dil = "tr" | "en" | "ru" | "az";
+export type Dil = "tr" | "en" | "de" | "es" | "ru" | "az";
 
-// Ek dil içerikleri en altta import edilir (döngü değil; tip-yalnız).
+// Ek dil içerikleri en üstte import edilir (döngü değil; tip-yalnız).
 
 // Dil kodu → BCP-47 yerel (sayı biçimlendirme için).
 export const YEREL: Record<Dil, string> = {
   tr: "tr-TR",
   en: "en-US",
+  de: "de-DE",
+  es: "es-ES",
   ru: "ru-RU",
   az: "az-Latn-AZ",
 };
@@ -54,12 +58,16 @@ export const YEREL: Record<Dil, string> = {
 export const DIL_YOL: Record<Dil, string> = {
   tr: "/",
   en: "/en",
+  de: "/de",
+  es: "/es",
   ru: "/ru",
   az: "/az",
 };
 export const DIL_ETIKET: Record<Dil, string> = {
   tr: "TR",
   en: "EN",
+  de: "DE",
+  es: "ES",
   ru: "RU",
   az: "AZ",
 };
@@ -932,4 +940,11 @@ const EN: Icerik = {
   ],
 };
 
-export const ICERIK: Record<Dil, Icerik> = { tr: TR, en: EN, ru: RU, az: AZ };
+export const ICERIK: Record<Dil, Icerik> = {
+  tr: TR,
+  en: EN,
+  de: DE,
+  es: ES,
+  ru: RU,
+  az: AZ,
+};

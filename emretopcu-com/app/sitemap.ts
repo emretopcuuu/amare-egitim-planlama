@@ -11,6 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const yollar = [
     "",
     "/en",
+    "/de",
+    "/es",
     "/ru",
     "/az",
     "/medya",

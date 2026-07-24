@@ -187,12 +187,19 @@ export async function projKartiPaylas(
   aylikKisi: number,
   ay6: number,
   ay12: number,
-  dilKodu: "tr" | "en" | "ru" | "az" = "tr",
+  dilKodu: "tr" | "en" | "de" | "es" | "ru" | "az" = "tr",
 ): Promise<void> {
-  // Kart metni yalnız TR/EN; RU/AZ İngilizceye düşer. Yerel biçim korunur.
+  // Kart metni yalnız TR/EN; diğer diller İngilizceye düşer. Yerel biçim korunur.
   const dil: "tr" | "en" = dilKodu === "tr" ? "tr" : "en";
-  const yerel =
-    dilKodu === "ru" ? "ru-RU" : dilKodu === "az" ? "az-Latn-AZ" : dil === "en" ? "en-US" : "tr-TR";
+  const YERELLER: Record<string, string> = {
+    tr: "tr-TR",
+    en: "en-US",
+    de: "de-DE",
+    es: "es-ES",
+    ru: "ru-RU",
+    az: "az-Latn-AZ",
+  };
+  const yerel = YERELLER[dilKodu] ?? "tr-TR";
   const S = 1080;
   const cv = document.createElement("canvas");
   cv.width = S;

@@ -466,7 +466,7 @@ function DunyaBolum() {
 }
 
 /* Dil değiştirici: TR / EN / RU / AZ (statik route'lara link). */
-const DILLER: Dil[] = ["tr", "en", "ru", "az"];
+const DILLER: Dil[] = ["tr", "en", "de", "es", "ru", "az"];
 function DilSecici() {
   const dil = useDil();
   return (
@@ -2880,7 +2880,15 @@ function DilSeridi() {
   let kayitli: Dil = "tr";
   try {
     const k = localStorage.getItem(DIL_ANAHTAR);
-    if (k === "tr" || k === "en" || k === "ru" || k === "az") kayitli = k;
+    if (
+      k === "tr" ||
+      k === "en" ||
+      k === "de" ||
+      k === "es" ||
+      k === "ru" ||
+      k === "az"
+    )
+      kayitli = k;
   } catch {
     /* yoksay */
   }
@@ -2889,6 +2897,8 @@ function DilSeridi() {
   const METIN: Record<Dil, { soru: string; devam: string }> = {
     tr: { soru: "Türkçe devam edilsin mi?", devam: "Devam et" },
     en: { soru: "Continue in English?", devam: "Continue" },
+    de: { soru: "Auf Deutsch fortfahren?", devam: "Fortfahren" },
+    es: { soru: "¿Continuar en español?", devam: "Continuar" },
     ru: { soru: "Продолжить на русском?", devam: "Продолжить" },
     az: { soru: "Azərbaycanca davam edilsin?", devam: "Davam et" },
   };

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "One Team Global-da Presidential Diamond. Komandalar quran, liderlər yetişdirən və bu işi sistemlə görən bir birbaşa satış lideri.",
   alternates: {
     canonical: "/az",
-    languages: { tr: "/", en: "/en", ru: "/ru", az: "/az" },
+    languages: { tr: "/", en: "/en", de: "/de", es: "/es", ru: "/ru", az: "/az" },
   },
   openGraph: {
     title: "Emre Topçu | Əlavə etmək yox, qatlamaq.",

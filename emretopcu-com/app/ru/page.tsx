@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Presidential Diamond в One Team Global. Лидер прямых продаж, который строит команды, растит лидеров и делает это системно.",
   alternates: {
     canonical: "/ru",
-    languages: { tr: "/", en: "/en", ru: "/ru", az: "/az" },
+    languages: { tr: "/", en: "/en", de: "/de", es: "/es", ru: "/ru", az: "/az" },
   },
   openGraph: {
     title: "Эмре Топчу | Не добавление, а умножение.",
