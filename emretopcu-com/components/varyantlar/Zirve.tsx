@@ -1260,6 +1260,7 @@ function EmreyeSor() {
   return (
     <section className="py-16 md:py-24">
       <div className="mx-auto max-w-3xl px-6">
+        <div className="rounded-[2rem] border border-black/5 bg-abanoz/80 p-8 shadow-[0_20px_60px_rgba(26,26,29,0.06)] backdrop-blur-md md:p-12">
         <H2Perde className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
           {c.ui.sorBaslik}
         </H2Perde>
@@ -1305,6 +1306,7 @@ function EmreyeSor() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </section>
   );
