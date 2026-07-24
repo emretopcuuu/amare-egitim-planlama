@@ -44,8 +44,13 @@ export function jsonLd() {
     "@id": `${SITE}/#site`,
     url: SITE,
     name: "Emre Topçu",
-    inLanguage: ["tr", "en"],
+    inLanguage: ["tr", "en", "ru", "az"],
     about: { "@id": `${SITE}/#emretopcu` },
+    // Sesli asistanlar için okunabilir bölümler.
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["#manifesto", "#teori"],
+    },
   };
 
   const sss = {
@@ -55,7 +60,28 @@ export function jsonLd() {
       name: s.soru,
       acceptedAnswer: { "@type": "Answer", text: s.cevap },
     })),
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["#sss"],
+    },
   };
 
-  return { "@context": "https://schema.org", "@graph": [kisi, kitap, site, sss] };
+  // Eğitim videoları — Google video zengin sonuçları.
+  const videolar = ICERIK.tr.videolar.liste.map((v) => ({
+    "@type": "VideoObject",
+    name: v.baslik,
+    description: v.ozet,
+    thumbnailUrl: `${SITE}${v.gorsel}`,
+    uploadDate: "2020-01-01",
+    embedUrl:
+      v.platform === "vimeo"
+        ? `https://player.vimeo.com/video/${v.id}`
+        : `https://www.youtube-nocookie.com/embed/${v.id}`,
+    publisher: { "@id": `${SITE}/#emretopcu` },
+  }));
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [kisi, kitap, site, sss, ...videolar],
+  };
 }
