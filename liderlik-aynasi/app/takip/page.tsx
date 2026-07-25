@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { takipDurum, sozTakipAktif, haftalikSayilar } from "@/lib/sozTakip";
+import { takipDurum, sozTakipAktif, haftalikSayilar, defterGetir } from "@/lib/sozTakip";
+import { sicakListeGetir } from "@/lib/sicakListe";
 import { sozGetir } from "@/lib/soz";
 import { hedefCekirdek } from "@/lib/hedef";
 import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
@@ -44,17 +45,30 @@ export default async function TakipSayfa() {
     );
   }
 
-  const [durum, soz, hafta, hedef, degerDavranisi, ortakMomentum, { data: aksTamam }] =
-    await Promise.all([
-      takipDurum(db, session.sub),
-      sozGetir(db, session.sub),
-      haftalikSayilar(db, session.sub),
-      hedefCekirdek(db, session.sub),
-      degerDavranisiGetir(db, session.sub),
-      ortakMomentumGetir(db, session.sub),
-      // [FAZ 6] Tamamlanmış aksiyon adımlarının index'leri (Yaşayan Plan).
-      db.from("soz_aksiyon_tamam").select("aksiyon_index").eq("participant_id", session.sub),
-    ]);
+  const [
+    durum,
+    soz,
+    hafta,
+    hedef,
+    degerDavranisi,
+    ortakMomentum,
+    { data: aksTamam },
+    defter,
+    sicakListe,
+  ] = await Promise.all([
+    takipDurum(db, session.sub),
+    sozGetir(db, session.sub),
+    haftalikSayilar(db, session.sub),
+    hedefCekirdek(db, session.sub),
+    degerDavranisiGetir(db, session.sub),
+    ortakMomentumGetir(db, session.sub),
+    // [FAZ 6] Tamamlanmış aksiyon adımlarının index'leri (Yaşayan Plan).
+    db.from("soz_aksiyon_tamam").select("aksiyon_index").eq("participant_id", session.sub),
+    // [DEFTER] Kişinin geri okunabilir kendi notları (saha isteği).
+    defterGetir(db, session.sub),
+    // [DEFTER] Not yazarken isimleri tek dokunuşla eklesin diye kendi aday listesi.
+    sicakListeGetir(db, session.sub),
+  ]);
   const kota = haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null);
   const tamamlananAksiyonlar = (aksTamam ?? []).map((a) => a.aksiyon_index);
 
@@ -210,6 +224,8 @@ export default async function TakipSayfa() {
         arkadas={arkadas}
         arkadasAlev={arkadasAlev}
         arkadasAdaylar={arkadasAdaylar}
+        defter={defter}
+        adayIsimleri={sicakListe.filter((k) => k.durum !== "pas").map((k) => k.isim)}
       />
     </main>
   );

@@ -52,6 +52,36 @@ export async function checkin(
   return !error;
 }
 
+// DEFTERİM — kişinin kendi check-in notları, geri okunabilir hâlde.
+// Saha bildirimi: "Görüşme yaptığımız isimleri ve sonucunu yazabileceğimiz, daha
+// sonra o yazdıklarımızı görebileceğimiz bir şey var mı? Ya da var da ben mi
+// göremiyorum?" — Notlar kaydediliyordu ama HİÇBİR YERDE gösterilmiyordu; kişi
+// boşluğa yazıyordu. Artık kendi defterini geri okuyabiliyor.
+export type DefterGunu = {
+  gun: string;
+  notlar: string;
+  gorusme: number;
+  kayit: number;
+};
+
+export async function defterGetir(db: Db, pid: string, limit = 60): Promise<DefterGunu[]> {
+  const { data } = await db
+    .from("soz_takip")
+    .select("gun, notlar, gorusme_sayisi, kayit_sayisi")
+    .eq("participant_id", pid)
+    .not("notlar", "is", null)
+    .order("gun", { ascending: false })
+    .limit(limit);
+  return (data ?? [])
+    .filter((r) => (r.notlar ?? "").trim().length > 0)
+    .map((r) => ({
+      gun: r.gun as string,
+      notlar: (r.notlar as string).trim(),
+      gorusme: r.gorusme_sayisi ?? 0,
+      kayit: r.kayit_sayisi ?? 0,
+    }));
+}
+
 // Bu haftanın (Pazartesi'den bugüne) toplam görüşme + kayıt sayısı — haftalık
 // kota barı ve momentum hesabı için TEK doğruluk kaynağı.
 export async function haftalikSayilar(

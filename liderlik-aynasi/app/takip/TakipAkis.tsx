@@ -88,6 +88,8 @@ export default function TakipAkis({
   arkadas = null,
   arkadasAlev = 0,
   arkadasAdaylar = [],
+  defter = [],
+  adayIsimleri = [],
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -131,6 +133,10 @@ export default function TakipAkis({
   arkadas?: { id: string; ad: string } | null;
   arkadasAlev?: number;
   arkadasAdaylar?: { id: string; ad: string }[];
+  // [DEFTER] Kişinin geri okunabilir kendi check-in notları (en yeni önce).
+  defter?: { gun: string; notlar: string; gorusme: number; kayit: number }[];
+  // [DEFTER] Sıcak listesindeki aday isimleri — nota tek dokunuşla eklenir.
+  adayIsimleri?: string[];
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -392,10 +398,34 @@ export default function TakipAkis({
             <textarea
               value={not}
               onChange={(e) => setNot(e.target.value.slice(0, 500))}
-              rows={2}
+              rows={3}
               placeholder={t.notYer}
               className="mt-2 w-full resize-none rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
             />
+            {/* [DEFTER] Sıcak listendeki isimler — tek dokunuşla nota ekle.
+                Saha isteği "görüşme yaptığımız isimleri yazabilelim": isim yazmak
+                zahmet olmasın, kendi listesinden seçsin. */}
+            {adayIsimleri.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {adayIsimleri.slice(0, 8).map((isim) => (
+                  <button
+                    key={isim}
+                    type="button"
+                    onClick={() =>
+                      setNot((g) => {
+                        const temiz = g.trim();
+                        // Zaten yazılmışsa tekrar ekleme.
+                        if (temiz.includes(isim)) return g;
+                        return (temiz ? `${temiz}\n${isim} — ` : `${isim} — `).slice(0, 500);
+                      })
+                    }
+                    className="rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs text-slate-300 transition-colors hover:border-gold/40 hover:text-gold-light"
+                  >
+                    + {isim}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="mt-2">
               <MikrofonButonu
                 onMetin={(p) => setNot((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 500))}
@@ -420,6 +450,54 @@ export default function TakipAkis({
           </>
         )}
       </section>
+
+      {/* ═══ 1.5) DEFTERİM — yazdıklarını geri okuma ═══
+          Saha bildirimi: "Görüşme yaptığımız isimleri ve sonucunu yazabileceğimiz,
+          sonra o yazdıklarımızı görebileceğimiz bir şey var mı?" Notlar kaydediliyor
+          ama hiç gösterilmiyordu. Akordeon: ekranı şişirmez, arayan bulur. */}
+      {defter.length > 0 && (
+        <details className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4">
+            <span className="text-sm font-semibold text-slate-200">
+              📔 Defterim
+              <span className="ml-1.5 text-xs font-normal text-slate-500">
+                ({defter.length} gün)
+              </span>
+            </span>
+            <span className="text-xs text-slate-500 transition-transform group-open:rotate-180" aria-hidden>
+              ▼
+            </span>
+          </summary>
+          <div className="space-y-2 border-t border-white/8 p-3">
+            <p className="px-1 text-xs text-slate-500">
+              Her gün yazdıkların burada birikir — kiminle görüştün, ne oldu.
+            </p>
+            {defter.map((d) => (
+              <div key={d.gun} className="rounded-xl bg-midnight-soft/60 p-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-semibold text-gold-light">
+                    {new Intl.DateTimeFormat("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      weekday: "short",
+                    }).format(new Date(`${d.gun}T12:00:00+03:00`))}
+                  </span>
+                  {(d.gorusme > 0 || d.kayit > 0) && (
+                    <span className="shrink-0 text-[0.7rem] text-slate-400">
+                      {d.gorusme > 0 && `${d.gorusme} görüşme`}
+                      {d.gorusme > 0 && d.kayit > 0 && " · "}
+                      {d.kayit > 0 && `${d.kayit} kayıt`}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                  {d.notlar}
+                </p>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {/* ═══ 2) TEK ÖZET SATIRI: seri + 90 gün (1. gün yumuşatma) ═══ */}
       {durum.toplam > 0 || durum.seri > 0 || isaretli ? (

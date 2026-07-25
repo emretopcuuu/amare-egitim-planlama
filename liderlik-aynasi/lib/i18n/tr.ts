@@ -4376,7 +4376,9 @@ export const tr = {
     bugunSoru: "Bugün sözüne / hedefine yönelik bir adım attın mı?",
     evet: "Evet, attım ✓",
     hayir: "Bugün atamadım",
-    notYer: "Ne yaptın? (opsiyonel)",
+    // [DEFTER] Saha isteği: "isimleri ve görüşme sonucunu yazabilelim". Alan
+    // zaten vardı ama ne yazılacağı belirsizdi; artık örnekle davet ediyor.
+    notYer: "Kiminle görüştün, ne oldu?\nÖrn: Ayşe — ilgilendi, cuma tekrar arayacağım",
     kaydet: "Kaydet",
     seri: (n: number) => `${n} günlük seri 🔥`,
     seriYok: "Serini bugün başlat.",
