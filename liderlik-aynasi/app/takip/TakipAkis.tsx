@@ -60,6 +60,59 @@ function milestoneBul(durum: Durum, hafta: Hafta, kota: number | null): Mileston
   return null;
 }
 
+// [UX] SAYAÇ — günlük check-in'de "kaç görüşme / kaç kayıt" için klavyesiz giriş.
+// Eskiden iki sayı input'u vardı: cevap günlerin çoğunda 0-3 olmasına rağmen kişi
+// her gün İKİ KEZ sayı klavyesi açmak zorundaydı (günlük ritüelde ciddi sürtünme).
+// Artık tek dokunuş. MODÜL SEVİYESİNDE tanımlı — render içinde tanımlansa her
+// tuşta yeniden kurulur ve odak/klavye kaybı olurdu (bkz. SahitlikPanel düzeltmesi).
+function Sayac({
+  etiket,
+  deger,
+  ayarla,
+  ust = 99,
+}: {
+  etiket: string;
+  deger: number;
+  ayarla: (n: number) => void;
+  ust?: number;
+}) {
+  const dugme =
+    "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 text-xl font-bold text-slate-200 transition-colors active:scale-95 disabled:opacity-30 hover:border-gold/40 hover:text-gold-light";
+  return (
+    <div>
+      <span className="text-xs text-slate-400">{etiket}</span>
+      <div className="mt-1 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => ayarla(Math.max(0, deger - 1))}
+          disabled={deger <= 0}
+          aria-label={`${etiket} azalt`}
+          className={dugme}
+        >
+          −
+        </button>
+        <span
+          aria-live="polite"
+          className={`min-w-[2.25rem] flex-1 text-center text-lg font-bold tabular-nums ${
+            deger > 0 ? "text-gold-light" : "text-slate-500"
+          }`}
+        >
+          {deger}
+        </span>
+        <button
+          type="button"
+          onClick={() => ayarla(Math.min(ust, deger + 1))}
+          disabled={deger >= ust}
+          aria-label={`${etiket} artır`}
+          className={dugme}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function TakipAkis({
   durum: durumBaslangic,
   aksiyonlar,
@@ -373,35 +426,34 @@ export default function TakipAkis({
         ) : (
           <>
             <p className="text-base font-semibold text-slate-100">{t.bugunSoru}</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className="text-xs text-slate-400">Kaç görüşme?</span>
-                <input
-                  inputMode="numeric"
-                  value={gorusme}
-                  onChange={(e) => setGorusme(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="0"
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-400">Kaç kayıt?</span>
-                <input
-                  inputMode="numeric"
-                  value={kayit}
-                  onChange={(e) => setKayit(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="0"
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
-                />
-              </label>
+            {/* [UX] Klavyesiz sayaçlar — günde iki kez sayı klavyesi açma derdi bitti. */}
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <Sayac
+                etiket="Görüşme"
+                deger={Number(gorusme) || 0}
+                ayarla={(n) => setGorusme(String(n))}
+              />
+              <Sayac
+                etiket="Kayıt"
+                deger={Number(kayit) || 0}
+                ayarla={(n) => setKayit(String(n))}
+              />
             </div>
-            <textarea
-              value={not}
-              onChange={(e) => setNot(e.target.value.slice(0, 500))}
-              rows={3}
-              placeholder={t.notYer}
-              className="mt-2 w-full resize-none rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
-            />
+            {/* [UX] Mikrofon artık tam genişlikte bir satır DEĞİL: not alanının
+                sağında ikon olarak duruyor → kart kısaldı, asıl buton ekranda kaldı. */}
+            <div className="mt-3 flex items-start gap-2">
+              <textarea
+                value={not}
+                onChange={(e) => setNot(e.target.value.slice(0, 500))}
+                rows={3}
+                placeholder={t.notYer}
+                className="min-w-0 flex-1 resize-none rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+              />
+              <MikrofonButonu
+                ikon
+                onMetin={(p) => setNot((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 500))}
+              />
+            </div>
             {/* [DEFTER] Sıcak listendeki isimler — tek dokunuşla nota ekle.
                 Saha isteği "görüşme yaptığımız isimleri yazabilelim": isim yazmak
                 zahmet olmasın, kendi listesinden seçsin. */}
@@ -426,11 +478,6 @@ export default function TakipAkis({
                 ))}
               </div>
             )}
-            <div className="mt-2">
-              <MikrofonButonu
-                onMetin={(p) => setNot((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 500))}
-              />
-            </div>
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => checkin(true)}
