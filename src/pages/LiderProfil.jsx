@@ -242,12 +242,12 @@ export default function LiderProfil() {
   // UX5 — sekme sayıları + boşları gizle
   const kayitliSayi = kayitliVideolar?.length ?? null;
   const sekmeler = [
-    { key: 'kariyer', label: 'Kariyer Yolculuğu', show: yolculuk.length > 0 },
-    { key: 'gelecek', label: `Gelecek (${gelecek.length})`, show: gelecek.length > 0 },
-    { key: 'gecmis', label: `Geçmiş (${gecmis.length})`, show: gecmis.length > 0 },
-    { key: 'kayitli', label: kayitliSayi != null ? `Kayıtlı Eğitimler (${kayitliSayi})` : 'Kayıtlı Eğitimler', show: kayitliSayi == null || kayitliSayi > 0 },
-    { key: 'sozler', label: 'İlham Sözleri', show: true },
-    { key: 'bio', label: 'Biyografi', show: !!kayit?.biyografi },
+    { key: 'kariyer', label: t('lp_tab_career'), show: yolculuk.length > 0 },
+    { key: 'gelecek', label: `${t('lp_tab_future')} (${gelecek.length})`, show: gelecek.length > 0 },
+    { key: 'gecmis', label: `${t('lp_tab_past')} (${gecmis.length})`, show: gecmis.length > 0 },
+    { key: 'kayitli', label: kayitliSayi != null ? `${t('rec_title')} (${kayitliSayi})` : t('rec_title'), show: kayitliSayi == null || kayitliSayi > 0 },
+    { key: 'sozler', label: t('lp_tab_quotes'), show: true },
+    { key: 'bio', label: t('lp_tab_bio'), show: !!kayit?.biyografi },
   ].filter(x => x.show);
   // varsayılan sekme geçerli mi
   useEffect(() => { if (!sekmeler.some(s => s.key === tab)) setTab(sekmeler[0]?.key || 'sozler'); /* eslint-disable-next-line */ }, [yolculuk.length, gelecek.length, gecmis.length, kayitliSayi, kayit?.biyografi]);
@@ -309,9 +309,9 @@ export default function LiderProfil() {
 
               {/* UX10 — etki/sosyal kanıt şeridi */}
               <div className="flex flex-wrap justify-center sm:justify-start items-baseline gap-x-2 gap-y-1 mt-3">
-                {toplamAy != null && <span className="text-white"><b className="text-lg">{sureMetni(toplamAy)}</b> <span className="text-white/60 text-xs">Amare'de</span></span>}
-                {kayitliSayi > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{kayitliSayi}</b> <span className="text-white/60 text-xs">kayıtlı eğitim</span></span></>}
-                {ilgili.length > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{ilgili.length}</b> <span className="text-white/60 text-xs">eğitim</span></span></>}
+                {toplamAy != null && <span className="text-white"><b className="text-lg">{sureMetni(toplamAy, t)}</b> <span className="text-white/60 text-xs">{t('lp_at_amare')}</span></span>}
+                {kayitliSayi > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{kayitliSayi}</b> <span className="text-white/60 text-xs">{t('lp_rec_training')}</span></span></>}
+                {ilgili.length > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{ilgili.length}</b> <span className="text-white/60 text-xs">{t('lp_training')}</span></span></>}
               </div>
 
               {/* UX8 — öne çıkan ilham sözü */}
@@ -319,12 +319,12 @@ export default function LiderProfil() {
 
               {/* Aksiyonlar — mobilde ikincil butonlar ikon-only (UX9) */}
               <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mt-3.5 text-sm">
-                <button onClick={() => setTakipModal(true)} title="Yeni eğitiminde e-posta bildirimi al" className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3.5 py-1.5 rounded-full font-bold gold-glow"><Bell className="w-4 h-4" />Yeni eğitimde haber ver</button>
-                <button onClick={() => coreId && takipToggle(coreId)} title={favori ? 'Favori' : 'Favoriye ekle'} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold transition-all ${favori ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
-                  <Star className="w-4 h-4" fill={favori ? 'currentColor' : 'none'} /><span className="hidden sm:inline">{favori ? 'Favori' : 'Favoriye ekle'}</span>
+                <button onClick={() => setTakipModal(true)} title={t('lp_notify_title')} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3.5 py-1.5 rounded-full font-bold gold-glow"><Bell className="w-4 h-4" />{t('lp_notify_new')}</button>
+                <button onClick={() => coreId && takipToggle(coreId)} title={favori ? t('lp_fav') : t('lp_fav_add')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold transition-all ${favori ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
+                  <Star className="w-4 h-4" fill={favori ? 'currentColor' : 'none'} /><span className="hidden sm:inline">{favori ? t('lp_fav') : t('lp_fav_add')}</span>
                 </button>
-                <button onClick={paylas} title="Paylaş" className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full font-bold">{paylasildi ? <><Check className="w-4 h-4" /><span className="hidden sm:inline">Kopyalandı</span></> : <><Share2 className="w-4 h-4" /><span className="hidden sm:inline">Paylaş</span></>}</button>
-                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} title="Profili düzenle" className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full font-bold"><Edit3 className="w-4 h-4" /><span className="hidden sm:inline">{benimProfilim && !isAdmin ? 'Profilimi düzenle' : 'Profili düzenle'}</span></button>}
+                <button onClick={paylas} title={t('rec_share_aria')} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full font-bold">{paylasildi ? <><Check className="w-4 h-4" /><span className="hidden sm:inline">{t('lp_copied')}</span></> : <><Share2 className="w-4 h-4" /><span className="hidden sm:inline">{t('rec_share_aria')}</span></>}</button>
+                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} title={t('lp_edit_profile')} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full font-bold"><Edit3 className="w-4 h-4" /><span className="hidden sm:inline">{benimProfilim && !isAdmin ? t('lp_edit_my_profile') : t('lp_edit_profile')}</span></button>}
               </div>
               {/* UX9 — yaklaşan eğitim birincil CTA */}
               {yaklasanEgitim && (
@@ -345,7 +345,7 @@ export default function LiderProfil() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-4">
           <button onClick={() => setDuzenleAcik(true)} className="w-full text-left bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-amber-100 transition">
             <TrendingUp className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <div className="flex-1 text-sm text-amber-900"><b>Kariyer yolculuğu boş.</b> "Kariyeri düzenle" ile Amare'ye katılım + basamakları (kariyer + AA.YYYY) gir → ışıltılı başarı grafiği ve PNG kart belirir.</div>
+            <div className="flex-1 text-sm text-amber-900"><b>{t('lp_career_empty')}</b> "Kariyeri düzenle" ile Amare'ye katılım + basamakları (kariyer + AA.YYYY) gir → ışıltılı başarı grafiği ve PNG kart belirir.</div>
             <Edit3 className="w-4 h-4 text-amber-600 flex-shrink-0" />
           </button>
         </div>
@@ -398,12 +398,12 @@ export default function LiderProfil() {
                 <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(circle at 80% 10%, rgba(216,177,90,${0.15 + isiltiSeviye * 0.4}), transparent 55%)` }} />
                 <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                   <div className="col-span-2 sm:col-span-1 text-left">
-                    <div className="text-amber-300 text-[11px] uppercase tracking-wider">Güncel kariyer</div>
+                    <div className="text-amber-300 text-[11px] uppercase tracking-wider">{t('lp_current_career')}</div>
                     <div className="text-xl font-extrabold gold-text-glow leading-tight">{guncelKariyer || '—'}</div>
                   </div>
-                  <div><div className="text-2xl font-extrabold">{toplamAy != null ? sureMetni(toplamAy) : '—'}</div><div className="text-purple-200/70 text-[11px]">Amare'de</div></div>
-                  <div><div className="text-2xl font-extrabold">{yolculuk.length}</div><div className="text-purple-200/70 text-[11px]">basamak</div></div>
-                  <div><div className="text-2xl font-extrabold text-amber-300">{enHizli != null ? sureMetni(enHizli) : '—'}</div><div className="text-purple-200/70 text-[11px]">en hızlı yükseliş</div></div>
+                  <div><div className="text-2xl font-extrabold">{toplamAy != null ? sureMetni(toplamAy, t) : '—'}</div><div className="text-purple-200/70 text-[11px]">{t('lp_at_amare')}</div></div>
+                  <div><div className="text-2xl font-extrabold">{yolculuk.length}</div><div className="text-purple-200/70 text-[11px]">{t('lp_steps')}</div></div>
+                  <div><div className="text-2xl font-extrabold text-amber-300">{enHizli != null ? sureMetni(enHizli, t) : '—'}</div><div className="text-purple-200/70 text-[11px]">{t('lp_fastest_rise')}</div></div>
                 </div>
               </div>
 
@@ -412,21 +412,21 @@ export default function LiderProfil() {
                 <div className="rounded-2xl p-4 bg-gradient-to-br from-indigo-900 to-purple-900 border border-amber-300/20 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold" style={{ background: rutbeBadgeGrad(sonrakiSira), color: '#2a1c06' }}><TrendingUp className="w-5 h-5" /></div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-amber-300 text-[11px] uppercase tracking-wider">Sıradaki hedef</div>
+                    <div className="text-amber-300 text-[11px] uppercase tracking-wider">{t('lp_next_goal')}</div>
                     <div className="text-white font-extrabold leading-tight">{KARIYER_BASAMAKLARI[sonrakiSira]}</div>
                   </div>
                 </div>
               ) : guncelSira >= 0 ? (
-                <div className="rounded-2xl p-4 bg-gradient-to-br from-fuchsia-900/70 to-amber-900/40 border border-amber-300/40 text-center text-white font-extrabold">👑 Zirvede — en yüksek kariyer basamağı</div>
+                <div className="rounded-2xl p-4 bg-gradient-to-br from-fuchsia-900/70 to-amber-900/40 border border-amber-300/40 text-center text-white font-extrabold">{t('lp_at_top')}</div>
               ) : null}
 
               {/* UX6 — Başarı kartı PNG + WhatsApp paylaş */}
               <div className="flex gap-2">
                 <button onClick={indirBasariKarti} disabled={kartUretiliyor}
                   className="flex-1 py-3 rounded-xl font-bold text-gray-900 bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-60">
-                  <Download className="w-5 h-5" />{kartUretiliyor ? 'Hazırlanıyor…' : 'Başarı kartı (PNG)'}
+                  <Download className="w-5 h-5" />{kartUretiliyor ? t('lp_preparing') : 'Başarı kartı (PNG)'}
                 </button>
-                <button onClick={whatsappPaylas} title="WhatsApp'ta paylaş"
+                <button onClick={whatsappPaylas} title={t('lp_share_wa')}
                   className="flex-shrink-0 py-3 px-4 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#1ebe5b] transition flex items-center justify-center gap-2 shadow-lg">
                   <Share2 className="w-5 h-5" /><span className="hidden sm:inline">WhatsApp</span>
                 </button>
@@ -434,7 +434,7 @@ export default function LiderProfil() {
 
               {/* MERDİVEN — sadece ulaşılan kariyerler, en üst geldiği kariyer en tepede */}
               <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Amare Kariyer Yolculuğu <span className="text-gray-400 normal-case font-normal">· katılımından bu yana</span></div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('lp_journey_title')} <span className="text-gray-400 normal-case font-normal">· {t('lp_since_join')}</span></div>
                 {/* UX2 — kıyas dipnotu */}
                 {benchmark.yeterli && <div className="text-[11px] text-gray-400 mb-3">Kıyas: {benchmark.kaynakSayisi} liderin verisiyle ortalama süreye göre</div>}
                 <div className="relative bg-gradient-to-b from-gray-900 via-purple-950 to-gray-900 rounded-2xl p-4 sm:p-5 overflow-hidden">
@@ -468,8 +468,8 @@ export default function LiderProfil() {
                                 {KARIYER_BASAMAKLARI[idx]}
                                 {sv > 0.7 && <Star className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="currentColor" />}
                                 {ilkDiamond && <span className="text-[10px] font-bold bg-amber-400/15 text-amber-200 px-1.5 py-0.5 rounded-full">💎 ilk Diamond</span>}
-                                {hizli && <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
-                                {suAn && <span className="text-[10px] font-extrabold text-gray-900 bg-amber-400 px-1.5 py-0.5 rounded-full">ŞU AN</span>}
+                                {hizli && <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">{t('lp_fast')}</span>}
+                                {suAn && <span className="text-[10px] font-extrabold text-gray-900 bg-amber-400 px-1.5 py-0.5 rounded-full">{t('lp_now')}</span>}
                               </div>
                               <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
                                 {k && <span className="text-[11px] text-amber-200/60">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</span>}
@@ -500,7 +500,7 @@ export default function LiderProfil() {
               {kayitliVideolar && kayitliVideolar.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">Öne çıkan kayıtlı eğitim</div>
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('lp_featured_rec')}</div>
                     <button onClick={() => setTab('kayitli')} className="text-xs font-semibold text-purple-600 hover:text-purple-800 inline-flex items-center gap-0.5">Tümü ({kayitliVideolar.length}) <ChevronRight className="w-3.5 h-3.5" /></button>
                   </div>
                   <button onClick={() => handleKayitliOynat(kayitliVideolar[0])} className="w-full bg-white border border-gray-200 hover:border-purple-400 hover:shadow-md rounded-xl overflow-hidden text-left transition-all group flex">
@@ -509,7 +509,7 @@ export default function LiderProfil() {
                       <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all"><div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center"><Play className="w-5 h-5 text-purple-700 ml-0.5" fill="currentColor" /></div></div>
                     </div>
                     <div className="p-3 flex-1 min-w-0">
-                      <div className="text-[10px] uppercase tracking-wider text-purple-500 font-bold mb-0.5">Kayıtlı eğitim</div>
+                      <div className="text-[10px] uppercase tracking-wider text-purple-500 font-bold mb-0.5">{t('lp_recording')}</div>
                       <h4 className="font-bold text-gray-900 text-sm line-clamp-2">{kayitliVideolar[0].baslik}</h4>
                       {kayitliVideolar[0].tarih && <span className="text-xs text-gray-500 inline-flex items-center gap-1 mt-1"><Calendar className="w-3 h-3" />{kayitliVideolar[0].tarih}</span>}
                     </div>
@@ -519,7 +519,7 @@ export default function LiderProfil() {
             </div>
           );
         })()}
-        {tab === 'gelecek' && (gelecek.length ? <div className="space-y-2">{gelecek.map(renderEgitim)}</div> : <div className="text-center py-12 text-gray-400"><Calendar className="w-16 h-16 mx-auto mb-3 opacity-30" /><p>Planlanmış eğitim yok.</p></div>)}
+        {tab === 'gelecek' && (gelecek.length ? <div className="space-y-2">{gelecek.map(renderEgitim)}</div> : <div className="text-center py-12 text-gray-400"><Calendar className="w-16 h-16 mx-auto mb-3 opacity-30" /><p>{t('lp_no_planned')}</p></div>)}
         {tab === 'gecmis' && <div className="space-y-2">{gecmis.map(renderEgitim)}</div>}
         {tab === 'kayitli' && (
           <>
@@ -534,7 +534,7 @@ export default function LiderProfil() {
                 ))}
               </div>
             )}
-            {!kayitliLoading && kayitliVideolar?.length === 0 && <div className="text-center py-12 text-gray-400"><Video className="w-16 h-16 mx-auto mb-3 opacity-30" /><p>Kayıtlı eğitim yok.</p></div>}
+            {!kayitliLoading && kayitliVideolar?.length === 0 && <div className="text-center py-12 text-gray-400"><Video className="w-16 h-16 mx-auto mb-3 opacity-30" /><p>{t('lp_no_rec')}</p></div>}
             {!kayitliLoading && kayitliVideolar?.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {kayitliVideolar.map(v => (
