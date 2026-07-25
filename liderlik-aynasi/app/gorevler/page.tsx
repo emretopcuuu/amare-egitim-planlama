@@ -391,6 +391,20 @@ export default async function GorevlerPage() {
   const seriRiski = seri >= 2 && bugunGorev === 0;
   // A7: aşırı yük koruması — bugün çok görev yaptıysan dinlenmeye davet.
   const yeterince = aktif.length === 0 && bugunGorev >= 5;
+  // [MALİYET] ÜRETİM DURAKLADI MI: yolculukta son görev yanıtsız kapandıysa
+  // (status 'expired' — süre dolumu yalnız yanıtlanmamış 'pending'i çevirir)
+  // tik artık otomatik yeni görev üretmiyor (lib/tik.ts). Kişi mahsur kalmasın
+  // diye burada nedenini söyleyip "Yeni görev iste" ile kendi çekmesini sunarız.
+  // İKİ KAPI: aynı anda düşen iki görevden biri seçilince öteki 'expired' olur —
+  // bu yüzden "son görev" tek satıra değil, EN SON VERİLİŞ ANINDAKİ TÜM görevlere
+  // bakılır; hepsi cevapsız kapandıysa duraklama gerçektir (lib/tik.ts ile aynı kural).
+  const sonVerilisAni = (gorevler ?? [])[0]?.issued_at ?? null;
+  const sonPartiGorevler = (gorevler ?? []).filter((g) => g.issued_at === sonVerilisAni);
+  const uretimDurakladi =
+    yolculuk &&
+    aktif.length === 0 &&
+    sonPartiGorevler.length > 0 &&
+    sonPartiGorevler.every((g) => g.status === "expired");
 
   // UX #1/#3: günün ritmi + "sıradaki görev ~N dk" tahmini (boş durumu canlandırır).
   // [YOLCULUK #1] 90 günde günde TEK görev düşer (tik.ts gunlukUst=1); kamp kotası
@@ -932,17 +946,36 @@ export default async function GorevlerPage() {
           </div>
         </section>
       ) : aktif.length === 0 ? (
-        <BosGorevDurumu
-          siradakiDk={siradakiDk}
-          siradakiSaat={siradakiSaat}
-          fragmanIpucu={fragmanIpucu}
-          aynaLafi={aynaLafi}
-          aynaDurum={aynaDurum}
-          gece={gece}
-          yolculukMetin={
-            yolculuk ? (bugunGorev > 0 ? t.bosYolculukBugun : t.bosYolculukBekle) : null
-          }
-        />
+        <>
+          <BosGorevDurumu
+            siradakiDk={siradakiDk}
+            siradakiSaat={siradakiSaat}
+            fragmanIpucu={fragmanIpucu}
+            aynaLafi={aynaLafi}
+            aynaDurum={aynaDurum}
+            gece={gece}
+            yolculukMetin={
+              yolculuk
+                ? uretimDurakladi
+                  ? t.bosYolculukDurakladi
+                  : bugunGorev > 0
+                    ? t.bosYolculukBugun
+                    : t.bosYolculukBekle
+                : null
+            }
+          />
+          {/* [MALİYET] Duraklamada tek çıkış kapısı: kişi hazır olduğunda kendi
+              çeker. Suçlayıcı değil — "sen hazır olunca" dili. */}
+          {uretimDurakladi && (
+            <section className="rounded-2xl border border-gold/30 bg-gold/[0.07] p-5 text-center">
+              <p className="text-sm font-semibold text-gold-light">{t.durakladiBaslik}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{t.durakladiMetin}</p>
+              <div className="mx-auto mt-4 w-full max-w-sm">
+                <EkstraGorev />
+              </div>
+            </section>
+          )}
+        </>
       ) : (
         <>
           {/* En son gelen görev — TEK odak, tam açık. */}

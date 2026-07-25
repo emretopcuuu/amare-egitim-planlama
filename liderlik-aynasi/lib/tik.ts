@@ -346,7 +346,7 @@ export async function tikCalistir(
   // GÜVENLİK KİLİDİ (devam): prova'daysak sorgu TEK katılımcıya sabitlenir.
   let kisilerSorgu = db
     .from("participants")
-    .select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an")
+    .select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an, son_gorulme")
     .eq("role", "participant");
   if (provaModu && provaKatilimciId) kisilerSorgu = kisilerSorgu.eq("id", provaKatilimciId);
 
@@ -354,18 +354,30 @@ export async function tikCalistir(
   // kişide 1000-satır PostgREST tavanını aşar; sayfalı çekilmezse kırpılan
   // satırlara ait kişilerin "bekleyen görevi var mı / bugün kaç aldı" durumu
   // yanlış görünür → çift görev / atlanan kişi. tumKayitlar tümünü birleştirir.
-  const gorevPencereBasi = new Date(simdi.getTime() - 26 * 3_600_000).toISOString();
+  // [MALİYET] Yolculukta pencere 7 GÜN: aşağıdaki "son görevini yaptı mı?"
+  // kapısı kişinin SON görevinin akıbetini bilmek zorunda; 26 saat yalnız dünü
+  // görür (kişi 2 gündür yanıtsızsa geçmişi boş sanılır → görev üretilir).
+  // Kampta 26 saat KALIR: orada günde ~20 görev × 150 kişi = 7 günde on binlerce
+  // satır olurdu ve bu kapı kampta zaten uygulanmıyor.
+  const gorevPencereBasi = new Date(
+    simdi.getTime() - (mod === "yolculuk" ? 7 * 86_400_000 : 26 * 3_600_000)
+  ).toISOString();
   const yanitPencereBasi = new Date(simdi.getTime() - 3 * 86_400_000).toISOString();
   const [{ data: kisiler }, sonGorevler, yanitGecmisi] = await Promise.all([
     kisilerSorgu,
-    tumKayitlar<{ participant_id: string; status: string; issued_at: string; kind: string | null }>(
-      (bas, son) =>
-        db
-          .from("missions")
-          .select("participant_id, status, issued_at, kind")
-          .gte("issued_at", gorevPencereBasi)
-          .order("id")
-          .range(bas, son)
+    tumKayitlar<{
+      participant_id: string;
+      status: string;
+      issued_at: string;
+      kind: string | null;
+      responded_at: string | null;
+    }>((bas, son) =>
+      db
+        .from("missions")
+        .select("participant_id, status, issued_at, kind, responded_at")
+        .gte("issued_at", gorevPencereBasi)
+        .order("id")
+        .range(bas, son)
     ),
     // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
     tumKayitlar<{ participant_id: string; responded_at: string | null }>((bas, son) =>
@@ -393,19 +405,67 @@ export async function tikCalistir(
     for (const [pid, saatler] of saatHarita) pikSaatleri.set(pid, pikSaatBul(saatler));
   }
 
-  type Durum = { bekleyen: boolean; bugunSayisi: number; sonVerilis: number };
+  // sonYanitli: kişinin EN SON verilen görevi yanıtlandı mı (maliyet kapısı için).
+  // yanitsizSeri: son yanıtından BU YANA üst üste kaç görev cevapsız kapandı.
+  type Durum = {
+    bekleyen: boolean;
+    bugunSayisi: number;
+    sonVerilis: number;
+    sonYanitli: boolean;
+    yanitsizSeri: number;
+  };
   const durumlar = new Map<string, Durum>();
   for (const g of sonGorevler ?? []) {
     const d =
       durumlar.get(g.participant_id) ??
-      ({ bekleyen: false, bugunSayisi: 0, sonVerilis: 0 } as Durum);
+      ({
+        bekleyen: false,
+        bugunSayisi: 0,
+        sonVerilis: 0,
+        sonYanitli: true,
+        yanitsizSeri: 0,
+      } as Durum);
     if (g.status === "pending" || g.status === "submitted") d.bekleyen = true;
     // #6 Günlük kota yalnız EYLEM görevlerini sayar; "senkron" kolektif/hafif bir
     // an olduğu için kişinin görev kotasını (gunlukUst) doldurmamalı.
     if (istanbulTarihi(new Date(g.issued_at)) === bugun && g.kind !== "senkron")
       d.bugunSayisi++;
-    d.sonVerilis = Math.max(d.sonVerilis, new Date(g.issued_at).getTime());
+    const verilisMs = new Date(g.issued_at).getTime();
+    // En son verilen görevin akıbeti kazanır. EŞİT zaman damgasında YANITLANMIŞ
+    // olan kazanır — İKİ KAPI: aynı anda iki görev düşer, kişi birini seçince
+    // ÖTEKİ anında 'expired' olur. Ham "sonuncu satır" kuralı, seçimini yapıp
+    // görevini TAMAMLAYAN kişiyi "yanıtsız" sanıp haksızca duraklatırdı.
+    if (verilisMs > d.sonVerilis || (verilisMs === d.sonVerilis && !!g.responded_at)) {
+      d.sonVerilis = verilisMs;
+      d.sonYanitli = !!g.responded_at;
+    }
     durumlar.set(g.participant_id, d);
+  }
+
+  // [MALİYET] YANITSIZ SERİ (yalnız yolculuk): kişinin SON yanıtından bu yana
+  // cevapsız kapanan görev sayısı. 1 = "olur böyle, bir şans daha"; 2+ = ısrarla
+  // yanıtsız → otomatik üretim tamamen durur, kişi hazır olduğunda kendi ister.
+  // Aynı anda düşen İki Kapı çifti tek "an" sayılır (verilis anına göre tekilleştirilir).
+  if (mod === "yolculuk") {
+    const sonYanitMs = new Map<string, number>();
+    for (const g of sonGorevler ?? []) {
+      if (!g.responded_at) continue;
+      const ms = new Date(g.issued_at).getTime();
+      sonYanitMs.set(g.participant_id, Math.max(sonYanitMs.get(g.participant_id) ?? 0, ms));
+    }
+    const yanitsizAnlar = new Map<string, Set<number>>();
+    for (const g of sonGorevler ?? []) {
+      if (g.responded_at) continue;
+      const ms = new Date(g.issued_at).getTime();
+      if (ms <= (sonYanitMs.get(g.participant_id) ?? 0)) continue; // yanıtından ÖNCE
+      const kume = yanitsizAnlar.get(g.participant_id) ?? new Set<number>();
+      kume.add(ms);
+      yanitsizAnlar.set(g.participant_id, kume);
+    }
+    for (const [pid, kume] of yanitsizAnlar) {
+      const d = durumlar.get(pid);
+      if (d) d.yanitsizSeri = kume.size;
+    }
   }
 
   const gunDk = saat * 60 + dakika;
@@ -427,6 +487,24 @@ export async function tikCalistir(
       const d = durumlar.get(k.id);
       if (!d) return true; // hiç görev almamış
       if (d.bekleyen || d.bugunSayisi >= gunlukUst) return false;
+      // [MALİYET/ODAK] YOLCULUK — YANITSIZ GÖREVİN ÜSTÜNE YENİSİNİ YIĞMA.
+      // Ölçüm (25 Tem): 99 kişi 5 günde 384 görev aldı ve HİÇBİRİNİ yanıtlamadı;
+      // 47'si uygulamayı 3 gündür açmamıştı bile. Her görev ~2 AI çağrısı → para
+      // ve kişide "yığılmış görev" suçluluğu. Kural: son görevini yanıtlamadıysan
+      // otomatik yeni görev ÜRETİLMEZ. Uyanma sinyali: kişi o görevden SONRA
+      // uygulamayı açtıysa (son_gorulme) geri dönmüş sayılır ve akış sürer.
+      // Mahsur kalma yok: boş ekranda "Yeni görev iste" ile kendi çekebilir
+      // (app/gorevler/page.tsx). Kampta uygulanmaz — orada görevler etkinliğe
+      // bağlı akar, oturumdayken kaçırmak "ilgisizlik" demek değildir.
+      // İKİ KADEME: (1) tek görev kaçırdıysan ve uygulamayı yeniden açtıysan
+      // ("geri döndüm" sinyali) akış sürer — insan hâli, bir şans daha. (2) üst
+      // üste 2+ görev cevapsız kapandıysa otomatik üretim TAMAMEN durur; ısrarla
+      // yanıtsız kişiye AI görevi üretmek parayı da ilgiyi de boşa harcıyor.
+      if (mod === "yolculuk" && !d.sonYanitli) {
+        if (d.yanitsizSeri >= 2) return false;
+        const sonGorulmeMs = k.son_gorulme ? new Date(k.son_gorulme).getTime() : 0;
+        if (sonGorulmeMs <= d.sonVerilis) return false;
+      }
       // Özellik 3 — duygu sıcakken (~15 dk hedefi) aralık/pik bekletmez.
       if (sicakMi(k)) return true;
       // #3 Fırsat penceresi: az önce deneyimsel bir etkinlik bittiyse (genel kamp
