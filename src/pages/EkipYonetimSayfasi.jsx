@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy, Award } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy, Award, TrendingUp, Gift } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -200,6 +200,46 @@ const MODULLER = [
     icon: Award,
     aktif: true,
     link: 'https://takdir.oneteamglobal.ai/',
+    renk: 'amber',
+  },
+  {
+    id: 'kariyer',
+    ad: {
+      tr: 'Kariyerim',
+      en: 'My Career',
+      de: 'Meine Karriere',
+      nl: 'Mijn Carrière',
+    },
+    kisaltma: 'KARİYER',
+    aciklama: {
+      tr: 'Ekibini kariyer seviyelerine göre gör, yükselişleri takip et.',
+      en: 'See your team by career rank and track their progress.',
+      de: 'Sieh dein Team nach Karrierestufe und verfolge Aufstiege.',
+      nl: 'Bekijk je team per carrièreniveau en volg promoties.',
+    },
+    icon: TrendingUp,
+    aktif: true,
+    link: 'https://kariyer.oneteamglobal.ai/',
+    renk: 'amber',
+  },
+  {
+    id: 'promosyon',
+    ad: {
+      tr: 'Promosyonlar',
+      en: 'Promotions',
+      de: 'Promotionen',
+      nl: 'Promoties',
+    },
+    kisaltma: 'PROMO',
+    aciklama: {
+      tr: 'Dönemsel kampanyalar ve kariyer seviyesine göre kazanç tahminleri.',
+      en: 'Seasonal campaigns and earnings estimates by career level.',
+      de: 'Saisonale Kampagnen und Verdienstschätzungen nach Karrierestufe.',
+      nl: 'Seizoenscampagnes en verdienstenramingen per carrièreniveau.',
+    },
+    icon: Gift,
+    aktif: true,
+    link: 'https://promosyon.oneteamglobal.ai/',
     renk: 'amber',
   },
   // İleride buraya yeni modüller eklenecek
