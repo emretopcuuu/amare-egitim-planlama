@@ -23,13 +23,13 @@ import { KARIYER_BASAMAKLARI, kariyerSira, kariyerTarih, ayFarki, sureMetni } fr
 // Sıralama opsiyonları — etiketler t() ile dinamik dönüşür
 const SIRALAMA_KODLARI = [
   { kod: 'aktif', tKey: 'trainers_sort_active', etiket: 'En Aktif', ikon: '🔥' },
-  { kod: 'rutbe', tKey: 'trainers_sort_active', etiket: 'Rütbe (yüksek→düşük)', ikon: '💎' },
-  { kod: 'hizli', tKey: 'trainers_sort_active', etiket: 'En hızlı yükselenler', ikon: '⚡' },
-  { kod: 'kidem', tKey: 'trainers_sort_active', etiket: 'En kıdemli', ikon: '🎖️' },
-  { kod: 'cok_egitim', tKey: 'trainers_sort_active', etiket: 'Çok Eğitim', ikon: '📈' },
+  { kod: 'rutbe', tKey: 'trainers_sort_rank', etiket: 'Rütbe (yüksek→düşük)', ikon: '💎' },
+  { kod: 'hizli', tKey: 'trainers_sort_fastest', etiket: 'En hızlı yükselenler', ikon: '⚡' },
+  { kod: 'kidem', tKey: 'trainers_sort_senior', etiket: 'En kıdemli', ikon: '🎖️' },
+  { kod: 'cok_egitim', tKey: 'trainers_sort_most', etiket: 'Çok Eğitim', ikon: '📈' },
   { kod: 'alfabe', tKey: 'trainers_sort_az', etiket: 'A — Z', ikon: '🔤' },
   { kod: 'alfabe_zy', tKey: 'trainers_sort_za', etiket: 'Z — A', ikon: '🔠' },
-  { kod: 'yeni', tKey: 'trainers_sort_active', etiket: 'Yeni Eklenenler', ikon: '🌱' },
+  { kod: 'yeni', tKey: 'trainers_sort_new', etiket: 'Yeni Eklenenler', ikon: '🌱' },
 ];
 
 // Liderin Amare kariyerini çöz: kariyerGecmis varsa son basamak, yoksa unvan rütbe mi?
@@ -377,7 +377,7 @@ const KonusmacilarSayfasi = () => {
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300" />
                 <input type="text" ref={aramaRef} value={arama} onChange={e => setArama(e.target.value)}
-                  placeholder={`${tumKonusmacilar.length} eğitmenin arasından ara... ( / ile odaklan)`}
+                  placeholder={`${tumKonusmacilar.length} ${t('trainers_search_among')}`}
                   className="w-full bg-white/15 backdrop-blur border-2 border-amber-300/30 focus:border-amber-400 text-white placeholder-purple-200/70 rounded-2xl pl-12 pr-10 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/40 transition-all shadow-lg" />
                 {arama && (
                   <button onClick={() => setArama('')} aria-label="Aramayı temizle"
@@ -408,7 +408,7 @@ const KonusmacilarSayfasi = () => {
                   className="bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-9 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
                   {SIRALAMA_KODLARI.map(s => (
                     <option key={s.kod} value={s.kod} className="bg-purple-900">
-                      {s.ikon} {s.etiket}
+                      {s.ikon} {t(s.tKey)}
                     </option>
                   ))}
                 </select>
@@ -424,7 +424,7 @@ const KonusmacilarSayfasi = () => {
               )}
               {/* Aktif sıralama göstergesi */}
               <span className="text-purple-300/50 text-[11px] italic inline-flex items-center">
-                {filtrelenmis.length} sonuç
+                {filtrelenmis.length} {t('trainers_results')}
               </span>
             </div>
 
@@ -434,14 +434,14 @@ const KonusmacilarSayfasi = () => {
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold transition-all ${
                   goruntuMode === 'grid' ? 'bg-amber-400 text-purple-900 shadow' : 'text-white/70 hover:text-white'
                 }`}
-                title="Grid görünüm">
+                title={t('trainers_grid_view')}>
                 <LayoutGrid className="w-3.5 h-3.5" />
               </button>
               <button onClick={() => setGoruntuMode('liste')}
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold transition-all ${
                   goruntuMode === 'liste' ? 'bg-amber-400 text-purple-900 shadow' : 'text-white/70 hover:text-white'
                 }`}
-                title="Liste görünüm">
+                title={t('trainers_list_view')}>
                 <List className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -455,7 +455,7 @@ const KonusmacilarSayfasi = () => {
           {/* #9 — Keşif: yaklaşan eğitimi olan eğitmenler (sadece arama/filtre yokken) */}
           {!arama.trim() && rutbeFiltre == null && !sadeceFav && yaklasanEgitmenler.length > 0 && (
             <div className="mb-5">
-              <div className="text-amber-300 text-xs font-bold uppercase tracking-wider mb-2 inline-flex items-center gap-1.5"><Calendar className="w-4 h-4" />Yaklaşan eğitimi olan eğitmenler</div>
+              <div className="text-amber-300 text-xs font-bold uppercase tracking-wider mb-2 inline-flex items-center gap-1.5"><Calendar className="w-4 h-4" />{t('trainers_upcoming')}</div>
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
                 {yaklasanEgitmenler.map(x => (
                   <button key={x.cid} onClick={() => navigate(`/lider/${x.cid}`)} className="flex-shrink-0 w-[72px] text-center group spring-tap">
@@ -475,11 +475,11 @@ const KonusmacilarSayfasi = () => {
           {/* #6 — İstatistik şeridi + veri tamamlanma (test) */}
           {istatistik.veriOlan > 0 && (
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><User className="w-3.5 h-3.5 text-purple-200" />{istatistik.toplam} eğitmen</span>
+              <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><User className="w-3.5 h-3.5 text-purple-200" />{istatistik.toplam} {t('trainers_count_suffix')}</span>
               <span className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-300/30 text-amber-100 text-xs font-semibold px-3 py-1.5 rounded-full">💎 {istatistik.diamondPlus} Diamond+</span>
-              {istatistik.avgTenure != null && <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><Calendar className="w-3.5 h-3.5 text-amber-300" />ort. kıdem {sureMetni(istatistik.avgTenure)}</span>}
-              {istatistik.enHizliDiamond != null && <span className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-300/30 text-amber-200 text-xs font-semibold px-3 py-1.5 rounded-full"><Zap className="w-3.5 h-3.5" />en hızlı Diamond {sureMetni(istatistik.enHizliDiamond)}</span>}
-              <span className="inline-flex items-center gap-1.5 bg-red-600/25 border border-red-400/60 text-red-100 text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.35)]" title="Kariyer verileri henüz tüm eğitmenler için tamamlanmadı — test aşamasında">⚠ TEST · Veriler yalnızca %{istatistik.tamamlanma} tamamlandı</span>
+              {istatistik.avgTenure != null && <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><Calendar className="w-3.5 h-3.5 text-amber-300" />{t('trainers_avg_tenure')} {sureMetni(istatistik.avgTenure, t)}</span>}
+              {istatistik.enHizliDiamond != null && <span className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-300/30 text-amber-200 text-xs font-semibold px-3 py-1.5 rounded-full"><Zap className="w-3.5 h-3.5" />{t('trainers_fastest_diamond')} {sureMetni(istatistik.enHizliDiamond, t)}</span>}
+              <span className="inline-flex items-center gap-1.5 bg-red-600/25 border border-red-400/60 text-red-100 text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.35)]" title={t('trainers_test_title')}>⚠ {t('trainers_test_data')} %{istatistik.tamamlanma} {t('trainers_test_done')}</span>
             </div>
           )}
 
@@ -487,9 +487,9 @@ const KonusmacilarSayfasi = () => {
           {Object.keys(istatistik.ortRutbe).length > 0 && (
             <div className="mb-5 rounded-2xl bg-gradient-to-br from-purple-950/60 to-indigo-950/40 border border-amber-300/20 p-3 sm:p-4">
               <div className="flex items-center justify-between gap-2 mb-2.5">
-                <div className="text-amber-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5"><TrendingUp className="w-4 h-4" />Eğitmenlerin ortalama kariyer süreleri</div>
+                <div className="text-amber-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5"><TrendingUp className="w-4 h-4" />{t('trainers_avg_career')}</div>
                 {rutbeFiltre != null && (
-                  <button onClick={() => setRutbeFiltre(null)} className="text-[11px] text-purple-200 hover:text-white inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full"><X className="w-3 h-3" />filtreyi kaldır</button>
+                  <button onClick={() => setRutbeFiltre(null)} className="text-[11px] text-purple-200 hover:text-white inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full"><X className="w-3 h-3" />{t('trainers_clear_filter')}</button>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -499,12 +499,12 @@ const KonusmacilarSayfasi = () => {
                     <button key={i} onClick={() => setRutbeFiltre(sel ? null : i)}
                       className={`flex-1 basis-[80px] sm:basis-[96px] rounded-xl border px-2 py-2 text-center transition-all spring-tap ${rutbeStil(i)} ${sel ? 'ring-2 ring-amber-400 scale-105' : 'hover:brightness-125'}`}>
                       <div className="text-[10px] font-bold leading-tight line-clamp-2 min-h-[1.6em]">{rutbeYazi(KARIYER_BASAMAKLARI[i])}</div>
-                      <div className="text-sm font-extrabold mt-0.5">~{sureMetni(istatistik.ortRutbe[i])}</div>
+                      <div className="text-sm font-extrabold mt-0.5">~{sureMetni(istatistik.ortRutbe[i], t)}</div>
                     </button>
                   );
                 })}
               </div>
-              <div className="text-[10px] text-purple-300/60 mt-2">Hangi kariyere ortalama ne kadar sürede ulaşıldı · {istatistik.veriOlan} liderin verisiyle · rütbeye tıkla → filtrele <span className="text-red-300/80">(tüm kayıtlar henüz dolmadığı için test aşamasındadır)</span></div>
+              <div className="text-[10px] text-purple-300/60 mt-2">{t('trainers_career_help')} · {istatistik.veriOlan} {t('trainers_career_help2')} <span className="text-red-300/80">{t('trainers_career_help3')}</span></div>
             </div>
           )}
 
@@ -698,7 +698,7 @@ const KonusmacilarSayfasi = () => {
                               )}
                               {sonEg?.egitim && (
                                 <>
-                                  <div className="text-amber-300 text-[10px] uppercase tracking-wider font-bold mb-1 inline-flex items-center gap-1"><Calendar className="w-3 h-3" />Son Eğitim</div>
+                                  <div className="text-amber-300 text-[10px] uppercase tracking-wider font-bold mb-1 inline-flex items-center gap-1"><Calendar className="w-3 h-3" />{t('trainers_last_training')}</div>
                                   <div className="text-white text-xs font-semibold leading-snug line-clamp-2">{sonEg.egitim}</div>
                                 </>
                               )}
@@ -778,7 +778,7 @@ const KonusmaciFilterSheet = ({ t, onClose, onUygula, siralama, setSiralama, sad
                     siralama === s.kod ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                   }`}>
                   <span>{s.ikon}</span>
-                  {s.etiket}
+                  {t(s.tKey)}
                 </button>
               ))}
             </div>

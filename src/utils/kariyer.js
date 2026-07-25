@@ -60,13 +60,17 @@ export const ayFarki = (a, b) => {
 };
 
 // "X ay" / "Y yıl Z ay" insanca metin
-export const sureMetni = (ay) => {
+// t (çeviri fonksiyonu) verilirse birimler seçili dilde döner; verilmezse Türkçe
+// (geriye dönük uyumluluk — eski çağrılar bozulmaz).
+export const sureMetni = (ay, t) => {
   if (ay == null || ay < 0) return '';
-  if (ay === 0) return 'aynı ay';
+  const YIL = t ? t('dur_year') : 'yıl';
+  const AY = t ? t('dur_month') : 'ay';
+  if (ay === 0) return t ? t('dur_same_month') : 'aynı ay';
   const yil = Math.floor(ay / 12), kalan = ay % 12;
-  if (yil === 0) return `${kalan} ay`;
-  if (kalan === 0) return `${yil} yıl`;
-  return `${yil} yıl ${kalan} ay`;
+  if (yil === 0) return `${kalan} ${AY}`;
+  if (kalan === 0) return `${yil} ${YIL}`;
+  return `${yil} ${YIL} ${kalan} ${AY}`;
 };
 
 // 'MM.YYYY' veya 'YYYY-MM' veya 'dd.MM.YYYY' → Date (ayın 1'i). Geçersizse null.
