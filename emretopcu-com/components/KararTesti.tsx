@@ -1,10 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { WhatsappLogo, ArrowCounterClockwise } from "@phosphor-icons/react";
-import { whatsappUrl } from "@/lib/icerik";
+import { WHATSAPP_NUMARA } from "@/lib/icerik";
+import { olcum } from "@/lib/olcum";
+
+// Cevaba göre öndolu WhatsApp mesajı — Emre görüşmeyi hazır profille açar.
+const NEDEN: Record<string, string> = {
+  gelir: "ek gelir arıyorum",
+  ozgurluk: "finansal özgürlük istiyorum",
+  liderlik: "kendi işimi kurmak ve liderlik istiyorum",
+};
+const ZAMAN: Record<string, string> = {
+  az: "günde ~1 saatim var",
+  orta: "günde 2-3 saatim var",
+  tam: "tam zamanlı bakabilirim",
+};
+const ZORLUK: Record<string, string> = {
+  cevre: "çevrem olmaması",
+  zaman: "zaman",
+  bilgi: "nasıl yapılacağını bilmemek",
+};
+function profilliWhatsapp(cevaplar: string[]): string {
+  const [neden, zaman, zorluk] = cevaplar;
+  const m = `Merhaba, doğrudan satışı düşünüyorum. ${NEDEN[neden] ?? ""}, ${ZAMAN[zaman] ?? ""}; en çok ${ZORLUK[zorluk] ?? ""} beni düşündürüyor. Ön görüşme alabilir miyim? [karar-testi]`;
+  return `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(m)}`;
+}
 
 const GECIS = [0.16, 1, 0.3, 1] as const;
 
@@ -62,6 +84,7 @@ export default function KararTesti() {
     yeni[adim] = anahtar;
     setCevaplar(yeni);
     setAdim(adim + 1);
+    if (adim + 1 >= SORULAR.length) olcum("test-bitti");
   };
 
   const sifirla = () => {
@@ -74,12 +97,12 @@ export default function KararTesti() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
       <div className="mb-10 flex items-center justify-between">
-        <Link
+        <a
           href="/"
           className="text-sm text-duman transition-colors hover:text-altin"
         >
           ← Ana sayfa
-        </Link>
+        </a>
         <span className="text-sm text-duman tabular-nums">
           {Math.min(adim + 1, SORULAR.length)} / {SORULAR.length}
         </span>
@@ -145,7 +168,7 @@ export default function KararTesti() {
             </div>
             <div className="mt-12 flex flex-wrap items-center gap-4">
               <a
-                href={whatsappUrl("karar-testi")}
+                href={profilliWhatsapp(cevaplar)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-4 font-medium text-fildisi active:scale-[0.98]"

@@ -265,7 +265,7 @@ export async function kanitVeri(db: Db, id: KanitId, bugun: string): Promise<Kan
 // AI ile Emre'nin sahne öncesi brifi — düzyazı, İSİMSİZ. Düşerse null (şablon).
 async function brifMetinUret(v: BrifVeri): Promise<string | null> {
   try {
-    const client = aynaClient();
+    const client = aynaClient("kapanis");
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 1100,

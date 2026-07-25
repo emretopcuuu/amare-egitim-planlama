@@ -77,6 +77,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/sistem#yedek", etiket: n.sYedek },
       { href: "/admin/sistem#yeni-kamp", etiket: n.sYeniKamp },
       { href: "/admin/sistem#kvkk", etiket: n.sKvkk },
+      { href: "/admin/token", etiket: n.sToken },
       { href: "/admin/simulasyon", etiket: n.sSimulasyon },
       { href: "/admin/prova", etiket: n.prova },
     ],

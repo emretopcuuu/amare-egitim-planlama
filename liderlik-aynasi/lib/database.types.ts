@@ -115,22 +115,31 @@ export type Database = {
       }
       ai_istek_log: {
         Row: {
+          cikti_token: number | null
           created_at: string
+          girdi_token: number | null
           id: number
           kaynak: string
-          participant_id: string
+          model: string | null
+          participant_id: string | null
         }
         Insert: {
+          cikti_token?: number | null
           created_at?: string
+          girdi_token?: number | null
           id?: never
           kaynak: string
-          participant_id: string
+          model?: string | null
+          participant_id?: string | null
         }
         Update: {
+          cikti_token?: number | null
           created_at?: string
+          girdi_token?: number | null
           id?: never
           kaynak?: string
-          participant_id?: string
+          model?: string | null
+          participant_id?: string | null
         }
         Relationships: [
           {
@@ -3548,6 +3557,8 @@ export type Database = {
           metin: string | null
           participant_id: string
           revize_at?: string | null
+          sahit_gorunum: string
+          sahit_metin: string | null
           sekillendi_at: string | null
           son_durtme_at: string | null
           son_tanik_uyari_at: string | null
@@ -3563,6 +3574,8 @@ export type Database = {
           metin?: string | null
           participant_id: string
           revize_at?: string | null
+          sahit_gorunum?: string
+          sahit_metin?: string | null
           sekillendi_at?: string | null
           son_durtme_at?: string | null
           son_tanik_uyari_at?: string | null
@@ -3578,6 +3591,8 @@ export type Database = {
           metin?: string | null
           participant_id?: string
           revize_at?: string | null
+          sahit_gorunum?: string
+          sahit_metin?: string | null
           sekillendi_at?: string | null
           son_durtme_at?: string | null
           son_tanik_uyari_at?: string | null

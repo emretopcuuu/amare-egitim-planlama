@@ -52,10 +52,39 @@ CLOUDFLARE_API_TOKEN=... npx wrangler pages deploy out --project-name=emretopcu-
 
 ## Sayfalar
 
-- `/` (TR) ve `/en` (EN): tek sayfa sinematik deneyim (`components/varyantlar/Zirve.tsx`).
+- `/` (TR), `/en`, `/ru`, `/az`: tek sayfa sinematik deneyim (`components/varyantlar/Zirve.tsx`).
+  Çeviriler `lib/icerik.ts` (TR/EN) + `lib/icerikRu.ts` + `lib/icerikAz.ts`.
 - `/medya`: medya kiti (portreler, 3 uzunlukta bio, konuşma başlıkları, davet).
-- `/dusunuyorum`: 3 soruluk karar testi (`components/KararTesti.tsx`).
-- `/sitemap.xml`, `/robots.txt`, `/llms.txt`: SEO + AI görünürlüğü.
+- `/dusunuyorum`: 3 soruluk karar testi (cevaba göre öndolu WhatsApp).
+- `/plan`: yazdırılabilir "İlk 72 Saat" başlangıç planı (lead magnet).
+- `/salon`: sahne için tam ekran döngü (söz + WhatsApp QR); `robots: noindex`.
+- `/soz/<slug>`: söze özel sayfa + kendi OG kartı (`public/soz/<slug>.png`,
+  `scripts/og-soz.mjs` ile `prebuild`'de üretilir).
+- `/sitemap.xml`, `/robots.txt`, `/llms.txt`: SEO + AI görünürlüğü (JSON-LD:
+  Person/Book/FAQ/VideoObject + speakable).
+
+## Cloudflare Pages Functions (opsiyonel arka uç)
+
+`functions/api/` altında iki uç nokta; bağlamalar yoksa güvenle devre dışı kalır
+(site bozulmaz — istemci mailto/statik yedeğe düşer):
+
+- `POST /api/olay` — çerezsiz olay sayacı. **KV binding `OLAY_KV`** bağlanınca
+  günlük olay sayaçları tutulur (kişisel veri yok). İstemci: `lib/olcum.ts`.
+- `POST /api/bulten` — Pazartesi Notları kaydı. **KV `BULTEN_KV`** + **env
+  `TURNSTILE_SECRET`** gerekir; yoksa 501 döner, form mailto'ya düşer.
+  Turnstile site anahtarını de eklersen tam çalışır.
+
+KV + Turnstile'ı Cloudflare Pages panelinden (Settings → Functions →
+KV namespace bindings / Environment variables) bağla.
+
+## Otomasyon (GitHub Actions)
+
+- `.github/workflows/emretopcu-haftalik.yml` — her Pazartesi YouTube RSS'ten en
+  yeni videoyu çeker (`scripts/son-video.mjs` → `public/son-video.json`),
+  değiştiyse yeniden derleyip deploy eder. **Secret `CLOUDFLARE_API_TOKEN`**
+  gerekir (yoksa yalnız json commit'lenir, deploy atlanır).
+- `.github/workflows/emretopcu-lighthouse.yml` — her PR'da Lighthouse bütçesi
+  (uyarır, bloklamaz; `lighthouserc.json`).
 
 ## Tema
 

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   if (limit) return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("deger-derinles");
     const gecmis = oncekiCevaplar.map((c, i) => `${i + 1}. "${c}"`).join("\n");
     const turTalimat =
       tur === 2

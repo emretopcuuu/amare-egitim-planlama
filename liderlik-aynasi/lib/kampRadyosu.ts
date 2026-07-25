@@ -105,7 +105,7 @@ async function veriTopla(db: Db, gun: number, bugun: string, slot: Slot): Promis
 // AI script — AYNA sunucu. Düşerse null (şablon devreye girer).
 async function scriptUret(veri: RadyoVeri, slot: Slot): Promise<string | null> {
   try {
-    const client = aynaClient();
+    const client = aynaClient("radyo");
     const gorevTanim =
       slot === "sabah"
         ? `SABAH YAYINI (07:30). İçerik sırası: (1) "Burası Kamp Radyosu, ben AYNA" tarzı açılış + güne enerjik günaydın, (2) bugünün programından şu iki başlığa heyecanlı tek cümle: ${veri.program.join(" ve ") || "sürpriz program"}, (3) İDDİALI TAHMİNİN: bugün kampta EN AZ ${veri.tahminHedef} görev tamamlanacağını iddia et ve "akşam yüzleşeceğiz, yazıyorum buraya" de, (4) tek cümlelik kapanış. Running gag'lerinden birine KISA dokunabilirsin (bowling programdaysa korkun tutabilir).`

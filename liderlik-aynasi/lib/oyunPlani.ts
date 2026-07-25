@@ -175,7 +175,7 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
   };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("oyun-plani");
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 2560,

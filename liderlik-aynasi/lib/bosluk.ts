@@ -160,7 +160,7 @@ export async function boslukGetirVeyaUret(db: Db, pid: string): Promise<BoslukSo
   };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("bosluk");
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 2048,

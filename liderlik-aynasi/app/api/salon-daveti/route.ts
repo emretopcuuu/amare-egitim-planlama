@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
   let taslak = "";
   try {
-    const client = aynaClient();
+    const client = aynaClient("salon-daveti");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,

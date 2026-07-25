@@ -1,0 +1,25 @@
+# emretopcu.ai — performans bütçesi. Her PR'da statik çıktıyı Lighthouse ile
+# ölçer; bütçe aşılırsa uyarır (bloklamaz). "Lüks" hissin yarısı hızdır.
+name: emretopcu Lighthouse
+
+on:
+  pull_request:
+    paths:
+      - "emretopcu-com/**"
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: emretopcu-com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - name: Lighthouse CI
+        run: npx --yes @lhci/cli@0.14.x autorun || true

@@ -97,7 +97,7 @@ export async function gelisimMektubuGetirVeyaUret(
   if (!sentez.degerler) return { durum: "veri-yok" };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("gelisim-mektubu");
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 4096,

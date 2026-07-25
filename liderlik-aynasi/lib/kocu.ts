@@ -185,7 +185,7 @@ export async function kocuTuru(
 
   let metin = "";
   try {
-    const client = aynaClient();
+    const client = aynaClient("kocu");
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,

@@ -1,5 +1,10 @@
-// Sitedeki tüm metin ve veri içeriği tek yerde, iki dilli (tr/en).
+// Sitedeki tüm metin ve veri içeriği tek yerde, dört dilli (tr/en/ru/az).
 // Dile bağlı olmayan sabitler üstte; dile bağlı içerik ICERIK altında.
+// RU/AZ içerikleri ayrı dosyalarda (tip-yalnız döngü; sorun değil).
+import { DE } from "./icerikDe";
+import { ES } from "./icerikEs";
+import { RU } from "./icerikRu";
+import { AZ } from "./icerikAz";
 
 export const EPOSTA = "s.emretopcu@gmail.com";
 export const INSTAGRAM_URL = "https://instagram.com/emretopcu_official";
@@ -36,7 +41,36 @@ export const LIDER_PROFIL_URL =
 // Resmi YouTube kanalı (haftalık kısa videolar).
 export const YOUTUBE_KANAL_URL = "https://www.youtube.com/@emretopcuofficial";
 
-export type Dil = "tr" | "en";
+export type Dil = "tr" | "en" | "de" | "es" | "ru" | "az";
+
+// Ek dil içerikleri en üstte import edilir (döngü değil; tip-yalnız).
+
+// Dil kodu → BCP-47 yerel (sayı biçimlendirme için).
+export const YEREL: Record<Dil, string> = {
+  tr: "tr-TR",
+  en: "en-US",
+  de: "de-DE",
+  es: "es-ES",
+  ru: "ru-RU",
+  az: "az-Latn-AZ",
+};
+// Dil kodu → sayfa yolu.
+export const DIL_YOL: Record<Dil, string> = {
+  tr: "/",
+  en: "/en",
+  de: "/de",
+  es: "/es",
+  ru: "/ru",
+  az: "/az",
+};
+export const DIL_ETIKET: Record<Dil, string> = {
+  tr: "TR",
+  en: "EN",
+  de: "DE",
+  es: "ES",
+  ru: "RU",
+  az: "AZ",
+};
 
 const TR = {
   nav: [
@@ -208,22 +242,27 @@ const TR = {
   },
   sozler: [
     {
+      slug: "karar",
       soz: "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
       arka: "Büyük kararlar büyük toplantılarda alınır. İşe kayıt olduğun gün değil, o kararı verdiğin gün başlarsın. — İlk 72 Saat, 2017",
     },
     {
+      slug: "lider",
       soz: "Sır, lider üretmektir.",
       arka: "Avcı değil, çiftçi ol. Büyüme üye saymak değildir; kendi ekibini kuran liderler yetiştirdiğinde iş katlanır.",
     },
     {
+      slug: "neden",
       soz: "Nedenin güçlüyse, nasılın önemi kalmaz.",
       arka: "Nedenini keşfettiğin insana dağları deldirirsin. Her şey inançla başlar, inançla biter.",
     },
     {
+      slug: "engel",
       soz: "Seni durduran, yine sensin.",
       arka: "Engel nedeninden büyükse pes edersin; nedenin engelinden büyükse bir yolunu bulursun. — İlk 72 Saat, 2017",
     },
     {
+      slug: "takip",
       soz: "İnsanlar sözlerini değil, seni takip eder.",
       arka: "Ne yaparsan yap, kopyalanır. Yapmadığım şeyi anlatmam; önce yaşar, sonra öğretirim.",
     },
@@ -390,6 +429,8 @@ const TR = {
     simSon: "İşte katlama. Ben bunu 250.000 kez yaşadım.",
     mektupNot: "Ön görüşme için tek mesaj yeter.",
     footerFelsefe: "Kimse, ama kimse tek başına başarmadı.",
+    populerBaslik: "En çok izlenenler",
+    populerAlt: "YouTube'da en çok izlenen videolarım.",
     fasillar: [
       "Hakkımda",
       "Teori",
@@ -411,6 +452,28 @@ const TR = {
     sozKartIndir: "Kartı indir",
     medyaLink: "Medya kiti",
     dusunuyorumLink: "Doğrudan satışı mı düşünüyorsun?",
+    alintila: "Kartla paylaş",
+    sozKartStory: "Story kartı",
+    ambiyansAc: "Ortam sesini aç",
+    ambiyansKapat: "Ortam sesini kapat",
+    devamBaslik: "Tekrar hoş geldin. Kaldığın yer:",
+    devamDugme: "Devam et",
+    sorBaslik: "Emre'ye sor",
+    sorAlt: "Sorunu yaz; cevabı Emre'nin kendi anlattıklarından bulayım.",
+    sorYaz: "Örn: Param yok, nasıl başlarım?",
+    sorBos: "Bu soruya buradaki metinlerde net bir cevap yok — WhatsApp'tan doğrudan sor.",
+    sonEtiket: "En yeni video",
+    planLink: "İlk 72 saat planı",
+    salonNot: "Bu ekran sahne içindir.",
+  },
+  proj: {
+    baslik: "Kendi katlamanı gör",
+    alt: "Ben ilk ay 5 kişiyle el sıkıştım. Sen ayda kaç kişiyle el sıkışırdın?",
+    kisiEtiket: "kişi / ay",
+    ay6: "6. ay ağın",
+    ay12: "12. ay ağın",
+    uyari: "Bu bir matematik projeksiyonu; kazanç vaadi değildir. Katlama, sistemi uygulayana çalışır.",
+    kartPaylas: "Projeksiyonu paylaş",
   },
   dunya: {
     baslik: "4 kıta, 38 ülke",
@@ -430,6 +493,9 @@ const TR = {
     dugme: "Kaydol",
     konu: "Pazartesi Notları — kayıt",
     govde: "Merhaba, Pazartesi Notları bültenine kaydolmak istiyorum.",
+    eposta: "E-posta adresin",
+    tesekkur: "Kaydın alındı. İlk not pazartesi sende.",
+    hata: "Kayıt şu an alınamadı — e-posta ile bildir:",
   },
   kariyerZaman: [
     { yil: "2013", ay: "Şubat", rutbe: "Başladı", not: "İlk ay 5 kişiyle el sıkıştım." },
@@ -613,22 +679,27 @@ const EN: Icerik = {
   },
   sozler: [
     {
+      slug: "karar",
       soz: "You don't start the day you sign up; you start the day you decide.",
       arka: "Big decisions are made in big meetings. You don't start the day you register — you start the day you decide. — İlk 72 Saat, 2017",
     },
     {
+      slug: "lider",
       soz: "The secret is producing leaders.",
       arka: "Be a farmer, not a hunter. Growth isn't counting members; when you raise leaders who build their own teams, the work multiplies.",
     },
     {
+      slug: "neden",
       soz: "If your why is strong, the how doesn't matter.",
       arka: "Give someone their why and they'll move mountains. Everything begins with belief and ends with belief.",
     },
     {
+      slug: "engel",
       soz: "The one stopping you is you.",
       arka: "If the obstacle is bigger than your why, you quit; if your why is bigger than the obstacle, you find a way. — İlk 72 Saat, 2017",
     },
     {
+      slug: "takip",
       soz: "People follow you, not your words.",
       arka: "Whatever you do gets copied. I don't teach what I haven't lived; I live it first, then I teach it.",
     },
@@ -795,6 +866,8 @@ const EN: Icerik = {
     simSon: "That's multiplying. I lived it 250,000 times.",
     mektupNot: "One message is all it takes.",
     footerFelsefe: "No one, but no one, ever made it alone.",
+    populerBaslik: "Most watched",
+    populerAlt: "My most-watched videos on YouTube.",
     fasillar: [
       "About",
       "Theory",
@@ -816,6 +889,28 @@ const EN: Icerik = {
     sozKartIndir: "Download card",
     medyaLink: "Media kit",
     dusunuyorumLink: "Considering direct sales?",
+    alintila: "Share as card",
+    sozKartStory: "Story card",
+    ambiyansAc: "Turn ambient sound on",
+    ambiyansKapat: "Turn ambient sound off",
+    devamBaslik: "Welcome back. You left off at:",
+    devamDugme: "Continue",
+    sorBaslik: "Ask Emre",
+    sorAlt: "Type your question; I'll answer from Emre's own words.",
+    sorYaz: "E.g.: I have no money, how do I start?",
+    sorBos: "There's no clear answer to that in these pages — ask directly on WhatsApp.",
+    sonEtiket: "Latest video",
+    planLink: "First 72 hours plan",
+    salonNot: "This screen is for the stage.",
+  },
+  proj: {
+    baslik: "See your own multiplication",
+    alt: "I shook hands with 5 people in my first month. How many would you shake hands with per month?",
+    kisiEtiket: "people / month",
+    ay6: "Your network, month 6",
+    ay12: "Your network, month 12",
+    uyari: "This is a mathematical projection, not an income promise. Multiplying works for those who apply the system.",
+    kartPaylas: "Share the projection",
   },
   dunya: {
     baslik: "4 continents, 38 countries",
@@ -835,6 +930,9 @@ const EN: Icerik = {
     dugme: "Sign up",
     konu: "Monday Notes — sign up",
     govde: "Hi, I'd like to sign up for the Monday Notes newsletter.",
+    eposta: "Your email address",
+    tesekkur: "You're on the list. First note lands Monday.",
+    hata: "Sign-up is unavailable right now — send an email instead:",
   },
   kariyerZaman: [
     { yil: "2013", ay: "February", rutbe: "Started", not: "Month one, I shook hands with 5 people." },
@@ -846,4 +944,11 @@ const EN: Icerik = {
   ],
 };
 
-export const ICERIK: Record<Dil, Icerik> = { tr: TR, en: EN };
+export const ICERIK: Record<Dil, Icerik> = {
+  tr: TR,
+  en: EN,
+  de: DE,
+  es: ES,
+  ru: RU,
+  az: AZ,
+};

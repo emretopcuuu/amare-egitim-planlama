@@ -82,7 +82,7 @@ export async function planMaddesineDanis(
   };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("plan-danis");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 1024,

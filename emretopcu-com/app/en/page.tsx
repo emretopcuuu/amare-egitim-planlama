@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Presidential Diamond at One Team Global. A direct-sales leader who builds teams, raises leaders, and does it all with a system.",
   alternates: {
     canonical: "/en",
-    languages: { tr: "/", en: "/en" },
+    languages: { tr: "/", en: "/en", de: "/de", es: "/es", ru: "/ru", az: "/az" },
   },
   openGraph: {
     title: "Emre Topçu | Leadership, team and system",

@@ -101,7 +101,7 @@ export async function ayMektubuGetirVeyaUret(
       korNokta,
     };
 
-    const client = aynaClient();
+    const client = aynaClient("ay-mektubu");
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 2048,

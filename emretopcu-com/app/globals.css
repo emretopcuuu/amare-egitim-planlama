@@ -71,8 +71,21 @@ body::after {
   border-radius: 6px;
 }
 
+/* Sayfalar arası sinematik geçiş (View Transitions API) — tam sayfa
+   gezinmelerde yumuşak çapraz geçiş. Desteklemeyen tarayıcı yok sayar. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  @view-transition {
+    navigation: none;
   }
 }
