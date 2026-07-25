@@ -3584,6 +3584,13 @@ export const tr = {
       "Bugünün görevini aldın. Yarın sabah 09:00–11:00 arası yenisi düşecek.",
     bosYolculukBekle:
       "Yeni görevin sabah 09:00–11:00 penceresinde düşer. AYNA seni yolda yalnız bırakmıyor.",
+    // [MALİYET] Yanıtsız görev sonrası otomatik üretim durdu — suçlama yok,
+    // "sıra sende" dili: kişi hazır olduğunda kendi çeker.
+    bosYolculukDurakladi:
+      "Sana üst üste görev yığmıyorum. Hazır olduğunda sıradakini kendin iste.",
+    durakladiBaslik: "🌙 Bekletiyorum, üstüne yığmıyorum",
+    durakladiMetin:
+      "Son görevin cevapsız kapandı — olur böyle. Yenisini otomatik göndermek yerine seni bekledim. Hazırsan tek dokunuşla taze bir görev alalım.",
     // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık
     bosSiradakiSaat: (saat: string) => `Sıradaki tur ~${saat} civarı gelebilir.`,
     bosHazirlan: "Hazırlan: telefonun sesi açık olsun, gözün çevrende.",

@@ -276,12 +276,15 @@ export default async function AnaSayfa({
     if (bayrak.get("bugu_acik")) {
       const sg = (kisi as { son_gorulme?: string | null }).son_gorulme;
       elmasBugulu = !!sg && Date.now() - Date.parse(sg) > 24 * 3_600_000;
-      await db
-        .from("participants")
-        .update({ son_gorulme: new Date().toISOString() })
-        .eq("id", session.sub)
-        .then(() => {}, () => {}); // fire-and-forget; akışı bloklamaz
     }
+    // [MALİYET] son_gorulme damgası artık bayraktan BAĞIMSIZ: yolculuk görev
+    // kapısı (lib/tik.ts) bunu "kişi geri döndü" sinyali olarak okuyor. Buğu
+    // bayrağı kapatılırsa damga da dururdu ve yanıtsız kişi kalıcı duraklardı.
+    await db
+      .from("participants")
+      .update({ son_gorulme: new Date().toISOString() })
+      .eq("id", session.sub)
+      .then(() => {}, () => {}); // fire-and-forget; akışı bloklamaz
   }
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
