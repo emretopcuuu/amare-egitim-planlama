@@ -63,8 +63,8 @@ const KATEGORI_RENK = {
 };
 
 const DIL_PATTERNS = [
-  { kod: 'RU', etiket: 'Rusça',      regex: /russian|russia|русск|россия|russisch|презентац|продукт/i },
-  { kod: 'EN', etiket: 'İngilizce',  regex: /\benglish\b|englisch|\(en\)|in english|\bbusiness presentation\b|english dub/i },
+  { kod: 'RU', tKey: 'lang_ru', etiket: 'Rusça',      regex: /russian|russia|русск|россия|russisch|презентац|продукт/i },
+  { kod: 'EN', tKey: 'lang_en', etiket: 'İngilizce',  regex: /\benglish\b|englisch|\(en\)|in english|\bbusiness presentation\b|english dub/i },
   { kod: 'DE', etiket: 'Almanca',    regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)|gesch[aä]ftspr[aä]sentation|produktpr[aä]sentation/i },
   { kod: 'NL', etiket: 'Hollandaca', regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)|gezondheidsdriehoek|productpresentatie/i },
 ];
@@ -565,7 +565,7 @@ const KayitliEgitimlerSayfasi = () => {
     }));
     if (dilKod !== 'all') {
       const d = DILLER.find(x => x.kod === dilKod);
-      list.push({ kod: 'dil', etiket: d?.etiket, kaldir: () => { haptic(8); setDilKod('all'); }, renk: 'bg-white/20 text-white' });
+      list.push({ kod: 'dil', etiket: d?.tKey ? t(d.tKey) : d?.etiket, kaldir: () => { haptic(8); setDilKod('all'); }, renk: 'bg-white/20 text-white' });
     }
     if (egitmenCoreId) {
       list.push({ kod: 'eg', etiket: egitmenAdMap.get(egitmenCoreId) || egitmenCoreId, kaldir: () => { haptic(8); setEgitmenCoreId(''); }, renk: 'bg-white/20 text-white' });
@@ -785,8 +785,8 @@ const KayitliEgitimlerSayfasi = () => {
                   <svg className="w-4 h-4 text-purple-900" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-amber-100 text-xs sm:text-sm font-bold">📺 2000+ eğitime ücretsiz eriş</div>
-                  <div className="text-amber-200/80 text-[10px] sm:text-xs">Marka Ortağı girişi yap — email/telefon/Amare ID ile saniyeler içinde</div>
+                  <div className="text-amber-100 text-xs sm:text-sm font-bold">{t('rec_free_access')}</div>
+                  <div className="text-amber-200/80 text-[10px] sm:text-xs">{t('rec_login_cta')}</div>
                 </div>
               </div>
               <span className="bg-amber-400 hover:bg-amber-300 text-purple-900 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -830,7 +830,7 @@ const KayitliEgitimlerSayfasi = () => {
             {/* Segmented control: 2 seçenek tek kapsülde */}
             <div className="inline-flex rounded-full bg-black/30 border border-white/15 p-0.5 shadow-inner">
               <button onClick={() => { haptic(5); setTranscriptAramaAcik(false); }}
-                title="Sadece video başlığı + eğitmen adında arar"
+                title={t('rec_search_title_only')}
                 className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold spring-tap transition-all ${
                   !transcriptAramaAcik
                     ? 'bg-white text-purple-900 shadow-md'
@@ -839,7 +839,7 @@ const KayitliEgitimlerSayfasi = () => {
                 Başlık
               </button>
               <button onClick={() => { haptic(8); setTranscriptAramaAcik(true); }}
-                title="Eğitimde söylenen tüm konuşmalarda derin arama yapar"
+                title={t('rec_search_deep')}
                 className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold spring-tap transition-all ${
                   transcriptAramaAcik
                     ? 'bg-amber-400 text-purple-900 shadow-md ring-2 ring-amber-300/50'
@@ -856,7 +856,7 @@ const KayitliEgitimlerSayfasi = () => {
             {/* Eş anlamlılar — sadece içerik aramada görünür */}
             {transcriptAramaAcik && (
               <button onClick={() => { haptic(8); setSynonimAcik(s => !s); }}
-                title="Eş anlamlı kelimeleri de ara (örn: lider → önder, liderlik)"
+                title={t('rec_synonym_title')}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold spring-tap transition-all border ${
                   synonimAcik
                     ? 'bg-sky-400 text-purple-900 border-sky-300 shadow-md'
@@ -888,7 +888,7 @@ const KayitliEgitimlerSayfasi = () => {
           {transcriptAramaAcik && synonimGenisletildi && kullanilanTerimler.length > 1 && (
             <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-400/15 border border-sky-300/40 text-sky-100 text-[11px] sm:text-xs animate-fade-in flex-wrap">
               <Sparkles className="w-3.5 h-3.5 text-sky-300 flex-shrink-0" />
-              <span>Eş anlamlılarla arandı:</span>
+              <span>{t('rec_synonym_used')}</span>
               {kullanilanTerimler.slice(0, 6).map(term => (
                 <span key={term} className="px-1.5 py-0.5 rounded-full bg-sky-300/20 text-sky-100 font-semibold">
                   {term}
@@ -1217,8 +1217,8 @@ const EmptyState = ({ t, onClear, hasFilters, loadHatasi }) => (
     {loadHatasi ? (
       <>
         <RotateCw className="w-16 h-16 mx-auto mb-3 opacity-40 text-amber-300/70" />
-        <p className="text-lg text-white/80 font-bold">Eğitimler yüklenemedi</p>
-        <p className="text-sm text-white/50 mt-1 max-w-sm mx-auto">Bağlantı sorunu olabilir. Yenileyince düzelir.</p>
+        <p className="text-lg text-white/80 font-bold">{t('rec_load_error')}</p>
+        <p className="text-sm text-white/50 mt-1 max-w-sm mx-auto">{t('rec_load_error_desc')}</p>
         <button onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-5 py-2.5 rounded-xl spring-tap">
           <RotateCw className="w-4 h-4" />Yenile
@@ -1565,7 +1565,7 @@ const VideoKart = ({ video: v, t, tDynamic = (s) => s, favori, izlendi, progress
                 <svg className="w-7 h-7 text-purple-900" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
               </div>
               <div className="absolute bottom-2 left-2 right-2 text-center bg-black/70 backdrop-blur-sm rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-amber-300 text-[10px] font-bold uppercase tracking-wider">Marka Ortağı girişi gerekir</span>
+                <span className="text-amber-300 text-[10px] font-bold uppercase tracking-wider">{t('rec_login_required')}</span>
               </div>
             </>
           ) : (
