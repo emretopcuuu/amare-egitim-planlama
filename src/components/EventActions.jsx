@@ -4,8 +4,10 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarPlus, Share2, Check, Link2, X } from 'lucide-react';
 import { downloadICS, googleCalendarUrl, outlookCalendarUrl, whatsappShareUrl, copyDeepLink } from '../utils/eventActions';
+import { useTranslation } from '../context/LanguageContext';
 
 const EventActions = ({ egitim, dark = false, compact = false }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -75,7 +77,7 @@ const EventActions = ({ egitim, dark = false, compact = false }) => {
       <button ref={triggerRef} type="button" onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
         className={triggerCls} title="Takvime ekle, paylaş, link kopyala">
         <Share2 className="w-3.5 h-3.5" />
-        {!compact && <span>Paylaş</span>}
+        {!compact && <span>{t('rec_share_aria')}</span>}
       </button>
       {open && createPortal(
         <div ref={menuRef}

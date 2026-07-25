@@ -1,6 +1,12 @@
 const translations = {
   // ─── COMMON ────────────────────────────────────────────────────────────────
   tr: {
+    // Mobil alt navigasyon (BottomNav)
+    nav_home: 'Anasayfa',
+    nav_calendar: 'Takvim',
+    nav_trainers: 'Eğitmenler',
+    nav_recorded: 'Kayıtlı',
+    nav_profile: 'Profil',
     // Common
     back_home: 'Ana Sayfaya Dön',
     back: 'Ana Sayfa',
@@ -242,6 +248,12 @@ const translations = {
 
   // ─── ENGLISH ────────────────────────────────────────────────────────────────
   en: {
+    // Mobile bottom navigation (BottomNav)
+    nav_home: 'Home',
+    nav_calendar: 'Calendar',
+    nav_trainers: 'Trainers',
+    nav_recorded: 'Recorded',
+    nav_profile: 'Profile',
     back_home: 'Back to Home',
     back: 'Home',
     submit: 'Submit',
@@ -473,6 +485,12 @@ const translations = {
 
   // ─── GERMAN ─────────────────────────────────────────────────────────────────
   de: {
+    // Mobile untere Navigation (BottomNav)
+    nav_home: 'Start',
+    nav_calendar: 'Kalender',
+    nav_trainers: 'Trainer',
+    nav_recorded: 'Aufnahmen',
+    nav_profile: 'Profil',
     back_home: 'Zurück zur Startseite',
     back: 'Startseite',
     submit: 'Absenden',
@@ -703,6 +721,12 @@ const translations = {
   },
 
   nl: {
+    // Mobiele onderste navigatie (BottomNav)
+    nav_home: 'Home',
+    nav_calendar: 'Agenda',
+    nav_trainers: 'Trainers',
+    nav_recorded: 'Opnames',
+    nav_profile: 'Profiel',
     back_home: 'Terug naar Startpagina',
     back: 'Startpagina',
     submit: 'Versturen',
