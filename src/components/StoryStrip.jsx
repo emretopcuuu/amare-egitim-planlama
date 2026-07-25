@@ -33,6 +33,7 @@ const splitEgitmen = (e) => {
 };
 
 const StoryStrip = ({ takvim, konusmacilar }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -180,7 +181,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
     <>
       <div className="-mx-4 px-4 mb-4">
         <div className="flex items-center gap-2 mb-2 text-purple-200 text-xs uppercase tracking-wider font-semibold">
-          <span>Önümüzdeki Eğitmenler</span>
+          <span>{t('cal_upcoming_trainers')}</span>
           <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full text-[10px] normal-case tracking-normal">
             En aktif {konusmaciListesi.length}
           </span>

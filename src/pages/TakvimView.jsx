@@ -221,7 +221,7 @@ const CountdownBadge = ({ egitim }) => {
   };
   if (cd.durum === 'canli') return cd.gec
     ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-amber-500 text-white ring-4 ring-amber-300/40"><Timer className="w-3.5 h-3.5" />{t('badge_ongoing')}</span>
-    : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />ŞİMDİ CANLI</span>;
+    : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />{t('cal_now_live')}</span>;
   if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">{t('cd_completed')}</span>;
   // 1 dakika kala — dev rozet + altın halka
   const oneMinuteAway = cd.durum === 'yakin' && cd.gun === 0 && cd.sa === 0 && cd.dakika <= 1;
@@ -308,7 +308,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             {yurtdisi && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-gray-900 shadow"><span>{yurtdisi.bayrak}</span>{yurtdisi.kisa}</span>}
             {cd?.durum === 'canli' && (cd.gec
               ? <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
-              : <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>)}
+              : <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
           </div>
         </div>
       )}
@@ -322,7 +322,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
               {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
               {cd?.durum === 'canli' && (cd.gec
                 ? <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
-                : <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>)}
+                : <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
             </div>
 
             <h2 className={`${titleSize} font-extrabold text-white leading-tight font-display`}>{tDynamic(egitim.egitim)}</h2>
@@ -389,7 +389,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                   <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
                     onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
                     className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-sm md:text-base' : 'px-3 py-2 text-xs'} bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
-                    <CalendarDays className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />Rezervasyon Yap
+                    <CalendarDays className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />{t('cal_reserve')}
                   </a>
                 )}
                 <button onClick={()=>onHatirlatma?.(egitim)}
@@ -1094,7 +1094,7 @@ const TakvimView = () => {
               <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
                 onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
                 className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl shadow spring-tap">
-                <CalendarDays className="w-4 h-4" />Rezervasyon Yap
+                <CalendarDays className="w-4 h-4" />{t('cal_reserve')}
               </a>
             )}
             {!gecmis && (
@@ -1155,9 +1155,9 @@ const TakvimView = () => {
                   {!gecmis && <EventActions egitim={egitim} />}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
-                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.saat ? <>{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-gray-400">({egitim.sure})</span>}</> : <span className="text-amber-600 italic">Saat henüz belirlenmedi</span>}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.saat ? <>{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-gray-400">({egitim.sure})</span>}</> : <span className="text-amber-600 italic">{t('cal_time_tbd')}</span>}</span>
                   {egitim.yer && <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5 text-blue-500" />:<MapPin className="w-3.5 h-3.5 text-red-400" />}<span className="truncate max-w-[220px]">{online?'Zoom':egitim.yer}</span></span>}
-                  {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200" title="Zoom raporundan gerçek katılım (üye girişi yapanlar görür)">📊 {egitim.zoomGercekKatilim} kişi katıldı{egitim.zoomOrtDakika?` · ort. ${egitim.zoomOrtDakika} dk`:''}</span>}
+                  {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200" title={t('cal_zoom_real')}>📊 {egitim.zoomGercekKatilim} {t('cal_attended')}{egitim.zoomOrtDakika?` · ${t('cal_avg')} ${egitim.zoomOrtDakika} dk`:''}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
@@ -1167,7 +1167,7 @@ const TakvimView = () => {
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? (
                   <span className="inline-flex items-center gap-2 flex-wrap">
                     <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a>
-                    {egitim.katilTiklamaSayisi > 0 && <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} kişi katıldı</span>}
+                    {egitim.katilTiklamaSayisi > 0 && <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} {t('cal_attended')}</span>}
                   </span>
                 ) : null; })()}
                 {/* Fiziki etkinlik → Katlama rezervasyon (farkındalık: tıklama sayılır) */}
@@ -1175,7 +1175,7 @@ const TakvimView = () => {
                   <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
                     onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
                     className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all">
-                    <CalendarDays className="w-3.5 h-3.5" />Rezervasyon Yap
+                    <CalendarDays className="w-3.5 h-3.5" />{t('cal_reserve')}
                   </a>
                 )}
               </div>
@@ -1250,11 +1250,11 @@ const TakvimView = () => {
                 {/* Bu butonlar mobile'da bottom nav ile duplicate — sadece md+ ekranlarda göster */}
                 <button onClick={()=>navigate('/konusmacilar')}
                   className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
-                  <User className="w-4 h-4" />Eğitmenler
+                  <User className="w-4 h-4" />{t('trainers_title')}
                 </button>
                 <button onClick={()=>navigate('/kayitli-egitimler')}
                   className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
-                  <Video className="w-4 h-4" />Kayıtlı Eğitimler
+                  <Video className="w-4 h-4" />{t('rec_title')}
                 </button>
                 <button onClick={exportPDF} disabled={pdfYukleniyor} className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
@@ -1265,8 +1265,8 @@ const TakvimView = () => {
                     title="Marka Ortağı girişi yap (email/telefon/Amare ID)"
                     className="flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/40 border border-amber-300/40 text-amber-100 px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
                     <LogIn className="w-4 h-4" />
-                    <span className="hidden sm:inline">Marka Ortağı Girişi</span>
-                    <span className="sm:hidden">Giriş</span>
+                    <span className="hidden sm:inline">{t('hp_giris')}</span>
+                    <span className="sm:hidden">{t('hp_giris_kisa')}</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-1">
@@ -1305,11 +1305,11 @@ const TakvimView = () => {
               <div className="bg-gradient-to-r from-amber-500/20 via-purple-600/20 to-pink-500/20 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider gold-glow">
-                    📍 Bugün
+                    📍 {t('cal_today_badge')}
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
-                    {bugunCanli > 0 && <span className="bg-red-500 text-white px-2.5 py-1 rounded-full font-bold animate-pulse inline-flex items-center gap-1"><span className="w-1.5 h-1.5 bg-white rounded-full" />{bugunCanli} CANLI</span>}
-                    {bugunGelecek > 0 && <span className="bg-green-500 text-white px-2.5 py-1 rounded-full font-bold">{bugunGelecek} GELECEK</span>}
+                    {bugunCanli > 0 && <span className="bg-red-500 text-white px-2.5 py-1 rounded-full font-bold animate-pulse inline-flex items-center gap-1"><span className="w-1.5 h-1.5 bg-white rounded-full" />{bugunCanli} {t('cal_live_short')}</span>}
+                    {bugunGelecek > 0 && <span className="bg-green-500 text-white px-2.5 py-1 rounded-full font-bold">{bugunGelecek} {t('cal_upcoming_short')}</span>}
                     {bugunGecmis > 0 && <span className="bg-white/15 text-white/70 px-2.5 py-1 rounded-full">{bugunGecmis} TAMAMLANDI</span>}
                   </div>
                   <span className="text-purple-200 text-sm ml-auto hidden sm:inline">{bugunEgitimleri.length} toplam eğitim bugün</span>
@@ -1326,10 +1326,10 @@ const TakvimView = () => {
               <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider gold-glow">
-                    🌍 Uluslararası
+                    🌍 {t('cal_intl_badge')}
                   </span>
                   <span className="text-amber-200 text-sm font-semibold">
-                    {yurtdisiYaklasan.length} yurtdışı etkinliği yaklaşıyor
+                    {yurtdisiYaklasan.length} {t('cal_intl_count')}
                   </span>
                 </div>
                 <Karusel okRenk="bg-amber-400/90 hover:bg-amber-400 text-gray-900">
@@ -1359,10 +1359,10 @@ const TakvimView = () => {
               <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 border-2 border-emerald-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
-                    📍 Türkiye
+                    📍 {t('cal_tr_badge')}
                   </span>
                   <span className="text-emerald-200 text-sm font-semibold">
-                    {yurticiFizikiYaklasan.length} şehirde fiziki etkinlik yaklaşıyor
+                    {yurticiFizikiYaklasan.length} {t('cal_tr_count')}
                   </span>
                 </div>
                 <Karusel okRenk="bg-emerald-400/90 hover:bg-emerald-400 text-gray-900">
@@ -1430,7 +1430,7 @@ const TakvimView = () => {
             {/* Hızlı zaman filtreleri + Bugün + Sıfırla — mobilde tek satır kaydırmalı (#9) */}
             <div className="flex items-center gap-2 mb-2 md:flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
               <button onClick={scrollToToday} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400 text-gray-900 hover:bg-amber-300 transition-all shadow">
-                <CalendarIcon className="w-3.5 h-3.5" />Bugün
+                <CalendarIcon className="w-3.5 h-3.5" />{t('cal_today_badge')}
               </button>
               {[{key:'bu-hafta',label:'Bu Hafta'},{key:'gelecek-7',label:'7 Gün'},{key:'gelecek-30',label:'30 Gün'}].map(z=>(
                 <button key={z.key} onClick={()=>setZamanFiltre(zamanFiltre===z.key?null:z.key)}
@@ -1452,7 +1452,7 @@ const TakvimView = () => {
                   {key:'tumu',label:t('cal_filter_all')},
                   {key:'online',label:t('cal_filter_online'),icon:<Wifi className="w-3.5 h-3.5" />},
                   {key:'offline',label:t('cal_filter_offline'),icon:<Building2 className="w-3.5 h-3.5" />},
-                  {key:'yurtdisi',label:'🌍 Yurt Dışı',special:true},
+                  {key:'yurtdisi',label:`🌍 ${t('cal_filter_abroad')}`,special:true},
                 ].map(f=>(
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap ${filtre===f.key
@@ -1502,7 +1502,7 @@ const TakvimView = () => {
                 <UsersIcon className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
                 <select value={konusmaciFiltre || ''} onChange={e=>setKonusmaciFiltre(e.target.value || null)}
                   className="bg-white/10 backdrop-blur border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-[280px]">
-                  <option value="" className="bg-purple-900">Tüm Eğitmenler ({tumKonusmacilar.length})</option>
+                  <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({tumKonusmacilar.length})</option>
                   {tumKonusmacilar.map(k => <option key={k} value={k} className="bg-purple-900">{k}</option>)}
                 </select>
                 <a href="/api/ical" target="_blank" rel="noopener noreferrer" title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"
@@ -1635,7 +1635,7 @@ const TakvimView = () => {
       {showScrollTop && (
         <button onClick={scrollToToday}
           className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-20 right-6 z-40 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white text-purple-800 font-extrabold text-sm shadow-2xl border-2 border-amber-300 transition-all hover:scale-105 spring-tap"
-          title="Bugünün eğitimlerine git" aria-label="Bugüne dön" data-no-pdf>
+          title={t('cal_today_go')} aria-label={t('cal_today_back')} data-no-pdf>
           📅 Bugün
         </button>
       )}
