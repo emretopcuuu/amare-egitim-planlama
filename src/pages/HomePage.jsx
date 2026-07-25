@@ -216,8 +216,8 @@ const HomePage = () => {
           <button onClick={() => setBultenModal(true)}
             className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
             <Newspaper className="w-4 h-4" />
-            <span className="hidden sm:inline">Haftalık Bülten</span>
-            <span className="sm:hidden">Bülten</span>
+            <span className="hidden sm:inline">{t('hp_bulten')}</span>
+            <span className="sm:hidden">{t('hp_bulten_kisa')}</span>
           </button>
           <div className="flex items-center gap-2">
             {currentUser ? (
@@ -226,15 +226,15 @@ const HomePage = () => {
                 title="Profilime git">
                 <User className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">
-                  {profilAdi || 'Profilim'}
+                  {profilAdi || t('hp_profilim')}
                 </span>
               </button>
             ) : (
               <button onClick={() => setGirisModal(true)}
                 className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
                 <LogIn className="w-4 h-4" />
-                <span className="hidden sm:inline">Marka Ortağı Girişi</span>
-                <span className="sm:hidden">Giriş</span>
+                <span className="hidden sm:inline">{t('hp_giris')}</span>
+                <span className="sm:hidden">{t('hp_giris_kisa')}</span>
               </button>
             )}
             <LanguageSwitcher />
@@ -258,8 +258,8 @@ const HomePage = () => {
           <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3">
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
             <span className="text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
-              <span className="text-amber-300">Girişimcilik </span>
-              <span className="text-gold-shimmer font-bold">Ekosistemi</span>
+              <span className="text-amber-300">{t('hp_kicker_1')} </span>
+              <span className="text-gold-shimmer font-bold">{t('hp_kicker_2')}</span>
             </span>
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
           </div>
@@ -268,9 +268,9 @@ const HomePage = () => {
           <LiveCounter
             className="mt-5 sm:mt-6"
             items={[
-              { deger: istatistik.egitmen, etiket: 'Eğitmen' },
-              { deger: istatistik.komisyon, etiket: 'Komisyon' },
-              { deger: istatistik.eğitim, etiket: 'Eğitim', sonek: '+' },
+              { deger: istatistik.egitmen, etiket: t('hp_stat_egitmen') },
+              { deger: istatistik.komisyon, etiket: t('hp_stat_komisyon') },
+              { deger: istatistik.eğitim, etiket: t('hp_stat_egitim'), sonek: '+' },
             ]}
           />
 
@@ -295,10 +295,10 @@ const HomePage = () => {
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
-              Eğitim Takvimi
+              {t('cal_title')}
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              Güncel eğitim takvimi
+              {t('hp_kart_takvim_desc')}
             </p>
           </button>
 
@@ -315,10 +315,10 @@ const HomePage = () => {
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
-              Hakkımızda
+              {t('hp_kart_hakkimizda')}
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              Misyon, vizyon, eğitmenler, komisyonlar ve liderler
+              {t('hp_kart_hakkimizda_desc')}
             </p>
           </button>
 
@@ -336,10 +336,10 @@ const HomePage = () => {
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
-              Ekip Yönetim Paneli
+              {t('hp_kart_ekip')}
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              Ekip yapısı ve saha yönetimi
+              {t('hp_kart_ekip_desc')}
             </p>
           </button>
         </div>
@@ -349,7 +349,7 @@ const HomePage = () => {
           <div className="max-w-5xl mx-auto mt-12 sm:mt-16">
             <div className="flex items-center justify-center gap-3 mb-5">
               <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
-              <span className="text-xs sm:text-sm uppercase tracking-[0.3em] font-semibold text-amber-300 whitespace-nowrap">🌍 Uluslararası Etkinlikler</span>
+              <span className="text-xs sm:text-sm uppercase tracking-[0.3em] font-semibold text-amber-300 whitespace-nowrap">🌍 {t('hp_intl')}</span>
               <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
             </div>
             <div className={`grid gap-4 ${uluslararasi.length === 1 ? 'max-w-xl mx-auto' : 'sm:grid-cols-2'}`}>
@@ -380,11 +380,11 @@ const HomePage = () => {
                         <a href={e.biletLink} target="_blank" rel="noopener noreferrer"
                           onClick={(ev) => ev.stopPropagation()}
                           className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg transition-all spring-tap">
-                          🎟 Bilet Al
+                          🎟 {t('bilet_al')}
                         </a>
                       )}
                       <span className="inline-flex items-center gap-1 text-purple-200/70 group-hover:text-amber-300 text-sm font-semibold transition">
-                        Detaylar <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        {t('hp_detaylar')} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </div>
                   </div>

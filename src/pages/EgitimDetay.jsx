@@ -375,7 +375,7 @@ const EgitimDetay = () => {
                 {egitim.biletLink && (
                   <a href={egitim.biletLink} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
-                    🎟 Bilet Al
+                    🎟 {t('bilet_al')}
                   </a>
                 )}
                 <button onClick={() => setHatirlatmaModal(true)}
