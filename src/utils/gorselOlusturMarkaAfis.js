@@ -248,6 +248,8 @@ export const ayarCikar = (ek) => {
   // konuşmacı arası boşluk
   if (has('sıkı aralık', 'sık aralık', 'dar aralık', 'sıkışık')) a.aralik = 'siki';
   if (has('geniş aralık', 'ferah', 'bol boşluk', 'aralıklı')) a.aralik = 'genis';
+  // "daha geniş aralık" 'geniş aralık'ı da içerir → bu satır ondan SONRA gelmeli (üste yazar)
+  if (has('daha geniş', 'çok geniş', 'ekstra geniş', 'iyice geniş', 'çok ferah')) a.aralik = 'cokgenis';
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
   // filigran (arka amblem) yoğunluğu
@@ -428,7 +430,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const rows = dagilim.length;
   // 3 sıra taban afişe rahat sığar; üstüne her sıra için boy uzat (aralık geniş → biraz daha)
   const ROWS_FIT = 3;
-  const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
+  const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'cokgenis' ? 1.5 : ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
   // Alt not / uyarı satırları (Enter → alt satır; en fazla 6). 2'den fazlaysa afiş AŞAĞI uzasın → taşma yok, hep sığar.
   const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
   const notExtra = Math.max(0, notSatirlari.length - 2) * Math.round(H * 0.045);
@@ -545,8 +547,8 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const startX = Math.round((W - adet * buCellW) / 2); // satırı ortala
       // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
       // Aralık: konuşmacı arası boşluk (dikey gap + yatay hücre doluluğu).
-      const gapMul = ayar.aralik === 'siki' ? 0.6 : ayar.aralik === 'genis' ? 1.7 : 1;
-      const capMul = ayar.aralik === 'siki' ? 0.92 : ayar.aralik === 'genis' ? 0.72 : 0.86;
+      const gapMul = ayar.aralik === 'siki' ? 0.6 : ayar.aralik === 'genis' ? 1.7 : ayar.aralik === 'cokgenis' ? 2.4 : 1;
+      const capMul = ayar.aralik === 'siki' ? 0.92 : ayar.aralik === 'genis' ? 0.72 : ayar.aralik === 'cokgenis' ? 0.62 : 0.86;
       const nameSize = Math.round(Math.max(15, Math.min(Math.round(buCellW * 0.048), 26)) * ayar.yazi);
       const roleSize = Math.round(Math.max(13, Math.min(Math.round(buCellW * 0.038), 18)) * ayar.yazi);
       const pillH = Math.round(nameSize * 1.7);

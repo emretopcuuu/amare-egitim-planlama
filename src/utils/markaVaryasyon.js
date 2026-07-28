@@ -23,6 +23,7 @@ export const MARKA_VARYASYON = [
   { grup: 'Aralık', tekil: true, secenekler: [
     { key: 'aralik-siki', label: 'Sıkı', cmd: 'sıkı aralık' },
     { key: 'aralik-genis', label: 'Geniş', cmd: 'geniş aralık' },
+    { key: 'aralik-dahagenis', label: 'Daha Geniş', cmd: 'daha geniş aralık' },
   ] },
   { grup: 'Tema', tekil: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
