@@ -1368,6 +1368,12 @@ export const tr = {
     hbbAyEtiket: (n: number) => `${n}. ay`,
     hbbToplamSatir: "İlk 3 ay",
     hbbNot: "Bunlar örnek senaryolardır, gelir garantisi değildir. Bu hızlı başlangıçtan sonra aşağıdan seçeceğin uzun vadeli hedefe doğru planlarsın.",
+    // Son şart — Amare HBB hüküm & koşulları (1 Tem 2026): rütbeye ulaşmak TEK BAŞINA
+    // yetmiyor. Kartta HER ZAMAN görünür (kademe tutulmuş olsun olmasın) — kimse atlamasın.
+    hbbSartBaslik: "Rütbe tek başına yetmez",
+    hbbSartMetin:
+      "Bonusun kesinleşmesi için aynı ay içinde en az 500 PV kişisel yeni müşteri hacmi ya da 1 yeni marka ortağı kaydı gerekir.",
+    hbbSartTeyit: "Bu şartı buradan göremiyoruz — kesin durumu amare.com back office'ten kontrol et.",
     // Somutlaştırma wizard'ı
     wizardIntro: "Sana 3 soru soracağım. Cevaplarına göre kariyer planını oluşturacağım:",
     soruEtiket: (n: number) => `SORU ${n}/3`,
