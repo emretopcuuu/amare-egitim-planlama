@@ -5,7 +5,11 @@
 //     → amare_raw_members / crm_members / email_overrides'taki email'i döner (durumla).
 //   POST { mode:'kaydet', amareId, yeniEmail }
 //     → email_overrides'a KİLİTLER (scraper ezmesin) + amare_raw_members.email +
-//       crm_members.email PATCH → tüm sistemlerde kalıcı düzeltme.
+//       crm_members.email PATCH + HBB/Supabase auth kullanıcısı → tüm sistemlerde
+//       kalıcı düzeltme.
+//   POST { mode:'maske-temizle' }
+//     → amare_raw_members / crm_members'taki maskeli ("*****") email+telefon
+//       değerlerini NULL'a çeker (bkz. MASKE notu aşağıda).
 //
 // Hepsi tek Supabase projesinde (yvpstkbwglefxukfpgyd). service-role, RLS bypass.
 // email_overrides: scraper upsert sonrası amare_raw_members'a geri uygular (kalıcılık).
@@ -34,6 +38,14 @@ const CORS = {
 const jr = (b, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json', ...CORS } });
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// MASKE: Amare back office bazı kayıtların email/telefonunu maskeleyerek ("*****")
+// gösteriyor; scraper bunu DÜZ METİN olarak yazıyor. Sonuç: kayıt "email'i var" gibi
+// görünür ama hiçbir eşleşmeye girmez ve kimse sorunu fark etmez (Oğuzcan Çiftçi
+// vakası, 3 Ağu 2026 — ID 2051852'de email='*****'). Maskeli değer = veri YOK.
+const MASKE_RE = /^\*+$/;
+const maskeliMi = (v) => MASKE_RE.test(String(v ?? '').trim());
+const maskesiz = (v) => { const s = String(v ?? '').trim(); return (!s || maskeliMi(s)) ? null : s; };
+
 const sbHeaders = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
 async function sbGet(path) {
   const r = await fetch(`${SB_URL}/rest/v1/${path}`, { headers: sbHeaders });
@@ -52,6 +64,44 @@ async function sbUpsert(table, body) {
     method: 'POST', headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(body),
   });
   return { ok: r.ok, status: r.status };
+}
+// Serbest filtreli PATCH (maske temizliği için) — filtre PostgREST sorgu dizesi.
+async function sbPatchFiltre(table, filtre, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${filtre}`, {
+    method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=representation' }, body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => []);
+  return { ok: r.ok, adet: Array.isArray(data) ? data.length : 0 };
+}
+
+// ── HBB / Supabase auth ────────────────────────────────────────────────────
+// HBB girişi signInWithOtp({ shouldCreateUser:false }) ile çalışıyor: email auth'ta
+// KAYITLI DEĞİLSE Supabase kod GÖNDERMEZ ve kullanıcı "kod gelmiyor" der (sessiz
+// başarısızlık). Bu yüzden email'i düzeltirken auth kullanıcısını da açıyoruz —
+// yoksa düzeltme "kaydedildi" görünür ama kişi yine giremez.
+async function authKullaniciVar(email) {
+  if (!email) return null;
+  try {
+    const r = await fetch(`${SB_URL}/auth/v1/admin/users?page=1&per_page=50&filter=${encodeURIComponent(email)}`, { headers: sbHeaders });
+    if (!r.ok) return null;
+    const j = await r.json().catch(() => null);
+    if (!Array.isArray(j?.users)) return null;
+    return j.users.some(u => String(u.email || '').toLowerCase() === email.toLowerCase());
+  } catch { return null; }
+}
+async function authKullaniciOlustur(email) {
+  try {
+    const r = await fetch(`${SB_URL}/auth/v1/admin/users`, {
+      method: 'POST', headers: sbHeaders,
+      body: JSON.stringify({ email, email_confirm: true }),
+    });
+    if (r.ok) return { ok: true, durum: 'oluşturuldu' };
+    const j = await r.json().catch(() => ({}));
+    const mesaj = String(j.error_code || j.msg || j.message || j.error || '');
+    // Zaten kayıtlıysa GoTrue 422 döner — bu bir hata değil, istenen son durum.
+    if (r.status === 422 || /exist|registered|duplicate/i.test(mesaj)) return { ok: true, durum: 'zaten vardı' };
+    return { ok: false, durum: `HATA (${r.status})` };
+  } catch (e) { return { ok: false, durum: 'HATA' }; }
 }
 
 export default async (req) => {
@@ -92,11 +142,37 @@ export default async (req) => {
     [...raw, ...crm].forEach(r => {
       const id = String(r.amare_id || '');
       if (id && !map.has(id)) map.set(id, {
-        amareId: id, isim: r.full_name || '', email: r.email || '',
-        telefonSon4: String(r.phone || '').replace(/\D/g, '').slice(-4),
+        amareId: id, isim: r.full_name || '', email: maskesiz(r.email) || '',
+        telefonSon4: String(maskesiz(r.phone) || '').replace(/\D/g, '').slice(-4),
       });
     });
     return jr({ adaylar: [...map.values()].slice(0, 20) });
+  }
+
+  // Maske temizliği — ID gerektirmez. Scraper'ın düz metin yazdığı "*****" değerlerini
+  // NULL'a çeker; idempotent, her re-sync sonrası tekrar çalıştırılabilir.
+  if (body.mode === 'maske-temizle') {
+    const maskeFiltre = (kolon) => `${kolon}=eq.${encodeURIComponent('*****')}`;
+    const [re, rp, ce, cp] = await Promise.all([
+      sbPatchFiltre('amare_raw_members', maskeFiltre('email'), { email: null }),
+      sbPatchFiltre('amare_raw_members', maskeFiltre('phone'), { phone: null }),
+      sbPatchFiltre('crm_members', maskeFiltre('email'), { email: null }),
+      sbPatchFiltre('crm_members', maskeFiltre('phone'), { phone: null }),
+    ]);
+    const hepsiOk = re.ok && rp.ok && ce.ok && cp.ok;
+    const toplam = re.adet + rp.adet + ce.adet + cp.adet;
+    return jr({
+      ok: hepsiOk, toplam,
+      sonuc: {
+        'amare_raw_members.email': re.ok ? re.adet : 'HATA',
+        'amare_raw_members.phone': rp.ok ? rp.adet : 'HATA',
+        'crm_members.email': ce.ok ? ce.adet : 'HATA',
+        'crm_members.phone': cp.ok ? cp.adet : 'HATA',
+      },
+      mesaj: hepsiOk
+        ? (toplam ? `${toplam} maskeli değer temizlendi (NULL).` : 'Maskeli kayıt yok — temiz.')
+        : 'Bazı temizlikler başarısız — sonucu kontrol et.',
+    }, hepsiOk ? 200 : 207);
   }
 
   const amareId = String(body.amareId || '').trim();
@@ -110,13 +186,18 @@ export default async (req) => {
     ]);
     const isim = raw[0]?.full_name || crm[0]?.full_name || '';
     if (!raw.length && !crm.length) return jr({ bulundu: false, amareId, isim: '', sistemler: [] });
+    // Maskeli değer email DEĞİLDİR: email null döner, ayrı `maskeli` bayrağı UI'da
+    // "🙈 maskeli — gerçek email yok" rozetini gösterir.
+    const gecerliEmail = maskesiz(ov[0]?.email) || maskesiz(raw[0]?.email) || maskesiz(crm[0]?.email);
     return jr({
       bulundu: true, amareId, isim,
       sistemler: [
-        { anahtar: 'amare_raw_members', ad: 'Eğitim Takvimi / Giriş', email: raw[0]?.email || null, kayitVar: !!raw.length, resyncEzer: true },
-        { anahtar: 'crm_members', ad: 'CRM · HBB · Vizyon', email: crm[0]?.email || null, kayitVar: !!crm.length, resyncEzer: false },
+        { anahtar: 'amare_raw_members', ad: 'Eğitim Takvimi / Giriş', email: maskesiz(raw[0]?.email), maskeli: maskeliMi(raw[0]?.email), kayitVar: !!raw.length, resyncEzer: true },
+        { anahtar: 'crm_members', ad: 'CRM · HBB · Vizyon', email: maskesiz(crm[0]?.email), maskeli: maskeliMi(crm[0]?.email), kayitVar: !!crm.length, resyncEzer: false },
       ],
       kilit: ov[0] ? { email: ov[0].email, tarih: ov[0].updated_at, duzelten: ov[0].duzelten } : null,
+      // HBB/asistan/90gün girişi bu email auth'ta kayıtlıysa çalışır (null = kontrol edilemedi)
+      girisHesabi: { email: gecerliEmail || null, var: gecerliEmail ? await authKullaniciVar(gecerliEmail) : null },
     });
   }
 
@@ -130,7 +211,8 @@ export default async (req) => {
       sbGet(`crm_members?amare_id=eq.${amareId}&select=email&limit=1`),
     ]);
     if (!raw.length && !crm.length) return jr({ error: 'Bu Amare ID hiçbir tabloda bulunamadı.' }, 404);
-    const eskiEmail = raw[0]?.email || crm[0]?.email || null;
+    // Maskeli değer audit'e "eski email" olarak yazılmaz — o bir adres değil, maske.
+    const eskiEmail = maskesiz(raw[0]?.email) || maskesiz(crm[0]?.email) || null;
 
     // 1) email_overrides KİLİT (scraper ezmesin) — kalıcılık anahtarı
     const ovRes = await sbUpsert('email_overrides', {
@@ -141,24 +223,27 @@ export default async (req) => {
     const rawRes = raw.length ? await sbPatch('amare_raw_members', amareId, { email: yeniEmail }) : { ok: true, adet: 0 };
     // 3) crm_members.email (CRM/HBB/Vizyon) — kayıt varsa
     const crmRes = crm.length ? await sbPatch('crm_members', amareId, { email: yeniEmail }) : { ok: true, adet: 0 };
+    // 4) HBB/Supabase auth kullanıcısı — bu olmadan kişi "kod gelmiyor" der (yukarıdaki nota bak)
+    const authRes = await authKullaniciOlustur(yeniEmail);
 
     // audit (Firestore — mevcut audit deseni)
     try {
       await admin.firestore().collection('kimlik_email_log').add({
         amareId, eskiEmail, yeniEmail, duzelten: decoded.email || null,
-        raw: rawRes.ok, crm: crmRes.ok, override: ovRes.ok,
+        raw: rawRes.ok, crm: crmRes.ok, override: ovRes.ok, auth: authRes.durum,
         ts: admin.firestore.FieldValue.serverTimestamp(),
       });
     } catch {}
 
-    const basarili = ovRes.ok && rawRes.ok && crmRes.ok;
+    const basarili = ovRes.ok && rawRes.ok && crmRes.ok && authRes.ok;
     return jr({
       ok: basarili, amareId, yeniEmail, eskiEmail,
       sonuc: {
         kilit: ovRes.ok, 'Eğitim Takvimi': rawRes.ok ? (rawRes.adet ? 'güncellendi' : 'kayıt yok') : 'HATA',
         'CRM/HBB/Vizyon': crmRes.ok ? (crmRes.adet ? 'güncellendi' : 'kayıt yok') : 'HATA',
+        'HBB Girişi': authRes.durum,
       },
-      mesaj: basarili ? 'Tüm sistemlerde güncellendi + kilitlendi (re-sync ezmez).' : 'Bazı yazımlar başarısız — sonucu kontrol et.',
+      mesaj: basarili ? 'Tüm sistemlerde güncellendi + kilitlendi (re-sync ezmez) + giriş hesabı hazır.' : 'Bazı yazımlar başarısız — sonucu kontrol et.',
     }, basarili ? 200 : 207);
   }
 
