@@ -46,6 +46,7 @@ import { sozKartiPaylas, sozStoryPaylas, projKartiPaylas } from "@/lib/sozKart";
 import { soruCevaplar, enIyiCevap } from "@/lib/soruCevap";
 import { olcum } from "@/lib/olcum";
 import { POPULER } from "@/lib/populer";
+import { IMZA } from "@/lib/imzaPath";
 import {
   EPOSTA,
   INSTAGRAM_URL,
@@ -145,8 +146,8 @@ function Acilis() {
   );
 }
 
-/* El yazısı imza — soldan sağa "yazılarak" belirir.
-   (Şimdilik stilize; gerçek imza SVG'siyle birebir değiştirilebilir.) */
+/* El yazısı imza — Emre'nin seçtiği tasarım imza (vektör), soldan sağa
+   "yazılarak" belirir. Renk currentColor ile temadan (altın) gelir. */
 function Imza({ className = "" }: { className?: string }) {
   const azalt = useReducedMotion();
   return (
@@ -155,10 +156,28 @@ function Imza({ className = "" }: { className?: string }) {
       whileInView={{ clipPath: "inset(0 0% 0 0)" }}
       viewport={{ once: true, amount: 0.8 }}
       transition={{ duration: 1.5, delay: 0.3, ease: "easeInOut" }}
-      className={`inline-block font-imza text-altin ${className}`}
+      className={`inline-block text-altin ${className}`}
       aria-label="Emre Topçu"
+      role="img"
     >
-      Emre Topçu
+      <svg
+        viewBox={IMZA.viewBox}
+        style={{ height: "1.6em", width: "auto" }}
+        fill="none"
+        aria-hidden
+      >
+        <g transform={`translate(${IMZA.pad},${IMZA.base}) scale(1,-1)`}>
+          <path d={IMZA.d} fill="currentColor" />
+        </g>
+        <path
+          d={IMZA.kuyruk}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={IMZA.kuyrukKalinlik}
+          strokeLinecap="round"
+          opacity={0.9}
+        />
+      </svg>
     </motion.span>
   );
 }
