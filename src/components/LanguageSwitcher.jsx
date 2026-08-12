@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
+import { gomuluMu } from '../utils/gomulu';
 
 // ── SVG bayraklar (20×15) — emoji bağımlılığı yok ──
 const Bayrak = ({ kod, className = 'w-5 h-[15px]' }) => {
@@ -52,6 +53,12 @@ const AD = { tr: 'Türkçe', en: 'English', de: 'Deutsch', nl: 'Nederlands' };
 const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
 const LanguageSwitcher = ({ className = '' }) => {
+  // 🔴 HİÇBİR HOOK'TAN ÖNCE: gömülü modda (OneTeam uygulamasının çerçevesi)
+  // dil seçici çizilmiyor — uygulama tek dilli ve bu düğme her sayfanın
+  // üstünde tekrar eden kabuğun parçasıydı. Bayrak sayfa ömrü boyunca
+  // değişmiyor (React yüklenmeden yazılıyor), o yüzden hook sayısı da sabit.
+  // Tarayıcıda takvim yine dört dilli — orada hiçbir şey değişmez.
+  if (gomuluMu()) return null;
   const { lang, setLang, SUPPORTED_LANGS } = useTranslation();
   const [acik, setAcik] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });

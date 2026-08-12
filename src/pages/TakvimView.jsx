@@ -1221,7 +1221,10 @@ const TakvimView = () => {
         {/* Header */}
         <div className="pt-6 pb-2 px-4">
           <div className="container mx-auto max-w-7xl">
-            <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf>
+            {/* data-kabuk="ust": gömülü modda (OneTeam uygulamasının çerçevesi)
+                bu bar gizleniyor — geri/dil/giriş zaten uygulamanın kendi
+                başlığında var, ikisi üst üste biniyordu. */}
+            <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf data-kabuk="ust">
               <button onClick={() => navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {/* MOBİL: dil+PDF "⋯" menüsünde (#4) — üst bar sade kalsın */}

@@ -3,6 +3,11 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { sentryBaslat, Sentry } from './utils/sentry'
+import { gomuluBaslat } from './utils/gomulu'
+
+// 🔴 EN BAŞTA: OneTeam uygulamasının çerçevesindeysek <html> işaretleniyor.
+// React'ten SONRA çalışsaydı mor kabuk bir kare görünüp kaybolurdu.
+gomuluBaslat()
 
 // Sentry — DSN yoksa NO-OP. Production'da PII redact ile aktif.
 sentryBaslat()
