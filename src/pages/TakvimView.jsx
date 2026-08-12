@@ -1219,7 +1219,10 @@ const TakvimView = () => {
       )}
       <div ref={contentRef}>
         {/* Header */}
-        <div className="pt-6 pb-2 px-4">
+        {/* data-kabuk="ustpay": gömülü modda üst pay küçülüyor. Uygulamanın
+            kendi başlığı hemen üstte duruyor; buradaki 24px'lik pay iki başlık
+            arasında boş bir şerit bırakıyordu (Emre, 12 Ağu: "çok boş alan"). */}
+        <div className="pt-6 pb-2 px-4" data-kabuk="ustpay">
           <div className="container mx-auto max-w-7xl">
             {/* Gömülü modda (OneTeam uygulamasının çerçevesi) bu barın tekrar
                 eden parçaları gizleniyor — geri/dil zaten uygulamanın kendi
