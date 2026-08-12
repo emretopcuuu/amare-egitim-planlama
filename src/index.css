@@ -566,6 +566,14 @@ html {
         gizleseydik yarın biri sınıfı değiştirir ve bar sessizce geri gelirdi. */
   html[data-gomulu] [data-kabuk="ust"] { display: none !important; }
 
+  /* Üst pay: uygulamanın başlığı hemen üstte duruyor, sayfanın kendi 24px'lik
+     payı iki başlık arasında boş şerit bırakıyordu. */
+  html[data-gomulu] [data-kabuk="ustpay"] { padding-top: .5rem; }
+  /* Misafirken bar tamamen gitmiyor (giriş düğmesi kalıyor, bkz. #884) —
+     o tek düğme koca bir satır kaplamasın: satır sıkışıyor ve düğme küçülüyor. */
+  html[data-gomulu] [data-kabuk="ustpay"] > div > div:first-child { margin-bottom: 0 }
+  html[data-gomulu] [data-kabuk="ustpay"] button { padding-top: .35rem; padding-bottom: .35rem }
+
   /* 3) ZEMİN: takvimin moru yerine uygulamanın gece laciverti. İki marka
         yan yana çarpışıyordu; altın vurgular zaten ortak, çarpışan tek şey
         mordu. Kartların kendi yüzeyleri de aynı aileye çekiliyor. */
