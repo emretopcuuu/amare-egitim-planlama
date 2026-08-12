@@ -4,10 +4,15 @@ import App from './App.jsx'
 import './index.css'
 import { sentryBaslat, Sentry } from './utils/sentry'
 import { gomuluBaslat } from './utils/gomulu'
+import { parcaKorumasiniBaslat } from './utils/gecYukle'
 
 // 🔴 EN BAŞTA: OneTeam uygulamasının çerçevesindeysek <html> işaretleniyor.
 // React'ten SONRA çalışsaydı mor kabuk bir kare görünüp kaybolurdu.
 gomuluBaslat()
+
+// Yeni sürüm yayınlandığında eski sekmenin JS parçası 404 verir → sayfayı
+// bir kez kendiliğinden yenile, kullanıcı hata ekranı görmesin.
+parcaKorumasiniBaslat()
 
 // Sentry — DSN yoksa NO-OP. Production'da PII redact ile aktif.
 sentryBaslat()
