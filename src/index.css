@@ -549,6 +549,35 @@ html {
     .pb-bottom-nav { padding-bottom: 3rem; }
   }
 
+  /* ══════ GÖMÜLÜ MOD — OneTeam uygulamasının çerçevesi ══════
+     Bayrağı utils/gomulu.js basıyor (<html data-gomulu="1">), React'ten önce.
+     🔴 Emre, 12 Ağu: takvim uygulamanın içinde açılınca ekranda İKİ alt çubuk,
+     İKİ başlık ve iki ayrı marka rengi üst üste biniyordu. Burada takvim kendi
+     kabuğunu bırakıyor; kabuk uygulamanın olsun diye.
+     Normal tarayıcıda bu blok hiç devreye girmez. */
+
+  /* 1) Alt çubuğun ayırdığı pay geri veriliyor — çubuk artık çizilmiyor
+        (BottomNav gömülü modda null döner), boşluğu da kalmamalı. */
+  html[data-gomulu] body { padding-bottom: 0; }
+  html[data-gomulu] .pb-bottom-nav { padding-bottom: 1.5rem; }
+
+  /* 2) Sayfaların kendi üst barı gizleniyor (geri bağlantısı, dil, giriş
+        düğmesi…). İşaretleme data-kabuk="ust" ile YAPILIYOR: sınıf adına göre
+        gizleseydik yarın biri sınıfı değiştirir ve bar sessizce geri gelirdi. */
+  html[data-gomulu] [data-kabuk="ust"] { display: none !important; }
+
+  /* 3) ZEMİN: takvimin moru yerine uygulamanın gece laciverti. İki marka
+        yan yana çarpışıyordu; altın vurgular zaten ortak, çarpışan tek şey
+        mordu. Kartların kendi yüzeyleri de aynı aileye çekiliyor. */
+  html[data-gomulu] .from-purple-900.via-purple-800.to-indigo-900,
+  html[data-gomulu] .from-purple-950.via-purple-900.to-indigo-950 {
+    background-image: linear-gradient(160deg, #101828 0%, #1d2b47 100%) !important;
+  }
+  html[data-gomulu] .bg-purple-950 { background-color: #16203a !important; }
+  html[data-gomulu] .bg-purple-900 { background-color: #1d2b47 !important; }
+  /* Dekor mor blur'ları sakinleşiyor: lacivert üstünde mor leke olarak kalıyorlardı. */
+  html[data-gomulu] .bg-purple-500\/20 { background-color: rgba(91,127,158,.18) !important; }
+
   /* ── Bottom sheet slide-in ────────────────────────────────── */
   .animate-slide-up {
     animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
