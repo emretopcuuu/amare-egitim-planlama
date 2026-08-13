@@ -394,6 +394,8 @@ export const AZ: Icerik = {
     sonEtiket: "Ən yeni video",
     planLink: "İlk 72 saat planı",
     testDavet: "Qərarsızsan? 2 dəqiqəlik testə başla; cavablarına əsasən danışarıq.",
+    sahneFotoNot: "İşıqlar sönür, alqış səngiyir; geriyə birlikdə yürünən yol qalır.",
+    kulisNot: "Kulis, səhnəyə çıxmazdan əvvəl. Ovcumda üç söz: Üşənmə. Təxirə salma. Təslim olma.",
     testDugme: "Testə başla",
     salonNot: "Bu ekran səhnə üçündür.",
   },
