@@ -396,6 +396,7 @@ export const ES: Icerik = {
     testDavet: "¿Indeciso? Haz el test de 2 minutos; hablamos según tus respuestas.",
     sahneFotoNot: "Las luces se apagan, el aplauso se desvanece; queda el camino recorrido juntos.",
     kulisNot: "Entre bastidores, antes de salir. Tres palabras en mi palma: No seas perezoso. No pospongas. No te rindas.",
+    dunyaVideoNot: "Lo mejor de 38 países no son los números: son los rostros.",
     testDugme: "Empezar el test",
     salonNot: "Esta pantalla es para el escenario.",
   },

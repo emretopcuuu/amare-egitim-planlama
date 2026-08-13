@@ -486,6 +486,54 @@ function DunyaBolum() {
   );
 }
 
+/* Dünya bölümünün insan yüzü — sahadan gerçek bir an (sessiz döngü).
+   Yalnız görünürken oynar; görünümden çıkınca durur (pil dostu). */
+function DunyaVideo() {
+  const c = useC();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const goz = new IntersectionObserver(
+      ([g]) => {
+        if (g.isIntersecting) v.play().catch(() => {});
+        else v.pause();
+      },
+      { threshold: 0.35 },
+    );
+    goz.observe(v);
+    return () => goz.disconnect();
+  }, []);
+  return (
+    <section className="pb-20 md:pb-28">
+      <motion.figure
+        initial={{ opacity: 0, y: 32 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.8, ease: GECIS }}
+        className="mx-auto max-w-3xl px-6"
+      >
+        <div className="overflow-hidden rounded-3xl border border-altin/20 shadow-[0_24px_70px_rgba(26,26,29,0.16)]">
+          <video
+            ref={videoRef}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="/video/afrika-poster.webp"
+            className="block w-full"
+          >
+            <source src="/video/afrika.mp4" type="video/mp4" />
+          </video>
+        </div>
+        <figcaption className="mx-auto mt-5 max-w-[44ch] text-center font-lux text-xl leading-snug text-fildisi md:text-2xl">
+          {c.ui.dunyaVideoNot}
+        </figcaption>
+      </motion.figure>
+    </section>
+  );
+}
+
 /* Dil değiştirici: TR / EN / RU / AZ (statik route'lara link). */
 const DILLER: Dil[] = ["tr", "en", "de", "es", "ru", "az"];
 function DilSecici() {
@@ -3238,6 +3286,7 @@ function ZirveIc() {
         <KatlamaProjeksiyon />
         <Rakamlar />
         <DunyaBolum />
+        <DunyaVideo />
         <Yolculuk />
         <LiderTipleri />
         <Gercekler />
