@@ -2436,7 +2436,7 @@ function Deyince() {
           </p>
         </motion.div>
 
-        {/* Öne çıkan sözler */}
+        {/* Öne çıkan sözler + ekipten bir an (2×2 denge) */}
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           {c.deyince.sozler.map((soz, i) => (
             <motion.blockquote
@@ -2452,6 +2452,22 @@ function Deyince() {
               <span className="text-altin/50">”</span>
             </motion.blockquote>
           ))}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.08, ease: GECIS }}
+            className="overflow-hidden rounded-2xl border border-altin/20"
+          >
+            <Image
+              src="/ekip.webp"
+              alt=""
+              width={1200}
+              height={900}
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="h-full w-full object-cover"
+            />
+          </motion.div>
         </div>
       </div>
     </section>
