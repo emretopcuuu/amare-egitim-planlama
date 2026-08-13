@@ -398,6 +398,8 @@ export const DE: Icerik = {
     kulisNot: "Backstage, kurz vor dem Auftritt. Drei Worte auf meiner Handfläche: Sei nicht faul. Schieb nicht auf. Gib nicht auf.",
     dunyaVideoNot: "Das Schönste an 38 Ländern sind nicht die Zahlen — es sind die Gesichter.",
     dunyaVideoNot2: "New York — ein Bild aus 38 Ländern.",
+    salonBosNot: "Jeder volle Saal war zuerst ein leerer Saal.",
+    salonDoluNot: "Stadt für Stadt, Saal für Saal — seit Jahren, jede Woche.",
     testDugme: "Test starten",
     salonNot: "Dieser Bildschirm ist für die Bühne.",
   },

@@ -398,6 +398,8 @@ export const AZ: Icerik = {
     kulisNot: "Kulis, səhnəyə çıxmazdan əvvəl. Ovcumda üç söz: Üşənmə. Təxirə salma. Təslim olma.",
     dunyaVideoNot: "38 ölkənin ən gözəl tərəfi rəqəmlər deyil — üzlərdir.",
     dunyaVideoNot2: "Nyu-York — 38 ölkədən bir kadr.",
+    salonBosNot: "Hər dolu salon əvvəlcə boş salon idi.",
+    salonDoluNot: "Şəhər-şəhər, salon-salon — illərdir hər həftə.",
     testDugme: "Testə başla",
     salonNot: "Bu ekran səhnə üçündür.",
   },

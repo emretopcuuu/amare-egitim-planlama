@@ -2399,6 +2399,55 @@ function Arsiv() {
             </a>
           </Manyetik>
         </motion.div>
+
+        {/* Boş arena bandı — "her dolu salon önce boştu" */}
+        <motion.figure
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: GECIS }}
+          className="relative mt-12 overflow-hidden rounded-3xl border border-altin/20"
+        >
+          <Image
+            src="/salon-bos.webp"
+            alt=""
+            width={960}
+            height={640}
+            sizes="(min-width: 1152px) 1104px, 100vw"
+            className="h-[300px] w-full object-cover md:h-[420px]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+          <figcaption className="absolute inset-x-0 bottom-6 px-6 text-center font-lux text-xl leading-snug text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.6)] md:bottom-8 md:text-3xl">
+            {c.ui.salonBosNot}
+          </figcaption>
+        </motion.figure>
+
+        {/* Dolu salonlar — üçlü kanıt şeridi */}
+        <div className="mt-5 grid grid-cols-3 gap-3 md:gap-5">
+          {["/salon-1.webp", "/salon-2.webp", "/salon-3.webp"].map((src, i) => (
+            <motion.div
+              key={src}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: i * 0.08, ease: GECIS }}
+              className="overflow-hidden rounded-2xl border border-black/10"
+            >
+              <Image
+                src={src}
+                alt=""
+                width={1100}
+                height={825}
+                sizes="(min-width: 768px) 33vw, 33vw"
+                className="aspect-[4/3] w-full object-cover"
+              />
+            </motion.div>
+          ))}
+        </div>
+        <p className="mt-4 text-center text-sm text-duman">
+          {c.ui.salonDoluNot}
+        </p>
+
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {tumler.map((k, i) => (
             <motion.article
