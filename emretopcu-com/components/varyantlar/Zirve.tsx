@@ -11,6 +11,7 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import Link from "next/link";
 import {
   AnimatePresence,
   animate,
@@ -1277,14 +1278,13 @@ function EmreyeSor() {
     setCevap(sc ? { bulundu: true, metin: sc.cevap } : { bulundu: false, metin: c.ui.sorBos });
   };
   return (
-    <section className="py-16 md:py-24">
-      <div className="mx-auto max-w-3xl px-6">
-        <div className="rounded-[2rem] border border-black/5 bg-abanoz/80 p-8 shadow-[0_20px_60px_rgba(26,26,29,0.06)] backdrop-blur-md md:p-12">
-        <H2Perde className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
+    <div className="rounded-[2rem] border border-black/5 bg-abanoz/80 p-8 shadow-[0_20px_60px_rgba(26,26,29,0.06)] backdrop-blur-md md:p-10">
+        <p className="flex items-center gap-2 text-sm font-medium tracking-[0.2em] text-altin uppercase">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-altin" />
           {c.ui.sorBaslik}
-        </H2Perde>
-        <p className="mt-4 max-w-[52ch] text-duman">{c.ui.sorAlt}</p>
-        <form onSubmit={sor} className="mt-8 flex gap-3">
+        </p>
+        <p className="mt-3 max-w-[52ch] text-duman">{c.ui.sorAlt}</p>
+        <form onSubmit={sor} className="mt-6 flex gap-3">
           <input
             value={sorgu}
             onChange={(e) => setSorgu(e.target.value)}
@@ -1325,9 +1325,7 @@ function EmreyeSor() {
             </motion.div>
           )}
         </AnimatePresence>
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }
 
@@ -1349,6 +1347,9 @@ function Sss() {
         >
           {c.sss.altMetin}
         </motion.p>
+        <div className="mt-8">
+          <EmreyeSor />
+        </div>
         <div className="mt-10">
           {c.sss.sorular.map((s, i) => {
             const secili = acik === i;
@@ -1687,44 +1688,6 @@ function Rakamlar() {
             </motion.div>
           ))}
         </div>
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-x-3 gap-y-8 border-t border-black/10 pt-14 md:gap-x-5">
-          {c.katlamaSeridi.adimlar.map((adim, i) => (
-            <div key={adim.etiket} className="flex items-center gap-x-3 md:gap-x-5">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.6, delay: i * 0.12, ease: GECIS }}
-                className="text-center"
-              >
-                <p
-                  className={`font-semibold tracking-tighter ${
-                    i === c.katlamaSeridi.adimlar.length - 1
-                      ? "text-4xl text-altin md:text-6xl"
-                      : "text-2xl text-fildisi/70 md:text-4xl"
-                  }`}
-                >
-                  {adim.deger}
-                </p>
-                <p className="mt-2 max-w-[16ch] text-xs leading-snug text-duman md:text-sm">
-                  {adim.etiket}
-                </p>
-              </motion.div>
-              {i < c.katlamaSeridi.adimlar.length - 1 && (
-                <motion.span
-                  aria-hidden
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, amount: 0.6 }}
-                  transition={{ duration: 0.5, delay: i * 0.12 + 0.1, ease: GECIS }}
-                  className="text-xl text-altin/40 md:text-2xl"
-                >
-                  →
-                </motion.span>
-              )}
-            </div>
-          ))}
-        </div>
         <KariyerKaydirici />
       </div>
     </section>
@@ -1789,7 +1752,17 @@ function KariyerKaydirici() {
 /* Felsefe: kendi sözleri; dokununca sözün arka yüzü (açılımı) görünür. */
 function Sozler() {
   const c = useC();
+  const azalt = useReducedMotion();
   const [acik, setAcik] = useState<number | null>(null);
+  const onizlendi = useRef(false);
+  // İlk söz görünüme girince bir kez kendiliğinden çevrilip döner —
+  // "dokununca arkası var" davranışını sözsüz öğretir.
+  const onizle = () => {
+    if (onizlendi.current || azalt) return;
+    onizlendi.current = true;
+    window.setTimeout(() => setAcik((v) => (v === null ? 0 : v)), 900);
+    window.setTimeout(() => setAcik((v) => (v === 0 ? null : v)), 3200);
+  };
   return (
     <section id="sozler" className="relative scroll-mt-24 overflow-hidden py-24 md:py-40">
       {/* Filigran tırnak */}
@@ -1814,6 +1787,7 @@ function Sozler() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.7 }}
                 transition={{ duration: 0.8, ease: GECIS }}
+                onViewportEnter={i === 0 ? onizle : undefined}
                 className={`max-w-[24ch] ${i % 2 === 1 ? "ml-auto text-right" : ""}`}
               >
                 <button
@@ -2151,6 +2125,24 @@ function Vaat() {
         >
           {c.oneteamPerde.alt}
         </motion.p>
+        {/* Kararsız ziyaretçiyi karar testine taşıyan belirgin köprü */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.3, ease: GECIS }}
+          className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-altin/25 bg-abanoz-2/70 p-7 backdrop-blur-sm sm:flex-row sm:justify-between sm:text-left"
+        >
+          <p className="max-w-[30ch] font-medium text-fildisi">
+            {c.ui.testDavet}
+          </p>
+          <Link
+            href="/dusunuyorum"
+            className="shrink-0 rounded-full bg-altin px-6 py-3 font-medium text-fildisi transition-transform active:scale-[0.98]"
+          >
+            {c.ui.testDugme}
+          </Link>
+        </motion.div>
       </div>
       <div className="mx-auto mt-20 max-w-6xl px-6">
         <H2Perde className="max-w-[18ch] font-lux text-3xl font-semibold tracking-tight md:text-5xl">
@@ -2180,6 +2172,15 @@ function Vaat() {
               <p className="mt-3 leading-relaxed text-duman">
                 {adim.aciklama}
               </p>
+              {i === 2 && (
+                <Link
+                  href="/plan"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-altin underline-offset-2 hover:underline"
+                >
+                  {c.ui.planLink}
+                  <ArrowUpRight size={14} weight="bold" />
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>
@@ -2905,6 +2906,7 @@ function SaatSayaci() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ duration: 0.3, ease: GECIS }}
+          role="status"
           className="fixed bottom-5 left-5 z-40 flex max-w-[15.5rem] items-center gap-2.5 rounded-full border border-altin/25 bg-abanoz-2/90 py-2 pr-2 pl-3.5 text-xs shadow-lg backdrop-blur"
         >
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-altin" />
@@ -3081,7 +3083,10 @@ function FasilRayi() {
     }
   };
   return (
-    <div className="group fixed top-1/2 left-5 z-40 hidden -translate-y-1/2 flex-col gap-2.5 lg:flex">
+    <nav
+      aria-label="Fasıllar"
+      className="group fixed top-1/2 left-5 z-40 hidden -translate-y-1/2 flex-col gap-2.5 lg:flex"
+    >
       {FASIL_IDLERI.map((id, i) => {
         const s = i === aktif;
         return (
@@ -3129,7 +3134,7 @@ function FasilRayi() {
           {kopyalandi ? c.ui.baglantiKopyalandi : c.ui.baglantiKopyala}
         </span>
       </button>
-    </div>
+    </nav>
   );
 }
 
@@ -3180,7 +3185,6 @@ function ZirveIc() {
         <Arsiv />
         <Videolar />
         <Vaat />
-        <EmreyeSor />
         <Sss />
         <Deyince />
         <KapanisCumlesi />

@@ -7,7 +7,7 @@
   --color-abanoz: #f1efe9;
   --color-abanoz-2: #ffffff;
   --color-fildisi: #1a1a1d;
-  --color-duman: #6f6c66;
+  --color-duman: #67645d; /* porselen üstünde AA kontrast */
   --color-altin: #9a7a2c;
 
   --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;

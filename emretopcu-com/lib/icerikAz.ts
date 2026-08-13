@@ -393,6 +393,8 @@ export const AZ: Icerik = {
     sorBos: "Bu suala buradakı mətnlərdə aydın cavab yoxdur — WhatsApp-dan birbaşa soruş.",
     sonEtiket: "Ən yeni video",
     planLink: "İlk 72 saat planı",
+    testDavet: "Qərarsızsan? 2 dəqiqəlik testə başla; cavablarına əsasən danışarıq.",
+    testDugme: "Testə başla",
     salonNot: "Bu ekran səhnə üçündür.",
   },
   proj: {
