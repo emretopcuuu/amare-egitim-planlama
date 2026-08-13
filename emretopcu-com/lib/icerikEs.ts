@@ -397,6 +397,7 @@ export const ES: Icerik = {
     sahneFotoNot: "Las luces se apagan, el aplauso se desvanece; queda el camino recorrido juntos.",
     kulisNot: "Entre bastidores, antes de salir. Tres palabras en mi palma: No seas perezoso. No pospongas. No te rindas.",
     dunyaVideoNot: "Lo mejor de 38 países no son los números: son los rostros.",
+    dunyaVideoNot2: "Nueva York — una imagen de 38 países.",
     testDugme: "Empezar el test",
     salonNot: "Esta pantalla es para el escenario.",
   },
