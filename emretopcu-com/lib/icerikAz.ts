@@ -396,6 +396,7 @@ export const AZ: Icerik = {
     testDavet: "Qərarsızsan? 2 dəqiqəlik testə başla; cavablarına əsasən danışarıq.",
     sahneFotoNot: "İşıqlar sönür, alqış səngiyir; geriyə birlikdə yürünən yol qalır.",
     kulisNot: "Kulis, səhnəyə çıxmazdan əvvəl. Ovcumda üç söz: Üşənmə. Təxirə salma. Təslim olma.",
+    dunyaVideoNot: "38 ölkənin ən gözəl tərəfi rəqəmlər deyil — üzlərdir.",
     testDugme: "Testə başla",
     salonNot: "Bu ekran səhnə üçündür.",
   },
