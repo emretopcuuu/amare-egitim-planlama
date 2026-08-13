@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     siteName: "Emre Topçu",
     locale: "az_AZ",
     type: "website",
+    images: [{ url: "/og-az.png", width: 1200, height: 630 }],
   },
 };
 

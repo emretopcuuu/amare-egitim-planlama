@@ -145,7 +145,21 @@ export default function MedyaKiti() {
           </ul>
         </Bolum>
 
-        <Bolum no="04" baslik="İletişim ve davet">
+        <Bolum no="04" baslik="Sahne ekranı">
+          <p className="max-w-[60ch] leading-relaxed text-fildisi/90">
+            Konuşma sırasında perdeye yansıtmak için hazırlanmış tam ekran
+            döngü: dönen sözler + salondan ön görüşme QR kodu. Etkinlikte
+            tarayıcıdan açıp tam ekrana alın.
+          </p>
+          <a
+            href="/salon"
+            className="mt-5 inline-block rounded-full border border-altin/40 px-6 py-3 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi"
+          >
+            Sahne ekranını aç →
+          </a>
+        </Bolum>
+
+        <Bolum no="05" baslik="İletişim ve davet">
           <div className="flex flex-wrap gap-4 text-sm">
             <a
               href={WHATSAPP_URL}

@@ -393,6 +393,8 @@ export const DE: Icerik = {
     sorBos: "Auf diese Frage gibt es in diesen Texten keine klare Antwort — frag direkt über WhatsApp.",
     sonEtiket: "Neuestes Video",
     planLink: "Plan für die ersten 72 Stunden",
+    testDavet: "Unentschlossen? Mach den 2-Minuten-Test; wir sprechen auf Basis deiner Antworten.",
+    testDugme: "Test starten",
     salonNot: "Dieser Bildschirm ist für die Bühne.",
   },
   proj: {

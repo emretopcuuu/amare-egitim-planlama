@@ -464,6 +464,8 @@ const TR = {
     sorBos: "Bu soruya buradaki metinlerde net bir cevap yok — WhatsApp'tan doğrudan sor.",
     sonEtiket: "En yeni video",
     planLink: "İlk 72 saat planı",
+    testDavet: "Kararsız mısın? 2 dakikalık teste başla; cevaplarına göre konuşalım.",
+    testDugme: "Teste başla",
     salonNot: "Bu ekran sahne içindir.",
   },
   proj: {
@@ -901,6 +903,8 @@ const EN: Icerik = {
     sorBos: "There's no clear answer to that in these pages — ask directly on WhatsApp.",
     sonEtiket: "Latest video",
     planLink: "First 72 hours plan",
+    testDavet: "Undecided? Take the 2-minute test; we'll talk based on your answers.",
+    testDugme: "Start the test",
     salonNot: "This screen is for the stage.",
   },
   proj: {

@@ -366,16 +366,39 @@ export default function Ag3D({
   const [mobil, setMobil] = useState(false);
   // Sekme arka plandayken render'ı durdur (pil/CPU tasarrufu).
   const [gorunur, setGorunur] = useState(true);
+  // Mobilde WebGL, ilk boyamayı bloklamasın: sahne boşta bir ana ertelenir
+  // (zemin rengi aynı olduğundan görsel sıçrama olmaz; LCP metin erken gelir).
+  const [hazir, setHazir] = useState(false);
   const [tema] = useTema();
 
   useEffect(() => {
-    setMobil(window.matchMedia("(max-width: 767px)").matches);
+    const m = window.matchMedia("(max-width: 767px)").matches;
+    setMobil(m);
+    if (!m) {
+      setHazir(true);
+    } else {
+      const t = window.setTimeout(() => setHazir(true), 500);
+      return () => window.clearTimeout(t);
+    }
+  }, []);
+
+  useEffect(() => {
     const gorunurluk = () => setGorunur(!document.hidden);
     document.addEventListener("visibilitychange", gorunurluk);
     return () => document.removeEventListener("visibilitychange", gorunurluk);
   }, []);
 
   const zemin = PALET[tema].zemin;
+
+  if (!hazir) {
+    return (
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ backgroundColor: zemin }}
+        aria-hidden
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 -z-10" aria-hidden>
