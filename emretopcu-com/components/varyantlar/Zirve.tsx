@@ -486,10 +486,18 @@ function DunyaBolum() {
   );
 }
 
-/* Dünya bölümünün insan yüzü — sahadan gerçek bir an (sessiz döngü).
-   Yalnız görünürken oynar; görünümden çıkınca durur (pil dostu). */
-function DunyaVideo() {
-  const c = useC();
+/* Sahadan tek video kartı — yalnız görünürken oynar (pil dostu). */
+function SahaVideo({
+  src,
+  poster,
+  not,
+  sinif = "",
+}: {
+  src: string;
+  poster: string;
+  not: string;
+  sinif?: string;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const v = videoRef.current;
@@ -505,31 +513,51 @@ function DunyaVideo() {
     return () => goz.disconnect();
   }, []);
   return (
+    <figure className={sinif}>
+      <div className="h-full overflow-hidden rounded-3xl border border-altin/20 shadow-[0_24px_70px_rgba(26,26,29,0.16)]">
+        <video
+          ref={videoRef}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={poster}
+          className="block h-full w-full object-cover"
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      </div>
+      <figcaption className="mt-4 text-center font-lux text-lg leading-snug text-fildisi md:text-xl">
+        {not}
+      </figcaption>
+    </figure>
+  );
+}
+
+/* Dünya bölümünün insan yüzü — sahadan gerçek anlar: yüzler + şehirler. */
+function DunyaVideo() {
+  const c = useC();
+  return (
     <section className="pb-20 md:pb-28">
-      <motion.figure
+      <motion.div
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
+        viewport={{ once: true, amount: 0.25 }}
         transition={{ duration: 0.8, ease: GECIS }}
-        className="mx-auto max-w-3xl px-6"
+        className="mx-auto grid max-w-4xl items-stretch gap-8 px-6 md:grid-cols-[5fr_3fr]"
       >
-        <div className="overflow-hidden rounded-3xl border border-altin/20 shadow-[0_24px_70px_rgba(26,26,29,0.16)]">
-          <video
-            ref={videoRef}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="/video/afrika-poster.webp"
-            className="block w-full"
-          >
-            <source src="/video/afrika.mp4" type="video/mp4" />
-          </video>
-        </div>
-        <figcaption className="mx-auto mt-5 max-w-[44ch] text-center font-lux text-xl leading-snug text-fildisi md:text-2xl">
-          {c.ui.dunyaVideoNot}
-        </figcaption>
-      </motion.figure>
+        <SahaVideo
+          src="/video/afrika.mp4"
+          poster="/video/afrika-poster.webp"
+          not={c.ui.dunyaVideoNot}
+        />
+        <SahaVideo
+          src="/video/newyork.mp4"
+          poster="/video/newyork-poster.webp"
+          not={c.ui.dunyaVideoNot2}
+          sinif="mx-auto w-full max-w-[300px] md:max-w-none"
+        />
+      </motion.div>
     </section>
   );
 }
