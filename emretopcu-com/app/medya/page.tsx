@@ -79,6 +79,8 @@ export default function MedyaKiti() {
             {[
               { src: "/portre.jpg", ad: "Portre (renkli)" },
               { src: "/portre-duotone.webp", ad: "Portre (duotone)" },
+              { src: "/sahne-taninma.webp", ad: "Sahneden" },
+              { src: "/studyo.webp", ad: "Stüdyodan" },
             ].map((p) => (
               <figure key={p.src} className="group">
                 <div className="overflow-hidden rounded-2xl border border-altin/20">

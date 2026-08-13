@@ -394,6 +394,8 @@ export const DE: Icerik = {
     sonEtiket: "Neuestes Video",
     planLink: "Plan für die ersten 72 Stunden",
     testDavet: "Unentschlossen? Mach den 2-Minuten-Test; wir sprechen auf Basis deiner Antworten.",
+    sahneFotoNot: "Das Licht geht aus, der Applaus verklingt; was bleibt, ist der gemeinsam gegangene Weg.",
+    kulisNot: "Backstage, kurz vor dem Auftritt. Drei Worte auf meiner Handfläche: Sei nicht faul. Schieb nicht auf. Gib nicht auf.",
     testDugme: "Test starten",
     salonNot: "Dieser Bildschirm ist für die Bühne.",
   },

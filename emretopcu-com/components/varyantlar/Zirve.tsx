@@ -1400,6 +1400,66 @@ function Sss() {
 }
 
 /* Kapanış — davet mektubu: mühür + söz + imza. */
+/* Sahne perdesi — gerçek sahne fotoğrafı tam genişlik; üstünde tek cümle,
+   köşesinde kulis kartı ("Üşenme. Erteleme. Vazgeçme." avuç yazısı). */
+function SahnePerdesi() {
+  const c = useC();
+  return (
+    <section className="relative overflow-hidden">
+      <div className="relative h-[70vh] min-h-[420px] md:h-[85vh]">
+        <Image
+          src="/sahne-taninma.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        {/* Üst ve alt yumuşak geçiş + okunurluk için koyu degrade */}
+        <div className="absolute inset-0 bg-gradient-to-b from-abanoz via-transparent to-black/60" />
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.9, ease: GECIS }}
+          className="absolute inset-x-0 bottom-10 mx-auto max-w-[34ch] px-6 text-center font-lux text-2xl leading-snug text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.55)] md:bottom-16 md:text-4xl"
+        >
+          {c.ui.sahneFotoNot}
+        </motion.p>
+        {/* Kulis kartı — polaroid hissi, hafif dönük */}
+        <motion.figure
+          initial={{ opacity: 0, y: 24, rotate: 0 }}
+          whileInView={{ opacity: 1, y: 0, rotate: -2.5 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.25, ease: GECIS }}
+          className="absolute top-8 right-6 hidden w-44 rounded-xl bg-white p-2.5 pb-3 shadow-[0_18px_50px_rgba(0,0,0,0.35)] md:top-14 md:right-14 md:block md:w-56"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sahne-kulis.webp"
+            alt={c.ui.kulisNot}
+            className="w-full rounded-lg"
+          />
+          <figcaption className="mt-2 px-1 text-[0.68rem] leading-snug text-neutral-600">
+            {c.ui.kulisNot}
+          </figcaption>
+        </motion.figure>
+      </div>
+      {/* Mobilde kulis kartı fotoğrafın altında ayrı satır */}
+      <div className="bg-abanoz px-6 py-8 md:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-4 rounded-2xl border border-altin/20 bg-abanoz-2/70 p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sahne-kulis.webp"
+            alt=""
+            className="w-20 shrink-0 rounded-lg"
+          />
+          <p className="text-sm leading-snug text-duman">{c.ui.kulisNot}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function KapanisCumlesi() {
   const c = useC();
   return (
@@ -3187,6 +3247,7 @@ function ZirveIc() {
         <Vaat />
         <Sss />
         <Deyince />
+        <SahnePerdesi />
         <KapanisCumlesi />
         <Iletisim />
       </main>
