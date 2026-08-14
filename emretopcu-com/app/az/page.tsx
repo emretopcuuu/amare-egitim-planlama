@@ -4,7 +4,7 @@ import Zirve from "@/components/varyantlar/Zirve";
 export const metadata: Metadata = {
   title: "Emre Topçu | Birbaşa satış lideri",
   description:
-    "4 qitədə komandalar quran sahibkar lider; liderlər yetişdirən və bu işi sistemlə görən bir birbaşa satış lideri.",
+    "OneTeam həmtəsisçisi — 4 qitədə 200.000+ nəfərlik şəbəkə; birbaşa satış peşəkarları yetişdirir və miqyaslana bilən sistemlər qurur.",
   alternates: {
     canonical: "/az",
     languages: { tr: "/", en: "/en", de: "/de", es: "/es", ru: "/ru", az: "/az" },

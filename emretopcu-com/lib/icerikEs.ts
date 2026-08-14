@@ -14,10 +14,10 @@ export const ES: Icerik = {
     baslikSatir2: "multiplicar.",
     altMetin:
       "En este sector, tarde o temprano todos descubren cómo sumar. Que se multiplique, solo lo esperan — incluso los mayores actores. Nadie, absolutamente nadie, lo logró en solitario.",
-    rol: "Líder emprendedor con equipos en 4 continentes",
+    rol: "Cofundador de OneTeam · Más de 200.000 personas en 4 continentes",
   },
   hakkimda: {
-    unvan: "Líder emprendedor con equipos en 4 continentes",
+    unvan: "Cofundador de OneTeam · Más de 200.000 personas en 4 continentes",
     paragraflar: [
       "Mi contacto con la venta directa se remonta a 2003, a mis años de universidad; como distribuidor de una marca de aloe vera aprendí a trabajar con catálogo. Mi negocio actual lo empecé en febrero de 2013: el primer gran nivel de liderazgo en ocho meses, el nivel más alto de la compañía en tres años y medio. Lo que más creo en este camino es esto: el crecimiento duradero no viene del carisma, sino de un sistema claro que cualquiera puede aplicar.",
       "Soy licenciado en Relaciones Internacionales por la Kocaeli Üniversitesi; escritor, casado y padre de dos hijos. Llevo 27 años en la vida laboral y 17 al frente de mis propios proyectos. He recorrido 38 países; fui el artífice de la construcción de una red de clientes de casi 250.000 personas en 4 continentes. De Estados Unidos a Inglaterra, di formaciones de desarrollo personal en muchos países; hoy vivo en Estambul y hago coaching de éxito a empresarios.",

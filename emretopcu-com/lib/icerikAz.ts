@@ -14,10 +14,10 @@ export const AZ: Icerik = {
     baslikSatir2: "qatlama.",
     altMetin:
       "Bu sektorda əlavə etməyi hər kəs bir şəkildə kəşf edir. Qatlanacağına isə yalnız ümid edir — ən böyük oyunçular da daxil. Heç kim, amma heç kim tək başına uğur qazanmayıb.",
-    rol: "4 qitədə komandalar quran sahibkar lider",
+    rol: "OneTeam həmtəsisçisi · 4 qitədə 200.000+ nəfərlik şəbəkə",
   },
   hakkimda: {
-    unvan: "4 qitədə komandalar quran sahibkar lider",
+    unvan: "OneTeam həmtəsisçisi · 4 qitədə 200.000+ nəfərlik şəbəkə",
     paragraflar: [
       "Birbaşa satışla tanışlığım 2003-cü ilə, universitet illərimə gedib çıxır; bir aloe vera markasının distribütoru kimi kataloqla işləməyi öyrəndim. Bugünkü işimə 2013-cü ilin fevralında başladım: səkkiz aya ilk böyük liderlik səviyyəsinə, üç il yarıma şirkətin ən yüksək səviyyəsinə çatdım. Bu yolda ən çox inandığım şey budur: qalıcı böyümə xarizma ilə deyil, hər kəsin tətbiq edə bildiyi aydın bir sistemlə olur.",
       "Kocaeli Universitetinin Beynəlxalq Münasibətlər fakültəsini bitirmişəm; yazıçıyam, evliyəm, iki övlad atasıyam. 27 ildir iş həyatının içindəyəm, 17 ildir öz işlərimi qururam. 38 ölkə gəzmişəm; 4 qitədə 250.000-ə yaxın nəfərlik müştəri şəbəkəsinin qurulmasına vəsilə olmuşam. Amerikadan İngiltərəyə qədər bir çox ölkədə şəxsi inkişaf təlimləri keçmişəm; bu gün İstanbulda yaşayıram, iş adamlarına uğur koçluğu edirəm.",

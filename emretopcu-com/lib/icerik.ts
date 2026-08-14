@@ -85,10 +85,10 @@ const TR = {
     baslikSatir2: "katlama.",
     altMetin:
       "Bu sektörde herkes eklemeyi bir şekilde keşfeder. Katlanacağını ise sadece umar — en büyük oyuncular dahil. Kimse, ama kimse tek başına başarmadı.",
-    rol: "4 kıtada ekipler kuran girişimci lider",
+    rol: "OneTeam kurucu ortağı · 4 kıtada 200.000+ kişilik ağ",
   },
   hakkimda: {
-    unvan: "4 kıtada ekipler kuran girişimci lider",
+    unvan: "OneTeam kurucu ortağı · 4 kıtada 200.000+ kişilik ağ",
     paragraflar: [
       "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: sekiz ayda ilk büyük liderlik seviyesine, üç buçuk yılda şirketin en üst liderlik seviyesine ulaştım. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
       "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
@@ -530,10 +530,10 @@ const EN: Icerik = {
     baslikSatir2: "Multiplying.",
     altMetin:
       "In this industry everyone discovers how to add sooner or later. Whether it multiplies, they only hope — even the biggest players. No one, but no one, ever made it alone.",
-    rol: "Entrepreneurial leader building teams on 4 continents",
+    rol: "Co-founder of OneTeam · 200,000+ people across 4 continents",
   },
   hakkimda: {
-    unvan: "Entrepreneurial leader building teams on 4 continents",
+    unvan: "Co-founder of OneTeam · 200,000+ people across 4 continents",
     paragraflar: [
       "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: the company's first major leadership level in eight months, its very top level in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
       "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of nearly 250,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",

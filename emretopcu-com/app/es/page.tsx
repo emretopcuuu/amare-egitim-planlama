@@ -4,7 +4,7 @@ import Zirve from "@/components/varyantlar/Zirve";
 export const metadata: Metadata = {
   title: "Emre Topçu | Líder de venta directa",
   description:
-    "Un líder emprendedor con equipos en 4 continentes: construye equipos, forma líderes y lo hace todo con un sistema.",
+    "Cofundador de OneTeam con más de 200.000 personas en 4 continentes: forma a profesionales de la venta directa y construye sistemas escalables.",
   alternates: {
     canonical: "/es",
     languages: {

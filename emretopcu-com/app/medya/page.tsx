@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 const BIO_TEK =
-  "Emre Topçu — doğrudan satışta 4 kıtada ekipler kurmuş, liderler yetiştiren ve bu işi sistemle yapan bir girişimci lider.";
+  "Emre Topçu — OneTeam kurucu ortağı; 4 kıtada 200.000+ kişilik bir ağ. Doğrudan satış profesyonelleri yetiştiren, ölçeklenebilir sistemler kuran bir girişimci; gezgin ve yazar.";
 
 const BIO_KISA =
   "Emre Topçu, 2013'te başladığı işte sekiz ayda ilk büyük liderlik seviyesine, üç buçuk yılda şirketin en üst liderlik seviyesine ulaştı. Bugün 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile olmuş; İstanbul'da yaşıyor ve iş insanlarına başarı koçluğu yapıyor. 'İlk 72 Saat' (2017) kitabının yazarı.";

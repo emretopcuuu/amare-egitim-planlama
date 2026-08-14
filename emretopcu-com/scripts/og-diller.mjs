@@ -3,11 +3,11 @@
 import sharp from "sharp";
 
 const DILLER = [
-  { kod: "en", s1: "Not adding.", s2: "Multiplying.", alt: "Entrepreneurial leader · Teams on 4 continents" },
-  { kod: "de", s1: "Nicht addieren,", s2: "multiplizieren.", alt: "Unternehmer · Teams auf 4 Kontinenten" },
-  { kod: "es", s1: "No sumar,", s2: "multiplicar.", alt: "Líder emprendedor · Equipos en 4 continentes" },
-  { kod: "ru", s1: "Не сложение,", s2: "а умножение.", alt: "Предприниматель · Команды на 4 континентах" },
-  { kod: "az", s1: "Əlavə etmə deyil,", s2: "qatlama.", alt: "Sahibkar lider · 4 qitədə komandalar" },
+  { kod: "en", s1: "Not adding.", s2: "Multiplying.", alt: "Co-founder of OneTeam · 200,000+ across 4 continents" },
+  { kod: "de", s1: "Nicht addieren,", s2: "multiplizieren.", alt: "OneTeam-Mitgründer · 200.000+ auf 4 Kontinenten" },
+  { kod: "es", s1: "No sumar,", s2: "multiplicar.", alt: "Cofundador de OneTeam · 200.000+ en 4 continentes" },
+  { kod: "ru", s1: "Не сложение,", s2: "а умножение.", alt: "Сооснователь OneTeam · 200 000+ на 4 континентах" },
+  { kod: "az", s1: "Əlavə etmə deyil,", s2: "qatlama.", alt: "OneTeam həmtəsisçisi · 4 qitədə 200.000+" },
 ];
 
 const esc = (t) =>

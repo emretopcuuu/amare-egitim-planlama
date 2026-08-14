@@ -4,7 +4,7 @@ import Zirve from "@/components/varyantlar/Zirve";
 export const metadata: Metadata = {
   title: "Emre Topçu | Leadership, team and system",
   description:
-    "An entrepreneurial leader building teams on 4 continents — raising leaders and doing it all with a system.",
+    "Co-founder of OneTeam with 200,000+ people across 4 continents — training direct-sales professionals and building scalable systems.",
   alternates: {
     canonical: "/en",
     languages: { tr: "/", en: "/en", de: "/de", es: "/es", ru: "/ru", az: "/az" },
