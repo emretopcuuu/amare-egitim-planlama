@@ -14,12 +14,12 @@ export const ES: Icerik = {
     baslikSatir2: "multiplicar.",
     altMetin:
       "En este sector, tarde o temprano todos descubren cómo sumar. Que se multiplique, solo lo esperan — incluso los mayores actores. Nadie, absolutamente nadie, lo logró en solitario.",
-    rol: "Presidential Diamond | One Team Global",
+    rol: "Líder emprendedor con equipos en 4 continentes",
   },
   hakkimda: {
-    unvan: "Presidential Diamond | One Team Global",
+    unvan: "Líder emprendedor con equipos en 4 continentes",
     paragraflar: [
-      "Mi contacto con la venta directa se remonta a 2003, a mis años de universidad; como distribuidor de una marca de aloe vera aprendí a trabajar con catálogo. Mi negocio actual lo empecé en febrero de 2013: Diamond en ocho meses, Presidential Diamond en tres años y medio. Lo que más creo en este camino es esto: el crecimiento duradero no viene del carisma, sino de un sistema claro que cualquiera puede aplicar.",
+      "Mi contacto con la venta directa se remonta a 2003, a mis años de universidad; como distribuidor de una marca de aloe vera aprendí a trabajar con catálogo. Mi negocio actual lo empecé en febrero de 2013: el primer gran nivel de liderazgo en ocho meses, el nivel más alto de la compañía en tres años y medio. Lo que más creo en este camino es esto: el crecimiento duradero no viene del carisma, sino de un sistema claro que cualquiera puede aplicar.",
       "Soy licenciado en Relaciones Internacionales por la Kocaeli Üniversitesi; escritor, casado y padre de dos hijos. Llevo 27 años en la vida laboral y 17 al frente de mis propios proyectos. He recorrido 38 países; fui el artífice de la construcción de una red de clientes de casi 250.000 personas en 4 continentes. De Estados Unidos a Inglaterra, di formaciones de desarrollo personal en muchos países; hoy vivo en Estambul y hago coaching de éxito a empresarios.",
     ],
   },
@@ -74,13 +74,13 @@ export const ES: Icerik = {
     },
     {
       yil: "2013",
-      baslik: "Diamond en ocho meses",
+      baslik: "La primera cima en ocho meses",
       aciklama:
-        "Empecé en febrero y en el 8.º mes llegué a Diamond; a finales de ese mismo año, 1 Star Diamond. El primer mes estreché la mano a 5 personas y cerré el mes con una red de 19; en el segundo mes se multiplicó hasta 88. La velocidad fue la primera prueba del sistema correcto.",
+        "Empecé en febrero y en el 8.º mes alcancé el primer gran nivel de liderazgo de la compañía; a finales de ese mismo año, un escalón más. El primer mes estreché la mano a 5 personas y cerré el mes con una red de 19; en el segundo mes se multiplicó hasta 88. La velocidad fue la primera prueba del sistema correcto.",
     },
     {
       yil: "2016–2020",
-      baslik: "Presidential Diamond y el paso a lo online",
+      baslik: "El nivel más alto y el paso a lo online",
       aciklama:
         "En tres años y medio alcancé el nivel de liderazgo más alto de la compañía; el verdadero trabajo empezó ese día: abrir el mismo camino a mi equipo. Durante la pandemia trasladé a todo el equipo a un modelo remoto que funciona con principios de trabajo online.",
     },
@@ -88,11 +88,11 @@ export const ES: Icerik = {
       yil: "A continuación",
       baslik: "Líderes que se multiplican",
       aciklama:
-        "El próximo objetivo no es mi propia carrera: es hacer surgir de mi equipo nuevos Diamond y Presidential Diamond.",
+        "El próximo objetivo no es mi propia carrera: es hacer surgir de mi equipo nuevos líderes que alcancen la misma cima.",
     },
   ],
   rakamlar: [
-    { deger: "8", ek: " meses", etiket: "Tiempo hasta Diamond" },
+    { deger: "8", ek: " meses", etiket: "Meses hasta la primera cima" },
     { deger: "250.000", ek: "", etiket: "Personas en la red (a 2026)" },
     { deger: "4", ek: " continentes", etiket: "Geografía alcanzada" },
     { deger: "38", ek: " países", etiket: "Recorridos, con formación impartida" },
@@ -241,8 +241,8 @@ export const ES: Icerik = {
     },
     {
       yil: "2025",
-      baslik: "Diamond en 4 meses",
-      ozet: "El camino a Diamond narrado y planificado mes a mes, semana a semana.",
+      baslik: "La primera cima en 4 meses",
+      ozet: "El camino al primer gran nivel, narrado y planificado mes a mes, semana a semana.",
     },
     {
       yil: "2025",
@@ -436,9 +436,9 @@ export const ES: Icerik = {
   },
   kariyerZaman: [
     { yil: "2013", ay: "Febrero", rutbe: "Empezó", not: "El primer mes estreché la mano a 5 personas." },
-    { yil: "2013", ay: "Mes 8", rutbe: "Diamond", not: "Diamond en ocho meses." },
-    { yil: "2013", ay: "Fin de año", rutbe: "1 Star Diamond", not: "1 Star Diamond a finales de ese mismo año." },
-    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "El nivel más alto de la compañía en tres años y medio." },
+    { yil: "2013", ay: "Mes 8", rutbe: "Primer gran nivel", not: "El primer gran nivel de liderazgo en ocho meses." },
+    { yil: "2013", ay: "Fin de año", rutbe: "Un escalón más", not: "Un escalón más a finales de ese mismo año." },
+    { yil: "2016", ay: "", rutbe: "El nivel más alto", not: "El nivel más alto de la compañía en tres años y medio." },
     { yil: "2020", ay: "", rutbe: "Sistema online", not: "Todo el equipo pasó a un modelo de trabajo remoto." },
     { yil: "2026", ay: "", rutbe: "4 continentes", not: "Una red de casi 250.000 personas." },
   ],

@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 };
 
 const BIO_TEK =
-  "Emre Topçu — One Team Global Presidential Diamond; doğrudan satışta ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir lider.";
+  "Emre Topçu — doğrudan satışta 4 kıtada ekipler kurmuş, liderler yetiştiren ve bu işi sistemle yapan bir girişimci lider.";
 
 const BIO_KISA =
-  "Emre Topçu, 2013'te başladığı işte sekiz ayda Diamond, üç buçuk yılda Presidential Diamond oldu. Bugün 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile olmuş; İstanbul'da yaşıyor ve iş insanlarına başarı koçluğu yapıyor. 'İlk 72 Saat' (2017) kitabının yazarı.";
+  "Emre Topçu, 2013'te başladığı işte sekiz ayda ilk büyük liderlik seviyesine, üç buçuk yılda şirketin en üst liderlik seviyesine ulaştı. Bugün 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile olmuş; İstanbul'da yaşıyor ve iş insanlarına başarı koçluğu yapıyor. 'İlk 72 Saat' (2017) kitabının yazarı.";
 
 const BASLIKLAR = ICERIK.tr.konusmalar.map((k) => k.baslik);
 
