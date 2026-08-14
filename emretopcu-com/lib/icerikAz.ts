@@ -14,12 +14,12 @@ export const AZ: Icerik = {
     baslikSatir2: "qatlama.",
     altMetin:
       "Bu sektorda əlavə etməyi hər kəs bir şəkildə kəşf edir. Qatlanacağına isə yalnız ümid edir — ən böyük oyunçular da daxil. Heç kim, amma heç kim tək başına uğur qazanmayıb.",
-    rol: "Presidential Diamond | One Team Global",
+    rol: "4 qitədə komandalar quran sahibkar lider",
   },
   hakkimda: {
-    unvan: "Presidential Diamond | One Team Global",
+    unvan: "4 qitədə komandalar quran sahibkar lider",
     paragraflar: [
-      "Birbaşa satışla tanışlığım 2003-cü ilə, universitet illərimə gedib çıxır; bir aloe vera markasının distribütoru kimi kataloqla işləməyi öyrəndim. Bugünkü işimə 2013-cü ilin fevralında başladım: səkkiz aya Diamond, üç il yarıma Presidential Diamond oldum. Bu yolda ən çox inandığım şey budur: qalıcı böyümə xarizma ilə deyil, hər kəsin tətbiq edə bildiyi aydın bir sistemlə olur.",
+      "Birbaşa satışla tanışlığım 2003-cü ilə, universitet illərimə gedib çıxır; bir aloe vera markasının distribütoru kimi kataloqla işləməyi öyrəndim. Bugünkü işimə 2013-cü ilin fevralında başladım: səkkiz aya ilk böyük liderlik səviyyəsinə, üç il yarıma şirkətin ən yüksək səviyyəsinə çatdım. Bu yolda ən çox inandığım şey budur: qalıcı böyümə xarizma ilə deyil, hər kəsin tətbiq edə bildiyi aydın bir sistemlə olur.",
       "Kocaeli Universitetinin Beynəlxalq Münasibətlər fakültəsini bitirmişəm; yazıçıyam, evliyəm, iki övlad atasıyam. 27 ildir iş həyatının içindəyəm, 17 ildir öz işlərimi qururam. 38 ölkə gəzmişəm; 4 qitədə 250.000-ə yaxın nəfərlik müştəri şəbəkəsinin qurulmasına vəsilə olmuşam. Amerikadan İngiltərəyə qədər bir çox ölkədə şəxsi inkişaf təlimləri keçmişəm; bu gün İstanbulda yaşayıram, iş adamlarına uğur koçluğu edirəm.",
     ],
   },
@@ -74,13 +74,13 @@ export const AZ: Icerik = {
     },
     {
       yil: "2013",
-      baslik: "Səkkiz aya Diamond",
+      baslik: "Səkkiz aya ilk zirvə",
       aciklama:
-        "Fevralda başladım, 8-ci ayda Diamond oldum; həmin ilin sonunda 1 Star Diamond. İlk ay 5 nəfərlə əl sıxdım, ayın sonunda 19 nəfərlik şəbəkə oldu; ikinci ayda 88-ə qatlandı. Sürət doğru sistemin ilk sübutu idi.",
+        "Fevralda başladım, 8-ci ayda şirkətin ilk böyük liderlik səviyyəsinə çatdım; həmin ilin sonunda bir pillə də qalxdım. İlk ay 5 nəfərlə əl sıxdım, ayın sonunda 19 nəfərlik şəbəkə oldu; ikinci ayda 88-ə qatlandı. Sürət doğru sistemin ilk sübutu idi.",
     },
     {
       yil: "2016–2020",
-      baslik: "Presidential Diamond və onlayna keçid",
+      baslik: "Ən yüksək səviyyə və onlayna keçid",
       aciklama:
         "Üç il yarıma şirkətin ən yüksək liderlik səviyyəsinə çatdım; əsl iş o gün başladı — eyni yolu komandama açmaq. Pandemiya dövründə komandanın hamısını onlayn iş prinsipləri ilə uzaqdan işləyən bir nizama keçirdim.",
     },
@@ -88,11 +88,11 @@ export const AZ: Icerik = {
       yil: "Növbədə",
       baslik: "Çoxalan liderlər",
       aciklama:
-        "Növbəti hədəf öz karyeram deyil: komandamdan yeni Diamond-lar və Presidential Diamond-lar çıxarmaq.",
+        "Növbəti hədəf öz karyeram deyil: komandamdan eyni zirvəyə çatan yeni liderlər çıxarmaq.",
     },
   ],
   rakamlar: [
-    { deger: "8", ek: " ay", etiket: "Diamond-a gedən müddət" },
+    { deger: "8", ek: " ay", etiket: "İlk zirvəyə gedən müddət" },
     { deger: "250.000", ek: "", etiket: "Nəfərlik şəbəkə (2026-cı il etibarilə)" },
     { deger: "4", ek: " qitə", etiket: "Çatılan coğrafiya" },
     { deger: "38", ek: " ölkə", etiket: "Gəzilən, təlim keçilən" },
@@ -241,8 +241,8 @@ export const AZ: Icerik = {
     },
     {
       yil: "2025",
-      baslik: "4 Aya Diamond",
-      ozet: "Diamond yolçuluğunun ay-ay, həftə-həftə planlanmış izahı.",
+      baslik: "4 Aya İlk Zirvə",
+      ozet: "İlk böyük səviyyəyə gedən yolun ay-ay, həftə-həftə planlanmış izahı.",
     },
     {
       yil: "2025",
@@ -436,9 +436,9 @@ export const AZ: Icerik = {
   },
   kariyerZaman: [
     { yil: "2013", ay: "Fevral", rutbe: "Başladı", not: "İlk ay 5 nəfərlə əl sıxdım." },
-    { yil: "2013", ay: "8-ci ay", rutbe: "Diamond", not: "Səkkiz aya Diamond oldum." },
-    { yil: "2013", ay: "İlin sonu", rutbe: "1 Star Diamond", not: "Həmin ilin sonunda 1 Star Diamond." },
-    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "Üç il yarıma şirkətin ən yüksək səviyyəsi." },
+    { yil: "2013", ay: "8-ci ay", rutbe: "İlk böyük səviyyə", not: "Səkkiz aya şirkətin ilk böyük liderlik səviyyəsi." },
+    { yil: "2013", ay: "İlin sonu", rutbe: "Bir pillə də yuxarı", not: "Həmin ilin sonunda bir pillə də." },
+    { yil: "2016", ay: "", rutbe: "Ən yüksək səviyyə", not: "Üç il yarıma şirkətin ən yüksək səviyyəsi." },
     { yil: "2020", ay: "", rutbe: "Onlayn sistem", not: "Komandanın hamısı uzaqdan işləyən nizama keçdi." },
     { yil: "2026", ay: "", rutbe: "4 qitə", not: "250.000-ə yaxın nəfərlik şəbəkə." },
   ],

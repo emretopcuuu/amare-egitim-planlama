@@ -4,7 +4,7 @@ import Zirve from "@/components/varyantlar/Zirve";
 export const metadata: Metadata = {
   title: "Emre Topçu | Líder de venta directa",
   description:
-    "Presidential Diamond en One Team Global. Un líder de venta directa que construye equipos, forma líderes y lo hace todo con un sistema.",
+    "Un líder emprendedor con equipos en 4 continentes: construye equipos, forma líderes y lo hace todo con un sistema.",
   alternates: {
     canonical: "/es",
     languages: {

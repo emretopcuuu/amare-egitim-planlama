@@ -14,12 +14,12 @@ export const DE: Icerik = {
     baslikSatir2: "multiplizieren.",
     altMetin:
       "In dieser Branche entdeckt früher oder später jeder, wie man addiert. Ob es sich multipliziert, erhoffen sie nur — selbst die größten Akteure. Niemand, wirklich niemand, hat es allein geschafft.",
-    rol: "Presidential Diamond | One Team Global",
+    rol: "Unternehmer und Leader mit Teams auf 4 Kontinenten",
   },
   hakkimda: {
-    unvan: "Presidential Diamond | One Team Global",
+    unvan: "Unternehmer und Leader mit Teams auf 4 Kontinenten",
     paragraflar: [
-      "Meine Berührung mit dem Direktvertrieb reicht bis 2003 zurück, in meine Studienzeit; als Vertriebspartner einer Aloe-vera-Marke lernte ich, mit dem Katalog zu arbeiten. Mein heutiges Geschäft begann ich im Februar 2013: in acht Monaten Diamond, in dreieinhalb Jahren Presidential Diamond. Woran ich auf diesem Weg am meisten glaube: Nachhaltiges Wachstum entsteht nicht durch Charisma, sondern durch ein klares System, das jeder anwenden kann.",
+      "Meine Berührung mit dem Direktvertrieb reicht bis 2003 zurück, in meine Studienzeit; als Vertriebspartner einer Aloe-vera-Marke lernte ich, mit dem Katalog zu arbeiten. Mein heutiges Geschäft begann ich im Februar 2013: in acht Monaten die erste große Führungsstufe, in dreieinhalb Jahren die höchste Stufe des Unternehmens. Woran ich auf diesem Weg am meisten glaube: Nachhaltiges Wachstum entsteht nicht durch Charisma, sondern durch ein klares System, das jeder anwenden kann.",
       "Ich bin Absolvent der Internationalen Beziehungen an der Kocaeli Üniversitesi; Autor, verheiratet und Vater von zwei Kindern. Seit 27 Jahren bin ich im Berufsleben, seit 17 Jahren führe ich eigene Unternehmungen. Ich habe 38 Länder bereist; ich war Wegbereiter für den Aufbau eines Kundennetzwerks von fast 250.000 Menschen auf 4 Kontinenten. Von Amerika bis England habe ich in vielen Ländern Persönlichkeitstrainings gegeben; heute lebe ich in Istanbul und begleite Unternehmer als Erfolgscoach.",
     ],
   },
@@ -74,13 +74,13 @@ export const DE: Icerik = {
     },
     {
       yil: "2013",
-      baslik: "Diamond in acht Monaten",
+      baslik: "Der erste Gipfel in acht Monaten",
       aciklama:
-        "Ich begann im Februar und wurde im 8. Monat Diamond; zum Ende desselben Jahres 1 Star Diamond. Im ersten Monat schüttelte ich 5 Menschen die Hand, zum Monatsende war daraus ein Netzwerk von 19; im zweiten Monat multiplizierte es sich auf 88. Das Tempo war der erste Beweis für das richtige System.",
+        "Ich begann im Februar und erreichte im 8. Monat die erste große Führungsstufe des Unternehmens; zum Ende desselben Jahres eine weitere Stufe. Im ersten Monat schüttelte ich 5 Menschen die Hand, zum Monatsende war daraus ein Netzwerk von 19; im zweiten Monat multiplizierte es sich auf 88. Das Tempo war der erste Beweis für das richtige System.",
     },
     {
       yil: "2016–2020",
-      baslik: "Presidential Diamond und der Wechsel ins Online-Zeitalter",
+      baslik: "Die höchste Stufe und der Wechsel ins Online-Zeitalter",
       aciklama:
         "In dreieinhalb Jahren erreichte ich die höchste Führungsstufe des Unternehmens; die eigentliche Arbeit begann an jenem Tag: meinem Team denselben Weg zu öffnen. Während der Pandemie stellte ich das gesamte Team auf eine ferngesteuerte Ordnung um, die nach Online-Arbeitsprinzipien funktioniert.",
     },
@@ -88,11 +88,11 @@ export const DE: Icerik = {
       yil: "Als Nächstes",
       baslik: "Sich multiplizierende Führungskräfte",
       aciklama:
-        "Das nächste Ziel ist nicht meine eigene Karriere: aus meinem Team neue Diamonds und Presidential Diamonds hervorzubringen.",
+        "Das nächste Ziel ist nicht meine eigene Karriere: aus meinem Team neue Führungskräfte hervorzubringen, die denselben Gipfel erreichen.",
     },
   ],
   rakamlar: [
-    { deger: "8", ek: " Mon.", etiket: "Weg bis Diamond" },
+    { deger: "8", ek: " Mon.", etiket: "Weg bis zum ersten Gipfel" },
     { deger: "250.000", ek: "", etiket: "Menschen im Netzwerk (Stand 2026)" },
     { deger: "4", ek: " Kontinente", etiket: "Erreichte Geografie" },
     { deger: "38", ek: " Länder", etiket: "Bereist, unterrichtet" },
@@ -241,8 +241,8 @@ export const DE: Icerik = {
     },
     {
       yil: "2025",
-      baslik: "In 4 Monaten zum Diamond",
-      ozet: "Der Weg zum Diamond, Monat für Monat, Woche für Woche geplant erzählt.",
+      baslik: "In 4 Monaten zum ersten Gipfel",
+      ozet: "Der Weg zur ersten großen Führungsstufe, Monat für Monat, Woche für Woche geplant erzählt.",
     },
     {
       yil: "2025",
@@ -436,9 +436,9 @@ export const DE: Icerik = {
   },
   kariyerZaman: [
     { yil: "2013", ay: "Februar", rutbe: "Begonnen", not: "Im ersten Monat schüttelte ich 5 Menschen die Hand." },
-    { yil: "2013", ay: "8. Monat", rutbe: "Diamond", not: "Diamond in acht Monaten." },
-    { yil: "2013", ay: "Jahresende", rutbe: "1 Star Diamond", not: "Zum Ende desselben Jahres 1 Star Diamond." },
-    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "Die höchste Stufe des Unternehmens in dreieinhalb Jahren." },
+    { yil: "2013", ay: "8. Monat", rutbe: "Erste große Stufe", not: "Die erste große Führungsstufe in acht Monaten." },
+    { yil: "2013", ay: "Jahresende", rutbe: "Eine Stufe höher", not: "Zum Ende desselben Jahres eine weitere Stufe." },
+    { yil: "2016", ay: "", rutbe: "Höchste Stufe", not: "Die höchste Stufe des Unternehmens in dreieinhalb Jahren." },
     { yil: "2020", ay: "", rutbe: "Online-System", not: "Das gesamte Team wechselte zu einer ferngesteuerten Arbeitsweise." },
     { yil: "2026", ay: "", rutbe: "4 Kontinente", not: "Ein Netzwerk von fast 250.000 Menschen." },
   ],
