@@ -843,21 +843,30 @@ function KinetikSatir({
   className?: string;
 }) {
   const azalt = useReducedMotion();
-  const harfler = Array.from(metin);
   if (azalt) return <span className={className}>{metin}</span>;
+  // Harfler tek tek animasyonlu ama her KELİME bölünmez bir grup —
+  // satır sonu yalnız boşluklara denk gelir (dar ekranda "DE-ĞİL" kırılmaz).
+  const kelimeler = metin.split(" ");
   return (
     <span className={className}>
-      {harfler.map((h, i) => (
-        <motion.span
-          key={i}
-          className="inline-block"
-          style={{ fontWeight: 600 }}
-          initial={{ fontWeight: 600 }}
-          whileHover={{ fontWeight: 900, scaleY: 1.04 }}
-          transition={{ type: "spring", stiffness: 320, damping: 18 }}
-        >
-          {h === " " ? " " : h}
-        </motion.span>
+      {kelimeler.map((kelime, ki) => (
+        <span key={ki}>
+          {ki > 0 && " "}
+          <span className="inline-block whitespace-nowrap">
+            {Array.from(kelime).map((h, i) => (
+              <motion.span
+                key={i}
+                className="inline-block"
+                style={{ fontWeight: 600 }}
+                initial={{ fontWeight: 600 }}
+                whileHover={{ fontWeight: 900, scaleY: 1.04 }}
+                transition={{ type: "spring", stiffness: 320, damping: 18 }}
+              >
+                {h}
+              </motion.span>
+            ))}
+          </span>
+        </span>
       ))}
     </span>
   );
