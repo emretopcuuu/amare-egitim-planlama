@@ -29,10 +29,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://emretopcu.ai"),
   title: "Emre Topçu | Doğrudan satış lideri",
   description:
-    "4 kıtada ekipler kuran girişimci lider Emre Topçu. Liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
+    "OneTeam kurucu ortağı Emre Topçu — 4 kıtada 200.000+ kişilik ağ. Doğrudan satış profesyonelleri yetiştiriyor, ölçeklenebilir sistemler kuruyor.",
   keywords: [
     "Emre Topçu",
     "doğrudan satış",
+    "OneTeam",
     "girişimcilik",
     "ekip kurma",
     "liderlik",

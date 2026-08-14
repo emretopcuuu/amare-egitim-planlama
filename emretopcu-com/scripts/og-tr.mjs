@@ -2,12 +2,12 @@
 // dairesel duotone portre. Alt yazı değişince yeniden üretilir.
 import sharp from "sharp";
 
-const ALT = "4 KITADA EKİPLER KURAN GİRİŞİMCİ LİDER";
+const ALT = "ONETEAM KURUCU ORTAĞI · 4 KITADA 200.000+";
 
 const zemin = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="630" fill="#f1efe9"/>
   <text x="84" y="140" font-family="DejaVu Serif, Georgia, serif" font-size="26" letter-spacing="10" fill="#9a7a2c">EMRE TOPÇU</text>
-  <text x="84" y="182" font-family="DejaVu Sans, sans-serif" font-size="21" letter-spacing="4" fill="#67645d">${ALT}</text>
+  <text x="84" y="182" font-family="DejaVu Sans, sans-serif" font-size="19" letter-spacing="2" fill="#67645d">${ALT}</text>
   <text x="80" y="322" font-family="DejaVu Serif, Georgia, serif" font-weight="bold" font-size="72" fill="#1a1a1d">Ekleme değil,</text>
   <text x="80" y="424" font-family="DejaVu Serif, Georgia, serif" font-weight="bold" font-size="72" fill="#9a7a2c">katlama.</text>
   <rect x="84" y="496" width="120" height="5" fill="#9a7a2c"/>
