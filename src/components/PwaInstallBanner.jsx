@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Download, X } from 'lucide-react';
+import { gomuluMu } from '../utils/gomulu';
 
 const ZIYARET_ESIK = 3;
 const KARAR_KEY = 'amare_pwa_karar'; // 'kuruldu' | 'reddedildi' | 'sonra'
@@ -18,6 +19,12 @@ const PwaInstallBanner = () => {
   const [iosMod, setIosMod] = useState(false);
 
   useEffect(() => {
+    // Gömülü mod (OneTeam uygulamasının çerçevesi): kişi ZATEN uygulamanın
+    // içinde — "telefonuna ekle" çağrısı anlamsız ve kabuğu iki kez satmak
+    // olur (Emre, 15 Ağu, ekran görüntüsüyle). Ziyaret sayacı da artmaz:
+    // çerçeve ziyaretleri Safari'deki gerçek eşiği erken doldurmasın.
+    if (gomuluMu()) return;
+
     // Service worker register
     if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
       navigator.serviceWorker.register('/sw-offline.js').catch(e =>
