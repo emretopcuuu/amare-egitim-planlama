@@ -9,6 +9,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../utils/firebase';
+import { oturumuBildir } from '../utils/kabukHaber';
 
 const AuthContext = createContext(null);
 
@@ -23,6 +24,16 @@ export function AuthProvider({ children }) {
         // Mevcut kullanıcı var — anonim veya email
         setCurrentUser(user);
         setReady(true);
+        /* 🔴 KABUĞA HABER (18 Ağu): uygulama takvimi her açışta /sso'dan
+           geçiriyordu, çünkü oturumumuzun açık olup olmadığını göremiyor
+           (ayrı alan adı, ayrı kimlik sistemi). Bilen taraf biziz.
+           "Girişliyim" haberini alan uygulama bir dahaki açılışta doğrudan
+           /takvim'e geliyor ve o mor "Giriş yapılıyor" kartı hiç çıkmıyor.
+           ANONİM kullanıcı GİRİŞLİ SAYILMAZ: /takvim'de giriş duvarı yok,
+           oturum yoksa sessizce anonim giriliyor ve takvim açılıyor — ama
+           kişinin kayıtları, ekibi, profili görünmüyor. Bunu "girişli"
+           saysaydık uygulama sessizce eksik bir ekran açmaya devam ederdi. */
+        oturumuBildir(!user.isAnonymous && !!user.email);
         // SSO köprüsü: gerçek (anonim olmayan, email'li) kullanıcı → .oneteamglobal.ai
         // ortak Supabase oturumu kur (HBB/90gün/CRM/Presidential otomatik girişli olsun).
         // Lazy import: supabase-js sadece gerçek giriş olunca yüklenir, anonim yolu etkilenmez.
@@ -56,6 +67,7 @@ export function AuthProvider({ children }) {
           // Yine de ready=true yap — site çalışsın
           setCurrentUser(null);
           setReady(true);
+          oturumuBildir(false);          // kabuk kısayolu kullanmasın
         }
       }
     });
