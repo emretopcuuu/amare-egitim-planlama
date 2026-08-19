@@ -417,6 +417,7 @@ export const AZ: Icerik = {
     kapi3Alt: "Portretlər, hazır bioqrafiya, çıxış mövzuları.",
     hikayeBaslik: "Hekayənin tamamı",
     hikayeAlt: "Ana səhifə fraqman idi; bura filmin özüdür. 2003-dən bu günə hər addım, hər salon, hər söz.",
+    basvuruLink: "Görüşə müraciət et",
     salonNot: "Bu ekran səhnə üçündür.",
   },
   proj: {

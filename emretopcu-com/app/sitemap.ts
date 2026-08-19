@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/az/hikaye",
     "/medya",
     "/dusunuyorum",
+    "/basvuru",
     "/salon",
     "/plan",
     ...ICERIK.tr.sozler.map((s) => `/soz/${s.slug}`),

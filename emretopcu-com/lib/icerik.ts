@@ -488,6 +488,7 @@ const TR = {
     kapi3Alt: "Portreler, hazır biyografi, konuşma başlıkları.",
     hikayeBaslik: "Hikâyenin tamamı",
     hikayeAlt: "Ana sayfa fragmandı; burası filmin kendisi. 2003'ten bugüne her adım, her salon, her söz.",
+    basvuruLink: "Görüşmeye başvur",
     salonNot: "Bu ekran sahne içindir.",
   },
   proj: {
@@ -949,6 +950,7 @@ const EN: Icerik = {
     kapi3Alt: "Portraits, ready-made bio, talk topics.",
     hikayeBaslik: "The full story",
     hikayeAlt: "The homepage was the trailer; this is the film. Every step since 2003 — every hall, every word.",
+    basvuruLink: "Apply for a meeting",
     salonNot: "This screen is for the stage.",
   },
   proj: {
