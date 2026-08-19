@@ -4,9 +4,9 @@ import type { Icerik } from "./icerik";
 export const DE: Icerik = {
   nav: [
     { href: "#manifesto", etiket: "Über mich" },
-    { href: "#yolculuk", etiket: "Weg" },
-    { href: "#videolar", etiket: "Videos" },
-    { href: "#konusmalar", etiket: "Vorträge" },
+    { href: "/de/hikaye#yolculuk", etiket: "Weg" },
+    { href: "/de/hikaye#videolar", etiket: "Videos" },
+    { href: "/de/hikaye#konusmalar", etiket: "Vorträge" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -408,6 +408,15 @@ export const DE: Icerik = {
     ctaTestNot: "Du hast den Test beendet — schreib mit deinen Antworten, wir machen dort weiter.",
     saatMini: "72-Stunden-Zähler",
     salonLink: "Bühnenbildschirm",
+    kapiBaslik: "Warum bist du hier?",
+    kapi1: "Ich denke über Direktvertrieb nach",
+    kapi1Alt: "Ein 2-Minuten-Test; wir sprechen auf Basis deiner Antworten.",
+    kapi2: "Ich bin neugierig auf Emre",
+    kapi2Alt: "Der Weg, die Säle, die Videos — die ganze Geschichte.",
+    kapi3: "Ich lade ihn auf die Bühne ein",
+    kapi3Alt: "Porträts, fertige Biografie, Vortragsthemen.",
+    hikayeBaslik: "Die ganze Geschichte",
+    hikayeAlt: "Die Startseite war der Trailer; das hier ist der Film. Jeder Schritt seit 2003 — jeder Saal, jedes Wort.",
     salonNot: "Dieser Bildschirm ist für die Bühne.",
   },
   proj: {

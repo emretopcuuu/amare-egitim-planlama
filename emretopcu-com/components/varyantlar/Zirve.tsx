@@ -1058,6 +1058,70 @@ function Hero() {
   );
 }
 
+/* Üç kapı — ziyaretçi kendini seçer, yalnız kendi yolunu görür.
+   Kapı 1 → karar testi, Kapı 2 → tam hikâye, Kapı 3 → medya kiti. */
+function UcKapi() {
+  const c = useC();
+  const dil = useDil();
+  const hikayeYolu = dil === "tr" ? "/hikaye" : `/${dil}/hikaye`;
+  const kapilar = [
+    { href: "/dusunuyorum", baslik: c.ui.kapi1, alt: c.ui.kapi1Alt },
+    { href: hikayeYolu, baslik: c.ui.kapi2, alt: c.ui.kapi2Alt },
+    { href: "/medya", baslik: c.ui.kapi3, alt: c.ui.kapi3Alt },
+  ];
+  return (
+    <section className="py-14 md:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.ui.kapiBaslik}
+        </motion.p>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {kapilar.map((k, i) => (
+            <motion.div
+              key={k.href}
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.6, delay: i * 0.08, ease: GECIS }}
+            >
+              <Link
+                href={k.href}
+                onClick={() => olcum(`kapi-${i + 1}`)}
+                className="group flex h-full flex-col justify-between rounded-2xl border border-altin/20 bg-abanoz-2/70 p-6 backdrop-blur-sm transition-colors hover:border-altin/60"
+              >
+                <div>
+                  <p className="font-lux text-2xl leading-none text-altin/30">
+                    0{i + 1}
+                  </p>
+                  <p className="mt-3 text-lg font-semibold tracking-tight text-fildisi">
+                    {k.baslik}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-snug text-duman">
+                    {k.alt}
+                  </p>
+                </div>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-altin">
+                  <ArrowUpRight
+                    size={15}
+                    weight="bold"
+                    className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  />
+                </span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* 2.5D derinlik portresi: imleç/eğime göre iki katman (portre + altın halka)
    zıt yönde kayar; hafif perspektif eğim "nefes alan" derinlik verir.
    Tek fotoğrafla; reduced-motion'da sabit. */
@@ -1643,7 +1707,7 @@ function SahnePerdesi() {
 function KapanisCumlesi() {
   const c = useC();
   return (
-    <section className="perde-koyu py-20 md:py-28">
+    <section id="iletisim" className="perde-koyu scroll-mt-24 py-20 md:py-28">
       <div className="mx-auto max-w-xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 28, rotate: 0 }}
@@ -1892,7 +1956,7 @@ function KatlamaProjeksiyon() {
   );
 }
 
-function Rakamlar() {
+function Rakamlar({ kaydirici = true }: { kaydirici?: boolean }) {
   const c = useC();
   return (
     <section id="rakamlar" className="relative scroll-mt-24 overflow-hidden py-24 md:py-32">
@@ -1942,7 +2006,7 @@ function Rakamlar() {
             </motion.div>
           ))}
         </div>
-        <KariyerKaydirici />
+        {kaydirici && <KariyerKaydirici />}
       </div>
     </section>
   );
@@ -3520,6 +3584,16 @@ function FasilRayi() {
   const c = useC();
   const aktif = useAktifFasil();
   const [kopyalandi, setKopyalandi] = useState(false);
+  // Fragman/hikâye ayrımı: ray yalnız bu sayfada gerçekten VAR olan
+  // fasılları gösterir (ölü bağlantı yok, numaralar yeniden sayılır).
+  const [mevcut, setMevcut] = useState<number[]>([]);
+  useEffect(() => {
+    setMevcut(
+      FASIL_IDLERI.map((id, i) => (document.getElementById(id) ? i : -1)).filter(
+        (i) => i >= 0,
+      ),
+    );
+  }, []);
   const kopyala = () => {
     try {
       const id = FASIL_IDLERI[aktif];
@@ -3536,7 +3610,8 @@ function FasilRayi() {
       aria-label="Fasıllar"
       className="group fixed top-1/2 left-5 z-40 hidden -translate-y-1/2 flex-col gap-2.5 lg:flex"
     >
-      {FASIL_IDLERI.map((id, i) => {
+      {mevcut.map((i, sira) => {
+        const id = FASIL_IDLERI[i];
         const s = i === aktif;
         return (
           <a key={id} href={`#${id}`} className="flex items-center gap-3">
@@ -3545,7 +3620,7 @@ function FasilRayi() {
                 s ? "text-altin" : "text-duman/40"
               }`}
             >
-              {String(i + 1).padStart(2, "0")}
+              {String(sira + 1).padStart(2, "0")}
             </span>
             <span
               className={`h-px transition-all duration-300 ${
@@ -3591,15 +3666,10 @@ function FasilRayi() {
 /* Metin-yoğun bölümlerde arka küre soluklaşır (görsel gürültü düşer). */
 const SOLUK_BOLUMLER = ["sozler", "videolar", "sss"] as const;
 
-function ZirveIc() {
-  const dil = useDil();
-  const azalt = useReducedMotion();
-  const { scrollYProgress } = useScroll();
-  const morf = useMotionValue(0); // ağ → dünya morfu (DunyaBolum sürer)
+/* Küre sanat yönetimi kancası: söz/video/soru bölümleri ekranı kaplarken
+   küre %35 opaklığa iner; sahneyi geri alınca döner. */
+function useKureSoluk() {
   const [kureSoluk, setKureSoluk] = useState(false);
-
-  // Küre sanat yönetimi: söz/video/soru bölümleri ekranı kaplarken küre
-  // %35 opaklığa iner; içerik nefes alır, küre sahneyi geri alınca döner.
   useEffect(() => {
     const gorunenler = new Set<string>();
     const goz = new IntersectionObserver(
@@ -3618,9 +3688,12 @@ function ZirveIc() {
     }
     return () => goz.disconnect();
   }, []);
+  return kureSoluk;
+}
 
-  // Fasıl bazlı ölçüm: her bölümde geçirilen süre, sayfadan ayrılırken
-  // isimsiz tek olay olarak gönderilir (fasil-<id>-<sn>s).
+/* Fasıl bazlı ölçüm: her bölümde geçirilen süre, sayfadan ayrılırken
+   isimsiz tek olay olarak gönderilir (fasil-<id>-<sn>s). */
+function FasilTakip() {
   useEffect(() => {
     const sure: Record<string, number> = {};
     const giris: Record<string, number> = {};
@@ -3664,6 +3737,15 @@ function ZirveIc() {
       document.removeEventListener("visibilitychange", gizlenince);
     };
   }, []);
+  return null;
+}
+
+function ZirveIc() {
+  const dil = useDil();
+  const azalt = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const morf = useMotionValue(0); // ağ → dünya morfu (DunyaBolum sürer)
+  const kureSoluk = useKureSoluk();
 
   return (
     <MorfContext.Provider value={morf}>
@@ -3674,8 +3756,6 @@ function ZirveIc() {
     >
       {/* İlk ziyarette sinematik açılış perdesi */}
       <Acilis />
-      {/* Dönen ziyaretçiye "kaldığın yer" şeridi */}
-      <DevamSeridi />
       {/* Masaüstünde imleci izleyen altın ışık */}
       <ImlecIsigi />
       {/* Ortam sesi düğmesi (kapalı başlar) */}
@@ -3696,26 +3776,16 @@ function ZirveIc() {
       <Nav />
       <FasilRayi />
       <DilSeridi />
+      <FasilTakip />
       <main>
         <Hero />
+        <UcKapi />
         <Manifesto />
         <Teori />
-        <KatlamaProjeksiyon />
-        <Rakamlar />
-        <DunyaBolum />
-        <DunyaVideo />
-        <Yolculuk />
-        <LiderTipleri />
-        <Gercekler />
-        <Sozler />
-        <Arsiv />
-        <Videolar />
-        <Vaat />
-        <Sss />
-        <Deyince />
+        <Rakamlar kaydirici={false} />
         <SahnePerdesi />
+        <Vaat />
         <KapanisCumlesi />
-        <Iletisim />
       </main>
       <KitapBulten />
       <Footer />
@@ -3724,6 +3794,95 @@ function ZirveIc() {
       <SecAlintila />
     </div>
     </MorfContext.Provider>
+  );
+}
+
+/* /hikaye girişi — "fragman bitti, film başlıyor". */
+function HikayeGiris() {
+  const c = useC();
+  return (
+    <section className="px-6 pt-36 pb-6 md:pt-44">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-sm font-medium tracking-[0.2em] text-altin uppercase">
+          {c.hero.isim}
+        </p>
+        <h1 className="mt-4 font-lux text-4xl font-semibold tracking-tight md:text-6xl">
+          {c.ui.hikayeBaslik}
+        </h1>
+        <p className="mt-5 max-w-[56ch] text-lg leading-relaxed text-duman">
+          {c.ui.hikayeAlt}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* /hikaye gövdesi — derinlik isteyenin sayfası: ana sayfadan taşınan
+   tüm fasıllar burada, aynı sahne (küre, ray, tema) üzerinde yaşar. */
+function HikayeIc() {
+  const dil = useDil();
+  const azalt = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const morf = useMotionValue(0);
+  const kureSoluk = useKureSoluk();
+
+  return (
+    <MorfContext.Provider value={morf}>
+    <div
+      lang={dil}
+      className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-fildisi"
+      style={{ colorScheme: "light" }}
+    >
+      <ImlecIsigi />
+      <AmbiyansDugme />
+      <Ag3D
+        ilerleme={scrollYProgress}
+        morf={morf}
+        hareket={!azalt}
+        soluk={kureSoluk}
+      />
+      <motion.div
+        aria-hidden
+        style={azalt ? undefined : { scaleX: scrollYProgress }}
+        className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-altin"
+      />
+      <Nav />
+      <FasilRayi />
+      <DevamSeridi />
+      <FasilTakip />
+      <main>
+        <HikayeGiris />
+        <KatlamaProjeksiyon />
+        <section className="pb-10">
+          <div className="mx-auto max-w-4xl px-6">
+            <KariyerKaydirici />
+          </div>
+        </section>
+        <DunyaBolum />
+        <DunyaVideo />
+        <Yolculuk />
+        <LiderTipleri />
+        <Gercekler />
+        <Sozler />
+        <Arsiv />
+        <Videolar />
+        <Sss />
+        <Deyince />
+        <Iletisim />
+      </main>
+      <Footer />
+      <BasaDon />
+      <SecAlintila />
+    </div>
+    </MorfContext.Provider>
+  );
+}
+
+export function ZirveHikaye({ dil = "tr" }: { dil?: Dil }) {
+  return (
+    <DilProvider dil={dil}>
+      <HikayeIc />
+    </DilProvider>
   );
 }
 
