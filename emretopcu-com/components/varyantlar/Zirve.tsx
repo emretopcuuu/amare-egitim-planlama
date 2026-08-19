@@ -1309,7 +1309,7 @@ function Manifesto() {
 function Teori() {
   const c = useC();
   return (
-    <section id="teori" className="perde-koyu relative scroll-mt-24 py-24 md:py-40">
+    <section id="teori" className="perde-koyu relative scroll-mt-24 py-20 md:py-32">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -1347,9 +1347,6 @@ function Teori() {
         >
           — {c.teori.imza}
         </motion.p>
-
-        {/* Katlamayı dokunarak yaşa */}
-        <KatlamaSim />
       </div>
     </section>
   );
@@ -2539,24 +2536,6 @@ function Vaat() {
         >
           {c.oneteamPerde.alt}
         </motion.p>
-        {/* Kararsız ziyaretçiyi karar testine taşıyan belirgin köprü */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, delay: 0.3, ease: GECIS }}
-          className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-altin/25 bg-abanoz-2/70 p-7 backdrop-blur-sm sm:flex-row sm:justify-between sm:text-left"
-        >
-          <p className="max-w-[30ch] font-medium text-fildisi">
-            {c.ui.testDavet}
-          </p>
-          <Link
-            href="/dusunuyorum"
-            className="shrink-0 rounded-full bg-altin px-6 py-3 font-medium text-fildisi transition-transform active:scale-[0.98]"
-          >
-            {c.ui.testDugme}
-          </Link>
-        </motion.div>
       </div>
       <div className="mx-auto mt-20 max-w-6xl px-6">
         <H2Perde className="max-w-[18ch] font-lux text-3xl font-semibold tracking-tight md:text-5xl">
@@ -3853,6 +3832,12 @@ function HikayeIc() {
       <main>
         <HikayeGiris />
         <KatlamaProjeksiyon />
+        {/* Katlamayı dokunarak yaşa — fragmandan taşındı */}
+        <section className="pb-6">
+          <div className="mx-auto max-w-4xl px-6">
+            <KatlamaSim />
+          </div>
+        </section>
         <section className="pb-10">
           <div className="mx-auto max-w-4xl px-6">
             <KariyerKaydirici />
