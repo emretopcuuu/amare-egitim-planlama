@@ -75,9 +75,9 @@ export const DIL_ETIKET: Record<Dil, string> = {
 const TR = {
   nav: [
     { href: "#manifesto", etiket: "Hakkımda" },
-    { href: "#yolculuk", etiket: "Yolculuk" },
-    { href: "#videolar", etiket: "Videolar" },
-    { href: "#konusmalar", etiket: "Konuşmalar" },
+    { href: "/hikaye#yolculuk", etiket: "Yolculuk" },
+    { href: "/hikaye#videolar", etiket: "Videolar" },
+    { href: "/hikaye#konusmalar", etiket: "Konuşmalar" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -479,6 +479,15 @@ const TR = {
     ctaTestNot: "Testi bitirdin — cevaplarınla birlikte yaz, kaldığımız yerden konuşalım.",
     saatMini: "İlk 72 saat sayacı",
     salonLink: "Sahne ekranı",
+    kapiBaslik: "Neden buradasın?",
+    kapi1: "Doğrudan satışı düşünüyorum",
+    kapi1Alt: "2 dakikalık test; cevaplarına göre konuşalım.",
+    kapi2: "Emre'yi merak ediyorum",
+    kapi2Alt: "Yolculuk, salonlar, videolar — hikâyenin tamamı.",
+    kapi3: "Sahneye davet edeceğim",
+    kapi3Alt: "Portreler, hazır biyografi, konuşma başlıkları.",
+    hikayeBaslik: "Hikâyenin tamamı",
+    hikayeAlt: "Ana sayfa fragmandı; burası filmin kendisi. 2003'ten bugüne her adım, her salon, her söz.",
     salonNot: "Bu ekran sahne içindir.",
   },
   proj: {
@@ -527,9 +536,9 @@ export type Icerik = typeof TR;
 const EN: Icerik = {
   nav: [
     { href: "#manifesto", etiket: "About" },
-    { href: "#yolculuk", etiket: "Journey" },
-    { href: "#videolar", etiket: "Videos" },
-    { href: "#konusmalar", etiket: "Talks" },
+    { href: "/en/hikaye#yolculuk", etiket: "Journey" },
+    { href: "/en/hikaye#videolar", etiket: "Videos" },
+    { href: "/en/hikaye#konusmalar", etiket: "Talks" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -931,6 +940,15 @@ const EN: Icerik = {
     ctaTestNot: "You finished the test — write with your answers and we'll pick up from there.",
     saatMini: "First 72 hours counter",
     salonLink: "Stage screen",
+    kapiBaslik: "Why are you here?",
+    kapi1: "I'm considering direct sales",
+    kapi1Alt: "A 2-minute test; we talk based on your answers.",
+    kapi2: "I'm curious about Emre",
+    kapi2Alt: "The journey, the halls, the videos — the full story.",
+    kapi3: "I'm booking a speaker",
+    kapi3Alt: "Portraits, ready-made bio, talk topics.",
+    hikayeBaslik: "The full story",
+    hikayeAlt: "The homepage was the trailer; this is the film. Every step since 2003 — every hall, every word.",
     salonNot: "This screen is for the stage.",
   },
   proj: {

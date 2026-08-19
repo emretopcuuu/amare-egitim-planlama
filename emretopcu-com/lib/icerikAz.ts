@@ -4,9 +4,9 @@ import type { Icerik } from "./icerik";
 export const AZ: Icerik = {
   nav: [
     { href: "#manifesto", etiket: "Haqqımda" },
-    { href: "#yolculuk", etiket: "Yol" },
-    { href: "#videolar", etiket: "Videolar" },
-    { href: "#konusmalar", etiket: "Çıxışlar" },
+    { href: "/az/hikaye#yolculuk", etiket: "Yol" },
+    { href: "/az/hikaye#videolar", etiket: "Videolar" },
+    { href: "/az/hikaye#konusmalar", etiket: "Çıxışlar" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -408,6 +408,15 @@ export const AZ: Icerik = {
     ctaTestNot: "Testi bitirdin — cavablarınla birlikdə yaz, qaldığımız yerdən danışaq.",
     saatMini: "72 saat sayğacı",
     salonLink: "Səhnə ekranı",
+    kapiBaslik: "Niyə buradasan?",
+    kapi1: "Birbaşa satışı düşünürəm",
+    kapi1Alt: "2 dəqiqəlik test; cavablarına görə danışaq.",
+    kapi2: "Emre ilə maraqlanıram",
+    kapi2Alt: "Yolçuluq, salonlar, videolar — hekayənin tamamı.",
+    kapi3: "Səhnəyə dəvət edəcəyəm",
+    kapi3Alt: "Portretlər, hazır bioqrafiya, çıxış mövzuları.",
+    hikayeBaslik: "Hekayənin tamamı",
+    hikayeAlt: "Ana səhifə fraqman idi; bura filmin özüdür. 2003-dən bu günə hər addım, hər salon, hər söz.",
     salonNot: "Bu ekran səhnə üçündür.",
   },
   proj: {
