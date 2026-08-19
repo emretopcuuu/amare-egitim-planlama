@@ -417,6 +417,7 @@ export const DE: Icerik = {
     kapi3Alt: "Porträts, fertige Biografie, Vortragsthemen.",
     hikayeBaslik: "Die ganze Geschichte",
     hikayeAlt: "Die Startseite war der Trailer; das hier ist der Film. Jeder Schritt seit 2003 — jeder Saal, jedes Wort.",
+    basvuruLink: "Gespräch beantragen",
     salonNot: "Dieser Bildschirm ist für die Bühne.",
   },
   proj: {

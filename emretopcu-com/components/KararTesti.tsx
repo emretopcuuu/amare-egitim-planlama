@@ -138,6 +138,10 @@ export default function KararTesti() {
         olcum("test-bitti");
         try {
           localStorage.setItem("emretopcu_test", "1");
+          localStorage.setItem(
+            "emretopcu_test_profil",
+            JSON.stringify({ neden: yeni[0], zaman: yeni[1], zorluk: yeni[2] }),
+          );
         } catch {
           /* yoksay */
         }
@@ -267,7 +271,14 @@ export default function KararTesti() {
                 Kartı indir
               </button>
             </div>
-            <div className="mt-10 flex flex-wrap items-center gap-4">
+            {/* Bir adım öteye: ters mülakat — cevaplar dosyaya işlenir */}
+            <a
+              href="/basvuru"
+              className="mt-6 inline-block text-sm font-medium text-altin underline-offset-2 hover:underline"
+            >
+              Bir adım öteye git: görüşmeye başvur — test cevapların dosyana eklenir →
+            </a>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
               <a
                 href={profilliWhatsapp(cevaplar)}
                 target="_blank"

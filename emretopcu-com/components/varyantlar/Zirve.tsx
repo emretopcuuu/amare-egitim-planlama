@@ -922,6 +922,7 @@ function KinetikSatir({
 
 function Hero() {
   const c = useC();
+  const dil = useDil();
   const azalt = useReducedMotion();
   const kaynak = useKaynak();
   const ref = useRef<HTMLElement>(null);
@@ -1022,10 +1023,10 @@ function Hero() {
                 </a>
               </Manyetik>
               <Link
-                href="/dusunuyorum"
+                href={dil === "tr" ? "/basvuru" : "/dusunuyorum"}
                 className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-6 py-3.5 font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
               >
-                {c.ui.testDugme}
+                {dil === "tr" ? c.ui.basvuruLink : c.ui.testDugme}
               </Link>
             </div>
             <p className="mt-3 max-w-[52ch] text-sm leading-snug text-duman">
@@ -3041,6 +3042,10 @@ function Footer() {
           <span className="text-black/15">·</span>
           <a href="/medya" className="transition-colors hover:text-altin">
             {c.ui.medyaLink}
+          </a>
+          <span className="text-black/15">·</span>
+          <a href="/basvuru" className="transition-colors hover:text-altin">
+            {c.ui.basvuruLink}
           </a>
           <span className="text-black/15">·</span>
           <a href="/salon" className="transition-colors hover:text-altin">
