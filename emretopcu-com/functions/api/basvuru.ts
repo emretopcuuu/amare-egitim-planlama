@@ -61,7 +61,7 @@ export const onRequestPost: PagesFunction<Ortam> = async ({ request, env }) => {
   let onOkuma: string | null = null;
   try {
     if (env.AI) {
-      const yanit = (await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      const yanit = (await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
         messages: [
           {
             role: "system",
@@ -74,8 +74,15 @@ export const onRequestPost: PagesFunction<Ortam> = async ({ request, env }) => {
           },
         ],
         max_tokens: 220,
-      })) as { response?: string };
-      const metin = (yanit?.response ?? "").trim();
+      })) as {
+        response?: string;
+        choices?: { message?: { content?: string } }[];
+      };
+      const metin = (
+        yanit?.response ??
+        yanit?.choices?.[0]?.message?.content ??
+        ""
+      ).trim();
       if (metin.length > 20) onOkuma = metin.slice(0, 700);
     }
   } catch {
