@@ -401,6 +401,13 @@ export const ES: Icerik = {
     salonBosNot: "Toda sala llena empezó siendo una sala vacía.",
     salonDoluNot: "Ciudad tras ciudad, sala tras sala — cada semana, durante años.",
     testDugme: "Empezar el test",
+    kanitTakipci: "267K seguidores",
+    kanitYazar: "Autor de ‘Las primeras 72 horas’",
+    kanitUlke: "38 países",
+    igSelam: "Vienes de Instagram — la historia sigue aquí.",
+    ctaTestNot: "Terminaste el test — escribe con tus respuestas y seguimos desde ahí.",
+    saatMini: "Contador de 72 horas",
+    salonLink: "Pantalla de escenario",
     salonNot: "Esta pantalla es para el escenario.",
   },
   proj: {

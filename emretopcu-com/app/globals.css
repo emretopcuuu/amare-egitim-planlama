@@ -7,7 +7,7 @@
   --color-abanoz: #f1efe9;
   --color-abanoz-2: #ffffff;
   --color-fildisi: #1a1a1d;
-  --color-duman: #67645d; /* porselen üstünde AA kontrast */
+  --color-duman: #5f5c55; /* porselen üstünde AA kontrast */
   --color-altin: #9a7a2c;
 
   --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
@@ -52,6 +52,19 @@ body::after {
   pointer-events: none;
   opacity: 0.032;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Koyu perde: bölüm bazlı sinema ritmi (açık-koyu-açık nefes anları).
+   Yerel palet değişkenleri ezilir; içindeki bg-abanoz / text-fildisi gibi
+   tüm yardımcı sınıflar otomatik koyulaşır — gece modundan bağımsız. */
+.perde-koyu {
+  --color-abanoz: #101322;
+  --color-abanoz-2: #181c2b;
+  --color-fildisi: #f1eee6;
+  --color-duman: #a19e96;
+  --color-altin: #d8b45a;
+  background-color: var(--color-abanoz);
+  color: var(--color-fildisi);
 }
 
 /* Editoryal drop-cap: manifesto ilk harfi. */

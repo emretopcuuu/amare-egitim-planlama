@@ -401,6 +401,13 @@ export const AZ: Icerik = {
     salonBosNot: "Hər dolu salon əvvəlcə boş salon idi.",
     salonDoluNot: "Şəhər-şəhər, salon-salon — illərdir hər həftə.",
     testDugme: "Testə başla",
+    kanitTakipci: "267K izləyici",
+    kanitYazar: "‘İlk 72 Saat’ kitabının müəllifi",
+    kanitUlke: "38 ölkə",
+    igSelam: "Instagram-dan gəldin — davamı buradadır.",
+    ctaTestNot: "Testi bitirdin — cavablarınla birlikdə yaz, qaldığımız yerdən danışaq.",
+    saatMini: "72 saat sayğacı",
+    salonLink: "Səhnə ekranı",
     salonNot: "Bu ekran səhnə üçündür.",
   },
   proj: {
