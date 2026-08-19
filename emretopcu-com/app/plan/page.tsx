@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PlanListe from "@/components/PlanListe";
 import PlanYazdir from "@/components/PlanYazdir";
 
 export const metadata: Metadata = {
@@ -66,28 +67,7 @@ export default function PlanSayfa() {
           sırayla yap; her birini işaretle. — Emre Topçu
         </p>
 
-        <ol className="mt-10 space-y-6">
-          {ADIMLAR.map((a, i) => (
-            <li
-              key={a.baslik}
-              className="flex gap-4 rounded-2xl border border-black/10 bg-abanoz-2 p-5 print:border-black/20 print:bg-white"
-            >
-              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-altin/50 font-lux text-sm text-altin">
-                {i + 1}
-              </span>
-              <div>
-                <h2 className="text-lg font-semibold text-fildisi">
-                  {a.baslik}
-                </h2>
-                <p className="mt-1 leading-relaxed text-duman">{a.metin}</p>
-              </div>
-              <span
-                aria-hidden
-                className="ml-auto mt-1 hidden h-6 w-6 shrink-0 rounded border border-black/30 print:block"
-              />
-            </li>
-          ))}
-        </ol>
+        <PlanListe adimlar={ADIMLAR} />
 
         <div className="mt-12 flex flex-wrap items-center gap-4">
           <PlanYazdir />

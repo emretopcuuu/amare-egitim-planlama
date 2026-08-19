@@ -357,10 +357,13 @@ export default function Ag3D({
   ilerleme,
   morf,
   hareket = true,
+  soluk = false,
 }: {
   ilerleme: MotionValue<number>;
   morf: MotionValue<number>;
   hareket?: boolean;
+  /* Metin-yoğun bölümlerde küre soluklaşır (Zirve yönetir). */
+  soluk?: boolean;
 }) {
   // Mobilde daha az düğüm; düşük dpr. İlk render'da ölç, sonra sabit tut.
   const [mobil, setMobil] = useState(false);
@@ -401,7 +404,11 @@ export default function Ag3D({
   }
 
   return (
-    <div className="fixed inset-0 -z-10" aria-hidden>
+    <div
+      className="fixed inset-0 -z-10 transition-opacity duration-1000"
+      style={{ opacity: soluk ? 0.35 : 1 }}
+      aria-hidden
+    >
       <Canvas
         camera={{ position: [0, 0, 6.2], fov: 45 }}
         dpr={mobil ? [1, 1.3] : [1, 1.75]}

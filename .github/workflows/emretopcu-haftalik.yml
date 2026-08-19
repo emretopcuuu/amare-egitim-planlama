@@ -27,10 +27,14 @@ jobs:
         run: node scripts/son-video.mjs
       - name: En çok izlenenleri tazele
         run: node scripts/populer-video.mjs
+
+      - name: Video kapaklarını yerelleştir
+        working-directory: emretopcu-com
+        run: node scripts/kapak-indir.mjs
       - name: Değişiklik var mı
         id: fark
         run: |
-          if git diff --quiet public/son-video.json lib/populer.ts; then
+          if git diff --quiet public/son-video.json lib/populer.ts && git diff --quiet --stat public/kapak 2>/dev/null && [ -z "$(git status --porcelain public/kapak)" ]; then
             echo "degisti=false" >> "$GITHUB_OUTPUT"
           else
             echo "degisti=true" >> "$GITHUB_OUTPUT"
@@ -47,6 +51,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/son-video.json lib/populer.ts
+          git add public/son-video.json lib/populer.ts public/kapak
           git commit -m "emretopcu.ai: video listeleri güncellendi"
           git push

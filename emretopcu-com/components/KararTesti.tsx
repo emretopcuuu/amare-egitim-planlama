@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { WhatsappLogo, ArrowCounterClockwise } from "@phosphor-icons/react";
+import { CheckCircle, DownloadSimple, WhatsappLogo, ArrowCounterClockwise } from "@phosphor-icons/react";
 import { WHATSAPP_NUMARA } from "@/lib/icerik";
 import { olcum } from "@/lib/olcum";
 
@@ -75,16 +75,74 @@ const NOTLAR: Record<string, string> = {
     "Nasıl yapılacağını bilmemek en kolay çözülen kısım — sistem ve eğitim arşivi tam da bunun için var. Yalnız değilsin.",
 };
 
+// Cevap anahtarını görünen etikete çevirir (kart ve özet için).
+function etiketBul(soruIdx: number, anahtar: string): string {
+  return (
+    SORULAR[soruIdx].secenekler.find((s) => s.anahtar === anahtar)?.etiket ?? ""
+  );
+}
+
+/* Sonuç ekranından indirilebilen paylaşılabilir profil kartı (PNG). */
+function kartIndir(cevaplar: string[]) {
+  const c = document.createElement("canvas");
+  c.width = 1080;
+  c.height = 1350;
+  const x = c.getContext("2d");
+  if (!x) return;
+  x.fillStyle = "#101322";
+  x.fillRect(0, 0, 1080, 1350);
+  x.strokeStyle = "rgba(216,180,90,0.55)";
+  x.lineWidth = 3;
+  x.strokeRect(48, 48, 984, 1254);
+  x.textAlign = "center";
+  x.fillStyle = "#d8b45a";
+  x.font = "600 34px Georgia, serif";
+  x.fillText("EMRE TOPÇU · KARAR TESTİ", 540, 170);
+  x.fillStyle = "#f1eee6";
+  x.font = "600 60px Georgia, serif";
+  x.fillText("Benim başlangıç profilim", 540, 320);
+  const basliklar = ["NEDENİM", "ZAMANIM", "BENİ DÜŞÜNDÜREN"];
+  cevaplar.forEach((a, i) => {
+    x.fillStyle = "#d8b45a";
+    x.font = "30px Georgia, serif";
+    x.fillText(basliklar[i] ?? "", 540, 480 + i * 210);
+    x.fillStyle = "#f1eee6";
+    x.font = "600 48px Georgia, serif";
+    x.fillText(etiketBul(i, a), 540, 545 + i * 210);
+  });
+  x.fillStyle = "#a19e96";
+  x.font = "30px Georgia, serif";
+  x.fillText("emretopcu.ai/dusunuyorum", 540, 1240);
+  const bag = document.createElement("a");
+  bag.download = "karar-testi.png";
+  bag.href = c.toDataURL("image/png");
+  bag.click();
+}
+
 export default function KararTesti() {
   const [adim, setAdim] = useState(0);
   const [cevaplar, setCevaplar] = useState<string[]>([]);
+  // Seçim mikro-onayı: dokunulan seçenek 260 ms altınla vurgulanır, sonra geçilir.
+  const [secilen, setSecilen] = useState<string | null>(null);
 
   const sec = (anahtar: string) => {
-    const yeni = [...cevaplar];
-    yeni[adim] = anahtar;
-    setCevaplar(yeni);
-    setAdim(adim + 1);
-    if (adim + 1 >= SORULAR.length) olcum("test-bitti");
+    if (secilen) return;
+    setSecilen(anahtar);
+    window.setTimeout(() => {
+      const yeni = [...cevaplar];
+      yeni[adim] = anahtar;
+      setCevaplar(yeni);
+      setAdim(adim + 1);
+      setSecilen(null);
+      if (adim + 1 >= SORULAR.length) {
+        olcum("test-bitti");
+        try {
+          localStorage.setItem("emretopcu_test", "1");
+        } catch {
+          /* yoksay */
+        }
+      }
+    }, 260);
   };
 
   const sifirla = () => {
@@ -109,7 +167,7 @@ export default function KararTesti() {
       </div>
 
       {/* İlerleme çubuğu */}
-      <div className="mb-12 h-[3px] w-full overflow-hidden rounded-full bg-black/10">
+      <div className="mb-12 h-1.5 w-full overflow-hidden rounded-full bg-fildisi/10">
         <motion.div
           className="h-full origin-left bg-altin"
           animate={{ scaleX: (bitti ? SORULAR.length : adim) / SORULAR.length }}
@@ -127,20 +185,39 @@ export default function KararTesti() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4, ease: GECIS }}
           >
-            <h1 className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
+            <p aria-hidden className="font-lux text-7xl leading-none text-altin/20">
+              0{adim + 1}
+            </p>
+            <h1 className="mt-4 font-lux text-3xl font-semibold tracking-tight md:text-5xl">
               {SORULAR[adim].soru}
             </h1>
             <div className="mt-10 space-y-3">
-              {SORULAR[adim].secenekler.map((s) => (
-                <button
-                  key={s.anahtar}
-                  type="button"
-                  onClick={() => sec(s.anahtar)}
-                  className="block w-full rounded-2xl border border-black/10 bg-abanoz-2 px-6 py-5 text-left text-lg text-fildisi transition-colors hover:border-altin/50 hover:text-altin active:scale-[0.99]"
-                >
-                  {s.etiket}
-                </button>
-              ))}
+              {SORULAR[adim].secenekler.map((s) => {
+                const vurgulu = secilen === s.anahtar;
+                return (
+                  <button
+                    key={s.anahtar}
+                    type="button"
+                    onClick={() => sec(s.anahtar)}
+                    className={`flex w-full items-center justify-between rounded-2xl border px-6 py-5 text-left text-lg transition-all active:scale-[0.99] ${
+                      vurgulu
+                        ? "scale-[1.01] border-altin bg-altin/15 text-altin"
+                        : "border-fildisi/10 bg-abanoz-2 text-fildisi hover:border-altin/50 hover:text-altin"
+                    }`}
+                  >
+                    {s.etiket}
+                    {vurgulu && (
+                      <motion.span
+                        initial={{ scale: 0.4, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                      >
+                        <CheckCircle size={24} weight="fill" className="text-altin" />
+                      </motion.span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         ) : (
@@ -166,7 +243,31 @@ export default function KararTesti() {
                 </div>
               ))}
             </div>
-            <div className="mt-12 flex flex-wrap items-center gap-4">
+            {/* Paylaşılabilir profil kartı */}
+            <div className="mt-10 rounded-3xl border border-altin/30 bg-abanoz-2/70 p-7">
+              <p className="text-xs font-medium tracking-[0.2em] text-altin uppercase">
+                Başlangıç profilin
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {["Nedenim", "Zamanım", "Beni düşündüren"].map((b, i) => (
+                  <div key={b}>
+                    <p className="text-xs text-duman uppercase">{b}</p>
+                    <p className="mt-1 font-lux text-lg text-fildisi">
+                      {etiketBul(i, cevaplar[i])}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => { kartIndir(cevaplar); olcum("test-kart"); }}
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi"
+              >
+                <DownloadSimple size={16} weight="bold" />
+                Kartı indir
+              </button>
+            </div>
+            <div className="mt-10 flex flex-wrap items-center gap-4">
               <a
                 href={profilliWhatsapp(cevaplar)}
                 target="_blank"
