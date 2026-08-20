@@ -5,7 +5,10 @@
 export const config = { schedule: '0 7 * * *' };
 
 export default async () => {
-  const anahtar = process.env.POSTA_GOREV_ANAHTARI;
+  // 4KB fonksiyon-env sınırı: yeni değişken EKLEME (build'i kırıyor, 2026-08-20
+  // teşhisi). Bu yüzden sitede zaten var olan BULTEN_TRIGGER_SECRET kullanılır.
+  const anahtar =
+    process.env.POSTA_GOREV_ANAHTARI || process.env.BULTEN_TRIGGER_SECRET;
   if (!anahtar) {
     console.log('posta-tetik: POSTA_GOREV_ANAHTARI yok, atlandı');
     return new Response('atlandi', { status: 200 });

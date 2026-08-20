@@ -29,7 +29,11 @@ adımları ve içerik TODO'ları kendi README'sinde.
   firebase-admin kullanır) — kamp app DEĞİL. Netlify env/fonksiyon
   değişikliğinde hangi siteye dokunduğunu MUTLAKA `custom_domain` ile
   doğrula; kök `FIREBASE_*` değişkenleri egitimtakvimi fonksiyonları için
-  ZORUNLU (functions kapsamı), kaldırma.
+  ZORUNLU (functions kapsamı), kaldırma. ⚠️ egitimtakvimi'nin AWS 4KB
+  fonksiyon-env bütçesi DOLU: functions kapsamına YENİ env değişkeni
+  EKLEME — build'i kırar ('building site' exit 2; 20 Ağu 2026'da yaşandı,
+  eklenen değişken silinince düzeldi). Yeni gizli değer gerekiyorsa mevcut
+  BULTEN_TRIGGER_SECRET yeniden kullanılır (posta-tetik böyle yapar).
 - **CI:** Bloklayan CI **yok** ama `.github/workflows/deploy-bekcisi.yml`
   var — her main push'unda egitimtakvimi'yi smoke-test eder (kisalt fonksiyonu
   dahil); kırıksa e-posta gönderir. Kamp app doğrulaması için
