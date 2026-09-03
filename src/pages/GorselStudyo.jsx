@@ -18,7 +18,7 @@ const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran'
 const GRUP_IKON = {
   'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Aralık': '↔️', 'Tema': '🎨', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
-  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋', 'Avrupa': '🇪🇺',
+  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋', 'Avrupa': '🇪🇺', 'Lüks': '✨',
 };
 // Çip font ailesi (görünür font önizleme)
 const CIP_FONT = {
