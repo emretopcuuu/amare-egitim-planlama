@@ -84,6 +84,11 @@ export const MARKA_VARYASYON = [
   { grup: 'Avrupa', tekil: false, secenekler: [
     { key: 'eu-saat', label: 'EU saati', cmd: 'eu saati' },
     { key: 'eu-bayrak', label: 'Avrupa bayrağı', cmd: 'avrupa bayrağı' },
+    { key: 'eu-bayrak-dalgali', label: 'Dalgalı bayrak', cmd: 'dalgalı bayrak' },
+  ] },
+  { grup: 'Lüks', tekil: false, secenekler: [
+    { key: 'isilti', label: 'Altın ışıltı', cmd: 'altın ışıltı' },
+    { key: 'suslu-kose', label: 'Süslü köşeler', cmd: 'süslü köşe' },
   ] },
   { grup: 'İçerik', tekil: false, secenekler: [
     { key: 'no-qr', label: 'QR yok', cmd: 'qr kaldır' },
@@ -96,6 +101,7 @@ export const MARKA_VARYASYON_INDEX = MARKA_VARYASYON.flatMap(g => g.secenekler.m
 
 // Hazır stil setleri — tek tıkla birden çok çip seçer
 export const MARKA_PRESETLER = [
+  { ad: '🇪🇺 Avrupa Gala', keys: ['tema-mor', 'eu-saat', 'eu-bayrak-dalgali', 'isilti', 'suslu-kose'] },
   { ad: '🌙 Lüks Gece', keys: ['tema-siyah', 'font-karisik', 'baslik-cift'] },
   { ad: '🤍 Zarif Krem', keys: ['tema-krem', 'font-zarif'] },
   { ad: '🌊 Kurumsal Lacivert', keys: ['tema-lacivert', 'font-modern'] },

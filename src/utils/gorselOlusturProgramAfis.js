@@ -2,7 +2,7 @@
 // Dikey zaman çizelgesi: her satır = saat + aktivite + (atanmış) konuşmacı foto/ad/rol + alt notlar.
 // Temalı: Marka Afiş ile aynı palet/font/ayar mantığını kullanır (ekPrompt → varyasyon).
 import { imgYukle as urlToImage } from './imgYukle';
-import { paletKoyu, paletAdla, fontSec, gunCevir, ayarCikar, euSaatCevir, euBayrakCiz } from './gorselOlusturMarkaAfis';
+import { paletKoyu, paletAdla, fontSec, gunCevir, ayarCikar, euSaatCevir, euBayrakCiz, dalgaliBayrakCiz } from './gorselOlusturMarkaAfis';
 
 const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 const tarihYaz = (tarih, gun) => {
@@ -197,8 +197,11 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
     } else ctx.drawImage(amare, ax, ayy, aw, ah);
   } catch {}
 
-  // ── AB BAYRAĞI ROZETİ (sol üst) — en üstte ──
-  if (ayar.euBayrak) euBayrakCiz(ctx, Math.round(W * 0.04), Math.round(W * 0.04), Math.round(W * 0.09), true);
+  // ── AB BAYRAĞI (sol üst) — dalgalı direkli veya düz rozet, en üstte ──
+  if (ayar.euBayrak) {
+    if (ayar.bayrakDalgali) dalgaliBayrakCiz(ctx, Math.round(W * 0.065), Math.round(W * 0.04), Math.round(W * 0.16), palet);
+    else euBayrakCiz(ctx, Math.round(W * 0.04), Math.round(W * 0.04), Math.round(W * 0.09), true);
+  }
 
   const dataUrl = canvas.toDataURL('image/png');
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };

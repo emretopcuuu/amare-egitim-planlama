@@ -164,6 +164,169 @@ export const euBayrakCiz = (ctx, x, y, w, golge = false) => {
   ctx.restore();
 };
 
+// ── LÜKS KATMANLAR (ışıltı / süslü köşe / dalgalı bayrak) — hepsi deterministik ──
+
+// Tohumlu PRNG (mulberry32) — aynı afiş her üretimde aynı ışıltı desenini alır.
+const rngYap = (tohum) => () => {
+  tohum = (tohum + 0x6D2B79F5) | 0;
+  let t = Math.imul(tohum ^ (tohum >>> 15), 1 | tohum);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
+// Tek ışıltı tanesi: yumuşak ışıma + 4 uçlu içbükey yıldız.
+const parildaCiz = (ctx, cx, cy, r, palet, alfa) => {
+  const cekirdek = palet.acik ? `rgba(${palet.goldRGB},${alfa})` : `rgba(255,252,235,${alfa})`;
+  const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  gl.addColorStop(0, cekirdek);
+  gl.addColorStop(0.3, `rgba(${palet.goldRGB},${alfa * 0.5})`);
+  gl.addColorStop(1, `rgba(${palet.goldRGB},0)`);
+  ctx.fillStyle = gl;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  const u = r * 0.95, k = r * 0.12;
+  ctx.fillStyle = palet.acik ? `rgba(${palet.goldRGB},${Math.min(1, alfa * 1.1)})` : `rgba(255,253,240,${Math.min(1, alfa * 1.1)})`;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - u); ctx.quadraticCurveTo(cx + k, cy - k, cx + u, cy);
+  ctx.quadraticCurveTo(cx + k, cy + k, cx, cy + u);
+  ctx.quadraticCurveTo(cx - k, cy + k, cx - u, cy);
+  ctx.quadraticCurveTo(cx - k, cy - k, cx, cy - u);
+  ctx.closePath(); ctx.fill();
+};
+
+// Altın ışıltı katmanı: kenar bantlarına + köşelere serpilmiş parıltılar.
+// İçerik alanına (yüzler/metin) girmez; kurdele varken sağ üst köşe boş bırakılır.
+const isiltiCiz = (ctx, W, H, palet, kurdeleVar = false) => {
+  const rnd = rngYap(7);
+  const olc = W / 1080;
+  ctx.save();
+  const bantlar = [
+    { x0: 0.015, x1: 0.13, y0: 0.02, y1: 0.96, n: 10 }, // sol kenar
+    { x0: 0.87, x1: 0.985, y0: 0.02, y1: 0.96, n: 10 }, // sağ kenar
+    { x0: 0.15, x1: 0.85, y0: 0.012, y1: 0.075, n: 6 }, // üst bant
+    { x0: 0.15, x1: 0.85, y0: 0.91, y1: 0.975, n: 5 },  // alt bant
+  ];
+  bantlar.forEach(b => {
+    for (let i = 0; i < b.n; i++) {
+      const px = (b.x0 + rnd() * (b.x1 - b.x0)) * W;
+      const py = (b.y0 + rnd() * (b.y1 - b.y0)) * H;
+      if (kurdeleVar && px > W * 0.66 && py < W * 0.34) continue;
+      const buyuk = rnd() < 0.16;
+      const r = (buyuk ? 13 + rnd() * 8 : 3.5 + rnd() * 7) * olc;
+      parildaCiz(ctx, px, py, r, palet, 0.4 + rnd() * 0.4);
+    }
+  });
+  // köşe "kahraman" ışıltıları (kurdele köşesi hariç)
+  const koseler = [[0.055, 0.045], [0.945, 0.045], [0.05, null], [0.95, null]];
+  koseler.forEach(([px, py], i) => {
+    const cx = px * W, cy = py == null ? H - 0.05 * W : py * W;
+    if (kurdeleVar && i === 1) return;
+    parildaCiz(ctx, cx, cy, 21 * olc, palet, 0.8);
+    parildaCiz(ctx, cx + 30 * olc, cy + 16 * olc, 8 * olc, palet, 0.55);
+  });
+  ctx.restore();
+};
+
+// Süslü altın köşe (basit L-aksan yerine): çift kavis + uç kıvrımı + elmas uçlar + mini ışıltı.
+// Sol üst köşe için çizilir, diğerleri translate+scale ile aynalanır. kurdele varken sağ üst atlanır.
+const susluKoseCiz = (ctx, W, H, palet, kurdeleVar = false) => {
+  const s = W * 0.14, m = W * 0.03;
+  const tek = () => {
+    ctx.save();
+    ctx.strokeStyle = palet.gold; ctx.fillStyle = palet.gold;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = `rgba(${palet.goldRGB},0.55)`; ctx.shadowBlur = 10;
+    // ana kavis (köşeyi saran yumuşak L) — uçları hafif içe kıvrılır
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(m + s, m);
+    ctx.quadraticCurveTo(m + s * 0.18, m + s * 0.02, m + s * 0.055, m + s * 0.16);
+    ctx.quadraticCurveTo(m, m + s * 0.3, m, m + s);
+    ctx.quadraticCurveTo(m + s * 0.015, m + s * 1.1, m + s * 0.1, m + s * 1.12);
+    ctx.stroke();
+    // dış ince eş kavis
+    ctx.lineWidth = 1.6; ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(m + s * 1.3, m * 0.6);
+    ctx.quadraticCurveTo(m * 0.72, m * 0.52, m * 0.6, m + s * 1.3);
+    ctx.stroke();
+    // iç kısa aksan kavisi
+    ctx.lineWidth = 1.4; ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(m + s * 0.62, m + s * 0.1);
+    ctx.quadraticCurveTo(m + s * 0.2, m + s * 0.16, m + s * 0.11, m + s * 0.6);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    // uç elmasları
+    const elmas = (x, y, r) => { ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.fillRect(-r, -r, r * 2, r * 2); ctx.restore(); };
+    elmas(m + s * 1.3, m * 0.6, 3.4); elmas(m * 0.6, m + s * 1.3, 3.4);
+    elmas(m + s, m, 2.6); elmas(m + s * 0.1, m + s * 1.12, 2.6);
+    // köşe tepesine mini ışıltı
+    parildaCiz(ctx, m + s * 0.09, m + s * 0.09, s * 0.13, palet, 0.85);
+    ctx.restore();
+  };
+  const koseDondur = (tx, ty, sx, sy) => { ctx.save(); ctx.translate(tx, ty); ctx.scale(sx, sy); tek(); ctx.restore(); };
+  koseDondur(0, 0, 1, 1);
+  if (!kurdeleVar) koseDondur(W, 0, -1, 1);
+  koseDondur(0, H, 1, -1);
+  koseDondur(W, H, -1, -1);
+};
+
+// Dalgalanan AB bayrağı + gümüş direk (sol üst). x,y = bayrağın direğe bağlanma noktası, w = bayrak genişliği.
+// Dikey dilim tekniği: sinüs dalgası uca doğru büyür, eğime göre kumaş gölgelenir; yıldızlar dalgayı izler.
+export const dalgaliBayrakCiz = (ctx, x, y, w, palet) => {
+  const h = Math.round(w * 0.62);
+  const direkW = Math.max(5, Math.round(w * 0.05));
+  const amp = h * 0.07, k = (Math.PI * 2.3) / w, faz = 0.9;
+  const dalgaY = (sx) => Math.sin(faz + sx * k) * amp * (0.2 + 0.8 * sx / w);
+  ctx.save();
+  // bayrak gölgesi (tek silüet, dilimlerin altına)
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = 'rgba(0,20,80,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(x, y + dalgaY(0));
+  for (let sx = 0; sx <= w; sx += 6) ctx.lineTo(x + sx, y + dalgaY(sx));
+  for (let sx = w; sx >= 0; sx -= 6) ctx.lineTo(x + sx, y + dalgaY(sx) + h * (1 - 0.05 * (sx / w)));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // kumaş dilimleri
+  const dilim = 3;
+  for (let sx = 0; sx < w; sx += dilim) {
+    const t = sx / w;
+    const yTop = y + dalgaY(sx);
+    const hh = h * (1 - 0.05 * t);
+    ctx.fillStyle = '#003399';
+    ctx.fillRect(x + sx, yTop, dilim + 1, hh);
+    const egim = Math.cos(faz + sx * k) * (0.2 + 0.8 * t);
+    if (egim > 0) ctx.fillStyle = `rgba(255,255,255,${egim * 0.22})`;
+    else ctx.fillStyle = `rgba(0,0,30,${-egim * 0.34})`;
+    ctx.fillRect(x + sx, yTop, dilim + 1, hh);
+  }
+  // 12 yıldız — çember üzerinde, her biri kendi dilimindeki dalgayı izler
+  const cxF = x + w * 0.5, R = h / 3.4;
+  for (let i = 0; i < 12; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 6;
+    const sxI = cxF + R * Math.cos(a) - x;
+    const cyI = y + dalgaY(sxI) + h * 0.5 * (1 - 0.05 * (sxI / w)) + R * 0.9 * Math.sin(a);
+    yildizCiz(ctx, x + sxI, cyI, Math.max(2, h / 19), '#ffcc00');
+  }
+  // direk (gümüş gradient) + altın tepe topu — bayrağın soluna, üstte
+  const dTop = y - Math.round(h * 0.16), dBoy = Math.round(h * 2.3);
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  const dg = ctx.createLinearGradient(x - direkW, 0, x, 0);
+  dg.addColorStop(0, '#8f929c'); dg.addColorStop(0.45, '#eceef4'); dg.addColorStop(1, '#71747e');
+  ctx.fillStyle = dg;
+  roundRect(ctx, x - direkW, dTop, direkW, dBoy, direkW / 2); ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  const topR = direkW * 1.05;
+  const tg = ctx.createRadialGradient(x - direkW / 2 - topR * 0.3, dTop - topR * 0.4, topR * 0.15, x - direkW / 2, dTop - topR * 0.1, topR * 1.5);
+  tg.addColorStop(0, '#ffedad'); tg.addColorStop(1, palet.goldKoyu || '#8a6a1f');
+  ctx.fillStyle = tg;
+  ctx.beginPath(); ctx.arc(x - direkW / 2, dTop - topR * 0.1, topR, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+};
+
 // TR (UTC+3, sabit) → Orta Avrupa saat farkı: yazın (CEST) 1, kışın (CET) 2 saat.
 // AB DST kuralı: Mart son Pazar 01:00 UTC – Ekim son Pazar 01:00 UTC arası yaz saati.
 const sonPazarUTC = (yil, ay) => { const d = new Date(Date.UTC(yil, ay + 1, 0)); return d.getUTCDate() - d.getUTCDay(); };
@@ -242,7 +405,7 @@ export const ayarCikar = (ek) => {
     qr: true, program: true, tarih: true,   // içerik
     tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
     filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr', duzen: null, aralik: 'normal',
-    euSaat: false, euBayrak: false,
+    euSaat: false, euBayrak: false, bayrakDalgali: false, isilti: false, susluKose: false,
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -305,6 +468,10 @@ export const ayarCikar = (ek) => {
   // Avrupa: TR saatinin altına Orta Avrupa saati + AB bayrağı rozeti
   if (has('eu saati', 'eu saat', 'avrupa saati', 'orta avrupa saati', 'cet saati')) a.euSaat = true;
   if (has('avrupa bayrağı', 'avrupa bayragi', 'eu bayrağı', 'eu bayrak', 'ab bayrağı')) a.euBayrak = true;
+  if (has('dalgalı bayrak', 'dalgali bayrak', 'bayrak dalgalansın', 'direkli bayrak')) { a.euBayrak = true; a.bayrakDalgali = true; }
+  // Lüks dokunuşlar: altın ışıltı serpintisi + süslü köşe süsleri
+  if (has('ışıltı', 'isilti', 'sim efekti', 'parıltı ekle', 'glitter')) a.isilti = true;
+  if (has('süslü köşe', 'suslu kose', 'süslü çerçeve', 'köşe süsü', 'ornament')) a.susluKose = true;
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
   // filigran (arka amblem) yoğunluğu
@@ -325,7 +492,7 @@ export const ayarCikar = (ek) => {
 // Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir.
 // dekor = { isik, elmas, cerceve } — tekil dekor kapatma için.
 const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
-  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false, filigran = 'normal', doku = null } = dekor;
+  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false, filigran = 'normal', doku = null, susluKose = false } = dekor;
   // DİKEY ve simetrik gradient (çapraz değil → sol/sağ eşit, "yarısı koyu yarısı açık" olmaz)
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
@@ -400,8 +567,10 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
       ctx.restore();
     } catch {}
   }
-  // LÜKS: köşe altın çerçeve aksanları (premium his) — kapatılabilir
-  if (cerceve) {
+  // LÜKS: köşe aksanları — süslü köşe seçiliyse zarif kavisli süs, değilse klasik L-aksan
+  if (susluKose) {
+    susluKoseCiz(ctx, W, H, palet, kurdeleVar);
+  } else if (cerceve) {
     ctx.strokeStyle = palet.gold; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
     const cm = Math.round(W * 0.045), cl = Math.round(W * 0.075);
     const kose = (x, y, dx, dy) => { ctx.beginPath(); ctx.moveTo(x + dx * cl, y); ctx.lineTo(x, y); ctx.lineTo(x, y + dy * cl); ctx.stroke(); };
@@ -497,7 +666,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const ctx = canvas.getContext('2d');
   const M = Math.round(W * 0.07);
 
-  await zeminCiz(ctx, W, CANVAS_H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku });
+  await zeminCiz(ctx, W, CANVAS_H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku, susluKose: ayar.susluKose });
 
   // ── ÜST: One Team logosu ──
   let y = Math.round(H * 0.02);
@@ -791,16 +960,23 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     }
   }
 
+  // ── ALTIN IŞILTI SERPİNTİSİ — kenar bantları + köşeler (kurdele/bayrak üstte kalır) ──
+  if (ayar.isilti) isiltiCiz(ctx, W, CANVAS_H, palet, !!ayar.kurdele);
+
   // ── KÖŞE KURDELE/ŞERİT (sağ üst) — en üstte çizilir ──
   if (ayar.kurdele) kurdeleCiz(ctx, W, ayar.kurdele, palet);
 
-  // ── AB BAYRAĞI ROZETİ (sol üst) — çerçeve köşe aksanının içine oturur ──
+  // ── AB BAYRAĞI (sol üst): dalgalı direkli bayrak veya düz rozet ──
   if (ayar.euBayrak) {
-    const fx = Math.round(W * 0.045) + 8, fw = Math.round(W * 0.10);
-    euBayrakCiz(ctx, fx, fx, fw, true);
-    ctx.strokeStyle = `rgba(${palet.goldRGB},0.7)`; ctx.lineWidth = 2;
-    roundRect(ctx, fx, fx, fw, Math.round(fw * 2 / 3), Math.max(2, Math.round(fw * 0.06)));
-    ctx.stroke();
+    if (ayar.bayrakDalgali) {
+      dalgaliBayrakCiz(ctx, Math.round(W * 0.062), Math.round(W * 0.028), Math.round(W * 0.155), palet);
+    } else {
+      const fx = Math.round(W * 0.045) + 8, fw = Math.round(W * 0.10);
+      euBayrakCiz(ctx, fx, fx, fw, true);
+      ctx.strokeStyle = `rgba(${palet.goldRGB},0.7)`; ctx.lineWidth = 2;
+      roundRect(ctx, fx, fx, fw, Math.round(fw * 2 / 3), Math.max(2, Math.round(fw * 0.06)));
+      ctx.stroke();
+    }
   }
 
   const dataUrl = canvas.toDataURL('image/png');
