@@ -81,6 +81,10 @@ export const MARKA_VARYASYON = [
     { key: 'dil-tr', label: 'Türkçe', cmd: 'türkçe' },
     { key: 'dil-en', label: 'English', cmd: 'ingilizce' },
   ] },
+  { grup: 'Avrupa', tekil: false, secenekler: [
+    { key: 'eu-saat', label: 'EU saati', cmd: 'eu saati' },
+    { key: 'eu-bayrak', label: 'Avrupa bayrağı', cmd: 'avrupa bayrağı' },
+  ] },
   { grup: 'İçerik', tekil: false, secenekler: [
     { key: 'no-qr', label: 'QR yok', cmd: 'qr kaldır' },
     { key: 'no-program', label: 'Program yok', cmd: 'program gizle' },

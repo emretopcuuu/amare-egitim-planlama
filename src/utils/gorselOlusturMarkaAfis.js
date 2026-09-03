@@ -133,6 +133,57 @@ const kurdeleCiz = (ctx, W, metin, palet) => {
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
 };
 
+// 5 köşeli yıldız (AB bayrağı için) — cx,cy merkez, r dış yarıçap, tepe yukarı.
+const yildizCiz = (ctx, cx, cy, r, renk) => {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const dis = -Math.PI / 2 + i * 2 * Math.PI / 5;
+    const ic = dis + Math.PI / 5;
+    const x1 = cx + r * Math.cos(dis), y1 = cy + r * Math.sin(dis);
+    const x2 = cx + r * 0.382 * Math.cos(ic), y2 = cy + r * 0.382 * Math.sin(ic);
+    i ? ctx.lineTo(x1, y1) : ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+  }
+  ctx.closePath(); ctx.fillStyle = renk; ctx.fill();
+};
+
+// AB bayrağı (mavi zemin + 12 altın yıldız çemberi) — x,y sol üst, w genişlik (oran 3:2).
+// golge=true köşe rozeti gibi derinlik verir; ikon boyutunda golge'siz kullanılır.
+export const euBayrakCiz = (ctx, x, y, w, golge = false) => {
+  const h = Math.round(w * 2 / 3);
+  ctx.save();
+  if (golge) { ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = Math.max(4, w * 0.06); ctx.shadowOffsetY = 2; }
+  roundRect(ctx, x, y, w, h, Math.max(2, Math.round(w * 0.06)));
+  ctx.fillStyle = '#003399'; ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  const cx = x + w / 2, cy = y + h / 2, R = h / 3, yr = Math.max(1.6, h / 18);
+  for (let i = 0; i < 12; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 6;
+    yildizCiz(ctx, cx + R * Math.cos(a), cy + R * Math.sin(a), yr, '#ffcc00');
+  }
+  ctx.restore();
+};
+
+// TR (UTC+3, sabit) → Orta Avrupa saat farkı: yazın (CEST) 1, kışın (CET) 2 saat.
+// AB DST kuralı: Mart son Pazar 01:00 UTC – Ekim son Pazar 01:00 UTC arası yaz saati.
+const sonPazarUTC = (yil, ay) => { const d = new Date(Date.UTC(yil, ay + 1, 0)); return d.getUTCDate() - d.getUTCDay(); };
+export const euSaatFarki = (tarihStr) => {
+  const [g, a, yil] = String(tarihStr || '').split('.').map(Number);
+  const t = (g && a >= 1 && a <= 12 && yil) ? new Date(Date.UTC(yil, a - 1, g, 12)) : new Date();
+  const yy = t.getUTCFullYear();
+  const yazBas = Date.UTC(yy, 2, sonPazarUTC(yy, 2), 1);
+  const yazSon = Date.UTC(yy, 9, sonPazarUTC(yy, 9), 1);
+  return (t.getTime() >= yazBas && t.getTime() < yazSon) ? 1 : 2;
+};
+
+// "20:00" (veya "20.00") TR saatini eğitim tarihine göre Orta Avrupa saatine çevirir; olmazsa ''.
+export const euSaatCevir = (saat, tarihStr) => {
+  const m = /^(\d{1,2})[:.](\d{2})$/.exec(String(saat || '').trim());
+  if (!m) return '';
+  const st = (parseInt(m[1], 10) - euSaatFarki(tarihStr) + 24) % 24;
+  return `${String(st).padStart(2, '0')}:${m[2]}`;
+};
+
 // Hazır paletler — goldRGB: dekor (ışık/elmas/parıltı) rengi, aksana göre değişir
 export const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#d9d6cf', elmas: true, acik: false });
 const paletMor = () => ({ ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#e7e0f0', elmas: false, acik: false });
@@ -191,6 +242,7 @@ export const ayarCikar = (ek) => {
     qr: true, program: true, tarih: true,   // içerik
     tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
     filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr', duzen: null, aralik: 'normal',
+    euSaat: false, euBayrak: false,
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -250,6 +302,9 @@ export const ayarCikar = (ek) => {
   if (has('geniş aralık', 'ferah', 'bol boşluk', 'aralıklı')) a.aralik = 'genis';
   // "daha geniş aralık" 'geniş aralık'ı da içerir → bu satır ondan SONRA gelmeli (üste yazar)
   if (has('daha geniş', 'çok geniş', 'ekstra geniş', 'iyice geniş', 'çok ferah')) a.aralik = 'cokgenis';
+  // Avrupa: TR saatinin altına Orta Avrupa saati + AB bayrağı rozeti
+  if (has('eu saati', 'eu saat', 'avrupa saati', 'orta avrupa saati', 'cet saati')) a.euSaat = true;
+  if (has('avrupa bayrağı', 'avrupa bayragi', 'eu bayrağı', 'eu bayrak', 'ab bayrağı')) a.euBayrak = true;
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
   // filigran (arka amblem) yoğunluğu
@@ -504,13 +559,32 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     if (egitim.saat) {
       const sFont = Math.round(W * 0.032 * ayar.yazi);
       ctx.font = `600 ${sFont}px ${FF.govde}`;
+      const euS = ayar.euSaat ? euSaatCevir(egitim.saat, egitim.tarih) : '';
       const saatTxt = `${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`;
+      const trEk = euS ? ' TR' : ''; // EU satırı varken TR satırı da etiketlenir
       const sik = Math.round(sFont * 0.95), sBaseY = y + Math.round(W * 0.03);
-      const sw = ctx.measureText(saatTxt).width;
-      const sStartX = W / 2 - (sw + sik + gap) / 2;
+      const sw = ctx.measureText(saatTxt).width, tew = trEk ? ctx.measureText(trEk).width : 0;
+      const sStartX = W / 2 - (sw + tew + sik + gap) / 2;
       ikonCiz(ctx, 'saat', sStartX + sik / 2, sBaseY - sFont * 0.35, sik, palet.gold);
       ctx.fillStyle = palet.metin; ctx.fillText(saatTxt, sStartX + sik + gap, sBaseY);
+      if (trEk) { ctx.fillStyle = palet.gold; ctx.fillText(trEk, sStartX + sik + gap + sw, sBaseY); }
       y += Math.round(W * 0.05);
+      // EU saati satırı (TR'nin hemen altında) — Orta Avrupa, tarihe göre CET/CEST farkı
+      if (euS) {
+        const eFont = Math.round(W * 0.027 * ayar.yazi);
+        ctx.font = `600 ${eFont}px ${FF.govde}`;
+        const euB = egitim.bitisSaati ? euSaatCevir(egitim.bitisSaati, egitim.tarih) : '';
+        const euZaman = `${euS}${euB ? ' - ' + euB : ''}`;
+        const euEtiket = ayar.dil === 'en' ? ' Europe' : ' Avrupa';
+        const zw = ctx.measureText(euZaman).width, ew = ctx.measureText(euEtiket).width;
+        const fW = Math.round(eFont * 1.5), fH = Math.round(fW * 2 / 3);
+        const eBaseY = y + Math.round(W * 0.027);
+        const eStartX = W / 2 - (fW + gap + zw + ew) / 2;
+        euBayrakCiz(ctx, eStartX, Math.round(eBaseY - eFont * 0.35 - fH / 2), fW);
+        ctx.fillStyle = palet.metin; ctx.fillText(euZaman, eStartX + fW + gap, eBaseY);
+        ctx.fillStyle = palet.gold; ctx.fillText(euEtiket, eStartX + fW + gap + zw, eBaseY);
+        y += Math.round(W * 0.045);
+      }
     }
     ctx.textAlign = 'center';
   }
@@ -719,6 +793,15 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
 
   // ── KÖŞE KURDELE/ŞERİT (sağ üst) — en üstte çizilir ──
   if (ayar.kurdele) kurdeleCiz(ctx, W, ayar.kurdele, palet);
+
+  // ── AB BAYRAĞI ROZETİ (sol üst) — çerçeve köşe aksanının içine oturur ──
+  if (ayar.euBayrak) {
+    const fx = Math.round(W * 0.045) + 8, fw = Math.round(W * 0.10);
+    euBayrakCiz(ctx, fx, fx, fw, true);
+    ctx.strokeStyle = `rgba(${palet.goldRGB},0.7)`; ctx.lineWidth = 2;
+    roundRect(ctx, fx, fx, fw, Math.round(fw * 2 / 3), Math.max(2, Math.round(fw * 0.06)));
+    ctx.stroke();
+  }
 
   const dataUrl = canvas.toDataURL('image/png');
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
