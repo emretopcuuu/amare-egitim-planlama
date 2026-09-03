@@ -96,11 +96,11 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   const sehir = (egitim.sehir || '').toLocaleUpperCase('tr-TR');
   const tarihTxt = tarihYaz(egitim.tarih, gunCevir(egitim.gun, ayar.dil));
   let saatTxt = `${egitim.saat || ''}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`.trim();
-  // EU saati seçeneği: "20:00 - 22:00 TR · 19:00 - 21:00 Avrupa"
+  // EU saati seçeneği: "20:00 - 22:00 TR · 19:00 - 21:00 EU"
   const euS = ayar.euSaat ? euSaatCevir(egitim.saat, egitim.tarih) : '';
   if (saatTxt && euS) {
     const euB = egitim.bitisSaati ? euSaatCevir(egitim.bitisSaati, egitim.tarih) : '';
-    saatTxt += ` TR · ${euS}${euB ? ' - ' + euB : ''} ${ayar.dil === 'en' ? 'Europe' : 'Avrupa'}`;
+    saatTxt += ` TR · ${euS}${euB ? ' - ' + euB : ''} EU`;
   }
   const rozetH = Math.round(W * 0.05 * ys);
   const pillFont = `800 ${Math.round(W * 0.03 * ys)}px ${FF.govde}`;
