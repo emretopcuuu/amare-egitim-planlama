@@ -12,13 +12,13 @@ import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
 
 // Program afişinde anlamlı varyasyon grupları (foto düzeni/içerik vb. hariç)
-const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu'];
+const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu', 'Avrupa'];
 
 // Grup başlık ikonları (göz hızlı tarar)
 const GRUP_IKON = {
   'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Aralık': '↔️', 'Tema': '🎨', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
-  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋',
+  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋', 'Avrupa': '🇪🇺',
 };
 // Çip font ailesi (görünür font önizleme)
 const CIP_FONT = {
