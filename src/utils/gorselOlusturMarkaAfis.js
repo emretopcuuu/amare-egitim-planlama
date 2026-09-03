@@ -770,12 +770,12 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
           ctx.fillStyle = palet.gold; ctx.fillText(etiket, startX + fW + gap, baseY);
           ctx.fillStyle = palet.metin; ctx.fillText(zaman, startX + fW + gap + ew, baseY);
         };
+        // iki satır da AYNI boyutta (saha isteği: "TR ve EU yazı büyüklüğü aynı olsun")
         bayrakliSatir(trBayrakCiz, 'TR ', saatTxt, sFont, y + Math.round(W * 0.03));
         y += Math.round(W * 0.05);
         const euB = egitim.bitisSaati ? euSaatCevir(egitim.bitisSaati, egitim.tarih) : '';
-        const eFont = Math.round(W * 0.028 * ayar.yazi);
-        bayrakliSatir(euBayrakCiz, 'EU ', `${euS}${euB ? ' - ' + euB : ''}`, eFont, y + Math.round(W * 0.028));
-        y += Math.round(W * 0.046);
+        bayrakliSatir(euBayrakCiz, 'EU ', `${euS}${euB ? ' - ' + euB : ''}`, sFont, y + Math.round(W * 0.03));
+        y += Math.round(W * 0.048);
       }
     }
     ctx.textAlign = 'center';
