@@ -18,13 +18,20 @@ const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran'
 const GRUP_IKON = {
   'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Aralık': '↔️', 'Tema': '🎨', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
-  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋', 'Avrupa': '🇪🇺', 'Lüks': '✨',
+  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋', 'Avrupa': '🇪🇺', 'Lüks': '✨', 'Arka plan sanatı': '🏞️',
 };
 // Çip font ailesi (görünür font önizleme)
 const CIP_FONT = {
   'font-klasik': 'Arial, sans-serif', 'font-zarif': 'Georgia, serif', 'font-karisik': 'Georgia, serif',
   'font-modern': '"Trebuchet MS", sans-serif', 'font-times': '"Times New Roman", serif',
+  'font-elit': '"Playfair Display", Georgia, serif', 'font-imparator': 'Cinzel, "Times New Roman", serif', 'font-vitrin': 'Montserrat, Arial, sans-serif',
 };
+// Paket web fontlarının çip önizlemesi için @font-face (canvas tarafı afisFontlari.js ile yükler)
+const PAKET_FONT_CSS = `
+@font-face { font-family: 'Playfair Display'; src: url('/fonts/playfair-display-latin.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Cinzel'; src: url('/fonts/cinzel-latin.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Montserrat'; src: url('/fonts/montserrat-latin.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+`;
 // Foto şekli mini görseli için border-radius / clip
 const SEKIL_STIL = {
   'sekil-yuvarlak': { borderRadius: '9999px' },
@@ -309,6 +316,42 @@ export default function GorselStudyo() {
     const yeni = ozelPresetler.filter(p => p.ad !== ad);
     setOzelPresetler(yeni);
     try { localStorage.setItem('markaOzelPresetler', JSON.stringify(yeni)); } catch {}
+  };
+
+  // 🎨 Tasarımcı Masası — aynı afişi 4 stille yan yana üret, beğenileni tek tıkla uygula
+  const [masaDurum, setMasaDurum] = useState(null); // null | 'uretiyor' | { gorseller: [{ad, keys, url}] }
+  const masaSonrasiUret = useRef(false);
+  useEffect(() => {
+    if (masaSonrasiUret.current) { masaSonrasiUret.current = false; uret(); }
+  }, [markaSecim]); // eslint-disable-line react-hooks/exhaustive-deps
+  const masaKapat = () => {
+    if (masaDurum && masaDurum.gorseller) masaDurum.gorseller.forEach(g => { try { URL.revokeObjectURL(g.url); } catch {} });
+    setMasaDurum(null);
+  };
+  const masaUret = async () => {
+    if (!egitim || !markaModu || masaDurum === 'uretiyor') return;
+    setMasaDurum('uretiyor');
+    try {
+      const kombolar = [
+        { ad: '🎛️ Şu anki seçim', keys: Object.keys(markaSecim).filter(k => markaSecim[k]) },
+        ...MARKA_PRESETLER.slice(0, 3),
+      ];
+      const gorseller = await Promise.all(kombolar.map(async (k) => {
+        const secim = Object.fromEntries(k.keys.map(x => [x, true]));
+        const res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(secim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon } });
+        return { ad: k.ad, keys: k.keys, url: b64ToUrl(res.base64, res.mimeType) };
+      }));
+      setMasaDurum({ gorseller });
+    } catch (e) {
+      setMasaDurum(null);
+      setError('Tasarımcı Masası üretilemedi: ' + (e?.message || e));
+    }
+  };
+  const masaSec = (g) => {
+    const secim = Object.fromEntries(g.keys.map(x => [x, true]));
+    masaKapat();
+    masaSonrasiUret.current = true; // markaSecim state'e oturunca uret() çalışır (bayat state okunmaz)
+    uygula(secim);
   };
 
   const uret = async () => {
@@ -608,6 +651,11 @@ export default function GorselStudyo() {
                     <button onClick={geriAl} disabled={!undoStack.length} title="Geri al" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"><Undo2 className="w-4 h-4" /></button>
                     <button onClick={ileriAl} disabled={!redoStack.length} title="Yinele" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"><Redo2 className="w-4 h-4" /></button>
                     <button onClick={rastgele} title="Sürpriz kombinasyon" className="p-1.5 rounded-lg text-amare-purple hover:bg-purple-50"><Dices className="w-4 h-4" /></button>
+                    {markaModu && (
+                      <button onClick={masaUret} disabled={masaDurum === 'uretiyor'} title="Tasarımcı Masası — 4 stili yan yana gör, beğendiğini seç" className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 disabled:opacity-40 text-sm leading-none">
+                        {masaDurum === 'uretiyor' ? <Loader2 className="w-4 h-4 animate-spin" /> : '🎨'}
+                      </button>
+                    )}
                     <button onClick={ozelPresetKaydet} disabled={!Object.keys(markaSecim).length} title="Bu stili kaydet" className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 disabled:opacity-30"><Save className="w-4 h-4" /></button>
                     <button onClick={sifirla} title="Tüm tasarım tercihlerini varsayılana döndür" className="text-[11px] text-amare-purple hover:bg-purple-50 rounded-lg px-1.5 py-1 ml-1 inline-flex items-center gap-1"><RotateCcw className="w-3.5 h-3.5" />Sıfırla</button>
                   </div>
@@ -657,7 +705,29 @@ export default function GorselStudyo() {
                     </div>
                   </div>
                 ))}
-                <p className="text-[11px] text-gray-500 pt-0.5">Çipe bas → sağda <b>otomatik canlı önizleme</b>. 🎲 sürpriz · 💾 stilini kaydet · ↶ geri al.</p>
+                <p className="text-[11px] text-gray-500 pt-0.5">Çipe bas → sağda <b>otomatik canlı önizleme</b>. 🎲 sürpriz · 🎨 tasarımcı masası · 💾 stilini kaydet · ↶ geri al.</p>
+                <style>{PAKET_FONT_CSS}</style>
+                {/* 🎨 Tasarımcı Masası — 4'lü stil karşılaştırma */}
+                {masaDurum && masaDurum !== 'uretiyor' && (
+                  <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={masaKapat}>
+                    <div className="bg-white rounded-2xl p-4 max-w-4xl w-full max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-gray-800">🎨 Tasarımcı Masası — beğendiğin stile tıkla</span>
+                        <button onClick={masaKapat} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"><X className="w-5 h-5" /></button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {masaDurum.gorseller.map(g => (
+                          <button key={g.ad} onClick={() => masaSec(g)} className="group text-left rounded-xl border-2 border-gray-200 hover:border-amare-purple overflow-hidden transition">
+                            <img src={g.url} alt={g.ad} className="w-full h-auto" />
+                            <div className="px-2.5 py-2 text-[12px] font-bold text-gray-700 group-hover:text-amare-purple flex items-center justify-between">
+                              {g.ad}<span className="text-[10px] font-semibold text-amare-purple opacity-0 group-hover:opacity-100">Bunu uygula →</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : aiModu ? (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
