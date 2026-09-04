@@ -3,6 +3,7 @@
 // Temalı: Marka Afiş ile aynı palet/font/ayar mantığını kullanır (ekPrompt → varyasyon).
 import { imgYukle as urlToImage } from './imgYukle';
 import { paletKoyu, paletAdla, fontSec, gunCevir, ayarCikar, euSaatCevir, euBayrakCiz, dalgaliBayrakCiz } from './gorselOlusturMarkaAfis';
+import { afisFontYukle } from './afisFontlari';
 
 const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 const tarihYaz = (tarih, gun) => {
@@ -45,6 +46,7 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 3) => {
 
 export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], ekPrompt = '', baslik = '' }) => {
   const W = 1080;
+  await afisFontYukle(); // paket fontlar ölçümden önce hazır olsun (fail-open)
   const ayar = ayarCikar(ekPrompt);
   let palet = (ayar.tema && paletAdla(ayar.tema)) ? paletAdla(ayar.tema)() : paletKoyu();
   if (ayar.zemin !== 1) { palet.bg1 = renkAyarla(palet.bg1, ayar.zemin); palet.bg2 = renkAyarla(palet.bg2, ayar.zemin); }

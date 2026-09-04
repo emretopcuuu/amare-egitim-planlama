@@ -7,6 +7,7 @@ import { imgYukle as urlToImage } from './imgYukle';
 import { isFiziki } from './egitmenEtiket';
 import { qrOlustur } from './qrOlustur';
 import { fotoYerlesim } from './fotoYerlesim';
+import { afisFontYukle } from './afisFontlari';
 
 const roundRect = (ctx, x, y, w, h, r) => {
   const rr = Math.min(r, w / 2, h / 2);
@@ -292,6 +293,106 @@ const susluKoseCiz = (ctx, W, H, palet, kurdeleVar = false) => {
   koseDondur(W, H, -1, -1);
 };
 
+// Altın FOLYO degradesi — düz altın yerine metal his (açık-koyu-parlak süpürme).
+// Elemanın kendi kutusuna göre üretilir; palet.folyo=true iken hap/halka/pill dolguları bunu kullanır.
+const folyoGrad = (ctx, x, y, w, h, palet) => {
+  const g = ctx.createLinearGradient(x, y, x + w * 0.12, y + h);
+  g.addColorStop(0, '#f6e3a8');
+  g.addColorStop(0.35, palet.gold);
+  g.addColorStop(0.55, '#fff2c0');
+  g.addColorStop(0.78, palet.gold);
+  g.addColorStop(1, palet.goldKoyu);
+  return g;
+};
+
+// Film greni — tohumlu gürültü dokusu, en üst katman (dijital düzlüğü kırar).
+let grenDoku = null;
+const grenCiz = (ctx, W, H) => {
+  if (!grenDoku) {
+    const gc = document.createElement('canvas'); gc.width = 256; gc.height = 256;
+    const gx = gc.getContext('2d');
+    const id = gx.createImageData(256, 256);
+    const rnd = rngYap(42);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const v = Math.floor(rnd() * 255);
+      id.data[i] = v; id.data[i + 1] = v; id.data[i + 2] = v; id.data[i + 3] = 26;
+    }
+    gx.putImageData(id, 0, 0);
+    grenDoku = gc;
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = 'soft-light';
+  ctx.fillStyle = ctx.createPattern(grenDoku, 'repeat');
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+};
+
+// Sahne ışığı sahnelemesi: köşe spot huzmeleri + başlık hâlesi + zemin parlaması.
+const sahneIsigiCiz = (ctx, W, H, palet) => {
+  ctx.save();
+  const huzme = (x0, aci) => {
+    ctx.save();
+    ctx.translate(x0, -H * 0.02); ctx.rotate(aci);
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.72);
+    g.addColorStop(0, `rgba(${palet.goldRGB},${palet.acik ? 0.20 : 0.28})`);
+    g.addColorStop(1, `rgba(${palet.goldRGB},0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-W * 0.03, 0); ctx.lineTo(W * 0.03, 0);
+    ctx.lineTo(W * 0.17, H * 0.72); ctx.lineTo(-W * 0.17, H * 0.72);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  };
+  huzme(W * 0.07, -0.40); huzme(W * 0.93, 0.40);
+  // başlık arkasına sıcak hâle
+  const halo = ctx.createRadialGradient(W / 2, H * 0.13, 20, W / 2, H * 0.13, W * 0.55);
+  halo.addColorStop(0, `rgba(${palet.goldRGB},0.15)`); halo.addColorStop(1, `rgba(${palet.goldRGB},0)`);
+  ctx.fillStyle = halo; ctx.fillRect(0, 0, W, H * 0.45);
+  // zemin sahne parlaması (alt elips)
+  ctx.save();
+  ctx.translate(W / 2, H * 0.985); ctx.scale(1.6, 0.22);
+  const taban = ctx.createRadialGradient(0, 0, 0, 0, 0, W * 0.45);
+  taban.addColorStop(0, `rgba(${palet.goldRGB},0.14)`); taban.addColorStop(1, `rgba(${palet.goldRGB},0)`);
+  ctx.fillStyle = taban;
+  ctx.beginPath(); ctx.arc(0, 0, W * 0.45, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+};
+
+// Derin çok-duraklı zemin geçişleri — tema başına ton kaymalı 4 durak.
+const DERIN_GECISLER = {
+  mor: ['#171026', '#3d2c58', '#2a1840', '#140b20'],
+  siyah: ['#050506', '#1c1610', '#0e0b08', '#040404'],
+  lacivert: ['#050a18', '#13234c', '#0a1430', '#04081a'],
+  bordo: ['#160608', '#3c1218', '#24090e', '#100405'],
+  zumrut: ['#04140e', '#0f3527', '#082218', '#031009'],
+  gumus: ['#0b0c0e', '#24272d', '#141619', '#08090b'],
+  acik: ['#fbf7ee', '#f2e7d1', '#e9dcc0', '#efe6d2'],
+  platin: ['#f6f7f9', '#e7e9ed', '#dcdfe4', '#eceef1'],
+};
+
+// Kariyer unvanından rütbe rozet bilgisi — yalnız Diamond ailesi rozet alır.
+const rutbeCoz = (unvan) => {
+  const u = String(unvan || '').toLocaleLowerCase('tr-TR');
+  if (!u.includes('diamond')) return null;
+  if (u.includes('presidential') || u.includes('presidental')) return { tip: 'pd' };
+  const m = /(\d)\s*star/.exec(u);
+  if (m) return { tip: 'star', n: Math.max(1, Math.min(3, parseInt(m[1], 10))) };
+  return { tip: 'elmas' };
+};
+
+// Küçük faset pırlanta ikonu (rütbe rozeti) — cx,cy merkez, s yarı boyut.
+const elmasIkon = (ctx, cx, cy, s, palet) => {
+  ctx.save();
+  ctx.fillStyle = palet.folyo ? folyoGrad(ctx, cx - s, cy - s, s * 2, s * 2, palet) : palet.gold;
+  ctx.beginPath();
+  ctx.moveTo(cx - s, cy - s * 0.3); ctx.lineTo(cx - s * 0.5, cy - s * 0.9); ctx.lineTo(cx + s * 0.5, cy - s * 0.9);
+  ctx.lineTo(cx + s, cy - s * 0.3); ctx.lineTo(cx, cy + s * 0.95); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, s * 0.14);
+  ctx.beginPath(); ctx.moveTo(cx - s, cy - s * 0.3); ctx.lineTo(cx + s, cy - s * 0.3); ctx.stroke();
+  ctx.restore();
+};
+
 // Dalgalanan AB bayrağı + gümüş direk (sol üst). x,y = bayrağın direğe bağlanma noktası, w = bayrak genişliği.
 // Dikey dilim tekniği: sinüs dalgası uca doğru büyür, eğime göre kumaş gölgelenir; yıldızlar dalgayı izler.
 export const dalgaliBayrakCiz = (ctx, x, y, w, palet) => {
@@ -389,6 +490,10 @@ const FONT_SETLERI = {
   karisik: { baslik: 'Arial', isim: 'Georgia', govde: 'Arial' }, // güçlü başlık + zarif isim
   modern: { baslik: '"Trebuchet MS"', isim: '"Trebuchet MS"', govde: '"Trebuchet MS"' },
   klasikSerif: { baslik: '"Times New Roman"', isim: 'Georgia', govde: 'Georgia' },
+  // Paket web fontları (afisFontlari.js yükler; yüklenemezse fallback aile devreye girer)
+  elit: { baslik: '"Playfair Display", Georgia, serif', isim: '"Playfair Display", Georgia, serif', govde: 'Montserrat, Arial, sans-serif' },
+  imparator: { baslik: 'Cinzel, "Times New Roman", serif', isim: 'Montserrat, Arial, sans-serif', govde: 'Montserrat, Arial, sans-serif' },
+  vitrin: { baslik: 'Montserrat, Arial, sans-serif', isim: 'Montserrat, Arial, sans-serif', govde: 'Montserrat, Arial, sans-serif' },
 };
 export const fontSec = (ad) => FONT_SETLERI[ad] || FONT_SETLERI.klasik;
 
@@ -426,6 +531,7 @@ export const ayarCikar = (ek) => {
     tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
     filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr', duzen: null, aralik: 'normal',
     euSaat: false, euBayrak: false, bayrakDalgali: false, isilti: false, susluKose: false,
+    folyo: false, sahneIsigi: false, gren: false, derinRenk: false, fotoRotus: false, rutbe: false, artalan: null,
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -492,6 +598,24 @@ export const ayarCikar = (ek) => {
   // Lüks dokunuşlar: altın ışıltı serpintisi + süslü köşe süsleri
   if (has('ışıltı', 'isilti', 'sim efekti', 'parıltı ekle', 'glitter')) a.isilti = true;
   if (has('süslü köşe', 'suslu kose', 'süslü çerçeve', 'köşe süsü', 'ornament')) a.susluKose = true;
+  if (has('altın folyo', 'folyo', 'metalik altın', 'altın varak')) a.folyo = true;
+  if (has('sahne ışığı', 'sahne isigi', 'spot ışığı', 'projektör')) a.sahneIsigi = true;
+  if (has('film greni', 'gren', 'doku greni', 'noise')) a.gren = true;
+  if (has('derin renk', 'zengin renk', 'derin geçiş')) a.derinRenk = true;
+  if (has('foto rötuş', 'foto rotus', 'ton eşitle', 'rötuş')) a.fotoRotus = true;
+  if (has('rütbe rozeti', 'rutbe rozeti', 'kariyer rozeti', 'rütbe ikonu')) a.rutbe = true;
+  // yeni paket fontlar
+  if (has('elit font', 'playfair')) a.font = 'elit';
+  if (has('imparator font', 'cinzel')) a.font = 'imparator';
+  if (has('vitrin font', 'montserrat')) a.font = 'vitrin';
+  // hazır arka plan sanatları
+  if (has('berlin arka plan', 'berlin silüeti')) a.artalan = 'berlin';
+  if (has('sahne arka plan', 'sahne sanatı')) a.artalan = 'sahne';
+  if (has('gece göğü arka plan', 'gokyuzu arka plan', 'aurora')) a.artalan = 'gokyuzu';
+  if (has('altın ipek arka plan', 'ipek arka plan', 'kumaş arka plan')) a.artalan = 'ipek';
+  // düzen arketipleri
+  if (has('dergi düzeni', 'dergi kapağı', 'kapak düzeni')) a.duzen = 'dergi';
+  if (has('yay düzeni', 'yay dizilim', 'kavis düzeni')) a.duzen = 'yay';
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
   // filigran (arka amblem) yoğunluğu
@@ -512,11 +636,37 @@ export const ayarCikar = (ek) => {
 // Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir.
 // dekor = { isik, elmas, cerceve } — tekil dekor kapatma için.
 const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
-  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false, filigran = 'normal', doku = null, susluKose = false } = dekor;
+  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false, filigran = 'normal', doku = null, susluKose = false, artalan = null, sahneIsigi = false, derinRenk = false } = dekor;
   // DİKEY ve simetrik gradient (çapraz değil → sol/sağ eşit, "yarısı koyu yarısı açık" olmaz)
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (derinRenk && DERIN_GECISLER[palet.ad]) {
+    // derin renk: 4 duraklı ton kaymalı geçiş + köşe altın aksanı
+    const d = DERIN_GECISLER[palet.ad];
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, d[0]); g.addColorStop(0.34, d[1]); g.addColorStop(0.72, d[2]); g.addColorStop(1, d[3]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const acc = ctx.createRadialGradient(W * 0.85, H * 0.92, 0, W * 0.85, H * 0.92, W * 0.9);
+    acc.addColorStop(0, `rgba(${palet.goldRGB},0.10)`); acc.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = acc; ctx.fillRect(0, 0, W, H);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // ── HAZIR ARKA PLAN SANATI (kamp-öncesi üretilmiş statik webp) ──
+  // Cover kırpma + üstüne tema renginde yarı saydam örtü → metin okunur kalır. Yüklenemezse degrade kalır.
+  if (artalan) {
+    try {
+      const art = await urlToImage(`/artalan/${artalan}.webp`);
+      const oran = Math.max(W / art.width, H / art.height);
+      const aw = art.width * oran, ah = art.height * oran;
+      ctx.drawImage(art, (W - aw) / 2, (H - ah) / 2, aw, ah);
+      ctx.save(); ctx.globalAlpha = 0.30;
+      const ort = ctx.createLinearGradient(0, 0, 0, H);
+      ort.addColorStop(0, palet.bg1); ort.addColorStop(1, palet.bg2);
+      ctx.fillStyle = ort; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    } catch {}
+  }
   // üstte yumuşak, ORTALI ışık (koyu temada beyaz, açık temada sıcak altın hâle)
   const r = ctx.createRadialGradient(W / 2, H * 0.16, 40, W / 2, H * 0.16, W * 0.85);
   if (palet.acik) { r.addColorStop(0, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); }
@@ -533,6 +683,8 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
     ctx.fillStyle = ray; ctx.fillRect(-W, -H * 0.16, W * 2, H * 0.32);
     ctx.restore();
   }
+  // ── SAHNE IŞIĞI (spot huzmeleri + başlık hâlesi + zemin parlaması) ──
+  if (sahneIsigi) sahneIsigiCiz(ctx, W, H, palet);
   // kenar vinyet (derinlik) — koyu temada siyah, açık temada yumuşak sıcak ton
   const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.34, W / 2, H / 2, H * 0.72);
   if (palet.acik) { vig.addColorStop(0, 'rgba(150,115,40,0)'); vig.addColorStop(1, 'rgba(150,115,40,0.12)'); }
@@ -605,7 +757,7 @@ const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   const tw = ctx.measureText((text || '').toLocaleUpperCase('tr-TR')).width;
   const h = Math.round(fontSize * 1.7), padX = Math.round(fontSize * 0.7);
   const w = tw + padX * 2;
-  ctx.fillStyle = palet.gold;
+  ctx.fillStyle = palet.folyo ? folyoGrad(ctx, cx - w / 2, y, w, h, palet) : palet.gold;
   roundRect(ctx, cx - w / 2, y, w, h, Math.round(h * 0.28)); ctx.fill();
   ctx.fillStyle = palet.pillText;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -657,6 +809,10 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     palet.bg1 = renkAyarla(palet.bg1, ayar.zemin);
     palet.bg2 = renkAyarla(palet.bg2, ayar.zemin);
   }
+  // altın folyo modu — palet üzerinden tüm hap/halka/pill dolgularına yayılır
+  if (ayar.folyo) palet.folyo = true;
+  // paket web fontları (elit/imparator/vitrin) ölçümden ÖNCE hazır olmalı — fail-open
+  await afisFontYukle();
   // yazı tipi seti (başlık / isim / gövde)
   const FF = fontSec(ayar.font);
   const fiziki = isFiziki(egitim);
@@ -666,8 +822,10 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const liste = (egitmenler || []).slice(0, KONUSMACI_CAP);
   const perMap = { iki: 2, uc: 3, dort: 4 };
   const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };
+  const dergiDuzen = ayar.duzen === 'dergi' && liste.length > 1; // dergi kapağı: dev ana konuşmacı + altta 5'li şerit
   const dagilim = !liste.length ? []
     : ayar.tekSira ? [liste.length]
+    : dergiDuzen ? [1, ...chunkRows(liste.length - 1, 5)]
     : (ayar.anaVurgu && liste.length > 1) ? [1, ...fotoYerlesim(liste.length - 1)]
     : (ayar.duzen && perMap[ayar.duzen]) ? chunkRows(liste.length, perMap[ayar.duzen])
     : fotoYerlesim(liste.length);
@@ -686,7 +844,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const ctx = canvas.getContext('2d');
   const M = Math.round(W * 0.07);
 
-  await zeminCiz(ctx, W, CANVAS_H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku, susluKose: ayar.susluKose });
+  await zeminCiz(ctx, W, CANVAS_H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku, susluKose: ayar.susluKose, artalan: ayar.artalan, sahneIsigi: ayar.sahneIsigi, derinRenk: ayar.derinRenk });
 
   // ── ÜST: One Team logosu ──
   let y = Math.round(H * 0.02);
@@ -801,7 +959,8 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     // Hücre genişliği: en kalabalık satıra göre TUTARLI (eşit boyut), satırlar ortalı.
     // Ana vurgu modunda 1. satır (tek kişi) hariç tutulur → o satır dev oval kalır.
     const sidePad = Math.round(W * 0.035);
-    const boyutAdetler = (ayar.anaVurgu && rows > 1) ? dagilim.slice(1) : dagilim;
+    const heroVar = (ayar.anaVurgu || dergiDuzen) && rows > 1; // ilk satır dev tekil hücre
+    const boyutAdetler = heroVar ? dagilim.slice(1) : dagilim;
     const maxAdet = Math.max(1, ...boyutAdetler);
     const cellW = (W - sidePad * 2) / maxAdet;
     let idx = 0;
@@ -809,7 +968,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const adet = dagilim[r];
       const rowY = speakersTop + r * perRowH;
       // ana vurgu 1. satır → daha geniş hücre (dev oval); diğerleri tutarlı cellW
-      const buCellW = (ayar.anaVurgu && r === 0 && rows > 1) ? Math.round(W * 0.5) : cellW;
+      const buCellW = (heroVar && r === 0) ? Math.round(W * (dergiDuzen ? 0.58 : 0.5)) : cellW;
       const startX = Math.round((W - adet * buCellW) / 2); // satırı ortala
       // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
       // Aralık: konuşmacı arası boşluk (dikey gap + yatay hücre doluluğu).
@@ -823,12 +982,17 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const g2 = Math.round(perRowH * 0.02 * gapMul);
       let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
-      const wTavan = (ayar.anaVurgu && r === 0 && rows > 1) ? 0.6 : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
+      const wTavan = (heroVar && r === 0) ? (dergiDuzen ? 0.64 : 0.6) : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
       foto = Math.max(72, Math.min(foto, Math.round(buCellW * capMul), Math.round(W * wTavan)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = startX + buCellW * c + buCellW / 2;
-        const fy = rowY + topPad + foto / 2;
+        let fy = rowY + topPad + foto / 2;
+        // yay düzeni: satır içinde parabolik dikey kavis (ortadaki yüksekte, kenarlar aşağıda)
+        if (ayar.duzen === 'yay' && adet > 1) {
+          const t = (c - (adet - 1) / 2) / ((adet - 1) / 2);
+          fy += Math.round(t * t * perRowH * 0.11);
+        }
         // yumuşak altın ışıltı (derinlik / modern his)
         const gl = ctx.createRadialGradient(cx, fy, foto * 0.32, cx, fy, foto * 0.88);
         gl.addColorStop(0, `rgba(${palet.goldRGB},0.32)`); gl.addColorStop(1, `rgba(${palet.goldRGB},0)`);
@@ -840,7 +1004,8 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
         ctx.shadowBlur = Math.round(foto * 0.12);
         ctx.shadowOffsetY = Math.round(foto * 0.04);
         cizYol(ctx, cx, fy, foto / 2 + 7, ayar.fotoSekil);
-        ctx.fillStyle = palet.gold; ctx.fill();
+        ctx.fillStyle = palet.folyo ? folyoGrad(ctx, cx - foto / 2 - 7, fy - foto / 2 - 7, foto + 14, foto + 14, palet) : palet.gold;
+        ctx.fill();
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
         cizYol(ctx, cx, fy, foto / 2 + 2, ayar.fotoSekil);
         ctx.fillStyle = palet.bg2; ctx.fill();
@@ -852,18 +1017,63 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
             // yüz-merkezli kırpma: üstten biraz pay bırak (yüzler genelde üst bölgede → kesilmez)
             const sx = (im.width - md) / 2;
             const sy = Math.max(0, (im.height - md) * 0.2);
+            // FOTO RÖTUŞ: parlaklığı ortak hedefe normalize et (farklı odalardan gelen fotolar eşitlensin)
+            if (ayar.fotoRotus) {
+              let f = 1;
+              try {
+                const oc = document.createElement('canvas'); oc.width = 24; oc.height = 24;
+                const octx = oc.getContext('2d');
+                octx.drawImage(im, sx, sy, md, md, 0, 0, 24, 24);
+                const d = octx.getImageData(0, 0, 24, 24).data;
+                let L = 0;
+                for (let i = 0; i < d.length; i += 4) L += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                L /= (d.length / 4) * 255;
+                f = Math.max(0.82, Math.min(1.25, 0.56 / Math.max(0.2, L)));
+              } catch { f = 1; } // CORS vb. → dokunma
+              ctx.filter = `brightness(${f.toFixed(3)}) contrast(1.06) saturate(1.05)`;
+            }
             ctx.drawImage(im, sx, sy, md, md, cx - foto / 2, fy - foto / 2, foto, foto);
+            ctx.filter = 'none';
+            if (ayar.fotoRotus) {
+              // ortak sıcak yıkama + iç kenar vinyeti → "aynı stüdyodan" hissi (clip içindeyiz)
+              ctx.save();
+              ctx.globalCompositeOperation = 'soft-light';
+              ctx.fillStyle = `rgba(${palet.goldRGB},0.20)`;
+              ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto);
+              ctx.restore();
+              const iv = ctx.createRadialGradient(cx, fy, foto * 0.30, cx, fy, foto * 0.52);
+              iv.addColorStop(0, 'rgba(0,0,0,0)'); iv.addColorStop(1, 'rgba(8,5,18,0.36)');
+              ctx.fillStyle = iv; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto);
+            }
           } catch { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         } else { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
         // isim — altın hap, fotonun ALTINDA (çakışma yok) — şık isim fontu
         const hapBottom = altinHap(ctx, cx, fy + foto / 2 + g1, e.ad || '', nameSize, palet, FF.isim);
-        // rol — hapın altında
+        // rol — hapın altında (rütbe rozeti açıksa Diamond ailesine pırlanta+yıldız ikonları)
         if (e.unvan) {
           ctx.fillStyle = palet.alt;
           ctx.font = `500 ${roleSize}px ${FF.govde}`;
           ctx.textAlign = 'center';
-          ctx.fillText(e.unvan, cx, hapBottom + g2 + roleSize, buCellW * 0.98);
+          const rY = hapBottom + g2 + roleSize;
+          const rb = ayar.rutbe ? rutbeCoz(e.unvan) : null;
+          if (rb) {
+            const s = Math.max(5, Math.round(roleSize * 0.52));
+            const yildizAdet = rb.tip === 'star' ? rb.n : 0;
+            const starW = yildizAdet ? yildizAdet * s * 1.15 + s * 0.3 : 0;
+            const tw = Math.min(ctx.measureText(e.unvan).width, buCellW * 0.98 - s * 3);
+            const gW = s * 2 + starW + s * 0.55 + tw;
+            const gX = cx - gW / 2;
+            const icy = rY - roleSize * 0.32;
+            elmasIkon(ctx, gX + s, icy, s, palet);
+            if (rb.tip === 'pd') yildizCiz(ctx, gX + s, icy - s * 1.15, s * 0.4, palet.gold); // taç yıldızı
+            for (let si = 0; si < yildizAdet; si++) yildizCiz(ctx, gX + s * 2.3 + si * s * 1.15, icy, s * 0.48, palet.gold);
+            ctx.textAlign = 'left';
+            ctx.fillText(e.unvan, gX + s * 2 + starW + s * 0.55, rY, buCellW * 0.98 - s * 3);
+            ctx.textAlign = 'center';
+          } else {
+            ctx.fillText(e.unvan, cx, rY, buCellW * 0.98);
+          }
         }
       }
     }
@@ -938,7 +1148,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
     const zw = ctx.measureText(zPill).width + Math.round(W * 0.06);
     const zh = Math.round(H * 0.05);
-    ctx.fillStyle = palet.gold;
+    ctx.fillStyle = palet.folyo ? folyoGrad(ctx, (W - zw) / 2, adresBlokTop + Math.round(H * 0.02), zw, zh, palet) : palet.gold;
     roundRect(ctx, (W - zw) / 2, adresBlokTop + Math.round(H * 0.02), zw, zh, zh / 2); ctx.fill();
     ctx.fillStyle = palet.pillText; ctx.textBaseline = 'middle';
     ctx.fillText(zPill, W / 2, adresBlokTop + Math.round(H * 0.02) + zh / 2);
@@ -1001,6 +1211,9 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       ctx.stroke();
     }
   }
+
+  // ── FİLM GRENİ — en üst katman (basılı malzeme hissi) ──
+  if (ayar.gren) grenCiz(ctx, W, CANVAS_H);
 
   const dataUrl = canvas.toDataURL('image/png');
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
