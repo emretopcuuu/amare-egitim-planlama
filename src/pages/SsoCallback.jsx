@@ -11,7 +11,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithCustomToken } from 'firebase/auth';
+import { signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle2, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import { auth, db } from '../utils/firebase';
@@ -38,21 +38,56 @@ const SsoCallback = () => {
 
     (async () => {
       try {
+        // 🔴 ZATEN GİRİŞLİYSE JETONA HİÇ DOKUNMA (Emre, 12 Ağu: "her seferinde
+        // neden giriş yapılıyor?"). Uygulama takvimi her açışta bu sayfadan
+        // geçiriyordu; oturum zaten açıkken bile "Giriş yapılıyor" dönüyor,
+        // jeton tazeliğine bağlı yeni bir başarısızlık ihtimali doğuyordu.
+        // Aynı kişi giriş yapmışsa doğrudan takvime geçiyoruz — ekranda
+        // hiçbir şey çakmıyor.
+        // 🔴 auth.currentUser İLK KAREDE BOŞ OLABİLİR: Firebase oturumu depodan
+        // ASENKRON geri yüklüyor. Doğrudan baksaydım kontrol hiç tutmaz, "zaten
+        // girişli" durumu hiç yakalanmaz, düzeltme kâğıt üstünde kalırdı.
+        // İlk auth olayını bekliyoruz (oturum varsa kullanıcıyla, yoksa null).
+        // 1,5 sn tavan: Firebase hiç cevap vermezse jetonla devam et, ekran asılmasın.
+        const mevcutKullanici = await new Promise((res) => {
+          let bitti = false;
+          const zaman = setTimeout(() => { if (!bitti) { bitti = true; res(null); } }, 1500);
+          const birak = onAuthStateChanged(auth, (u) => {
+            if (bitti) return;
+            bitti = true; clearTimeout(zaman); birak(); res(u);
+          }, () => { if (!bitti) { bitti = true; clearTimeout(zaman); res(null); } });
+        });
+        if (mevcutKullanici && (!email
+            || String(mevcutKullanici.email || '').toLowerCase() === String(email).toLowerCase())) {
+          if (returnUrl && /^https?:\/\/(egitimtakvimi\.oneteamglobal\.ai|localhost)/.test(returnUrl)) {
+            window.location.replace(returnUrl);
+          } else {
+            navigate('/takvim', { replace: true });
+          }
+          return;
+        }
+
         const cred = await signInWithCustomToken(auth, token);
-        const uid = cred.user.uid;
 
-        // Firestore'da profil oluştur/güncelle
-        const profilRef = doc(db, 'users', uid);
-        const mevcut = await getDoc(profilRef);
-
-        await setDoc(profilRef, {
-          email: email || cred.user.email || null,
-          displayName: fullName || cred.user.displayName || null,
-          amareId,
-          kaynak: 'onboarding_sso',
-          sonGiris: serverTimestamp(),
-          ...(mevcut.exists() ? {} : { ilkGiris: serverTimestamp() }),
-        }, { merge: true });
+        // 🔴 BURADAN SONRASI GİRİŞİ BOZAMAZ. Profil yazımı da aynı try içindeydi:
+        // Firestore kuralı reddettiğinde ya da ağ takıldığında GİRİŞ BAŞARILI
+        // olmasına rağmen ekran "Giriş başarısız — token süresi dolmuş olabilir"
+        // diyordu. Yanlış teşhis, yanlış mesaj. Artık profil yazımı iyi-niyet:
+        // düşerse sessizce loglanır, giriş ayakta kalır.
+        try {
+          const profilRef = doc(db, 'users', cred.user.uid);
+          const mevcut = await getDoc(profilRef);
+          await setDoc(profilRef, {
+            email: email || cred.user.email || null,
+            displayName: fullName || cred.user.displayName || null,
+            amareId,
+            kaynak: 'onboarding_sso',
+            sonGiris: serverTimestamp(),
+            ...(mevcut.exists() ? {} : { ilkGiris: serverTimestamp() }),
+          }, { merge: true });
+        } catch (perr) {
+          console.warn('[sso-callback] profil yazılamadı (giriş yine de başarılı):', perr);
+        }
 
         setDurum('basarili');
         // Return URL varsa oraya, yoksa /takvim'e dön
@@ -66,13 +101,19 @@ const SsoCallback = () => {
       } catch (err) {
         console.error('[sso-callback] hata:', err);
         setDurum('hata');
-        let msg = 'Giriş yapılamadı. Token süresi dolmuş olabilir.';
-        if (err?.code === 'auth/invalid-custom-token') {
-          msg = 'Token geçersiz. Onboarding linki bozulmuş olabilir.';
-        } else if (err?.code === 'auth/network-request-failed') {
-          msg = 'İnternet bağlantısı sorunu. Lütfen tekrar dene.';
-        }
-        setMesaj(msg);
+        // 🔴 SEBEBİ SÖYLE. Önce her hata "token süresi dolmuş olabilir" diye
+        // gösteriliyordu — çoğu zaman doğru değildi ve bakan kişiye (bize)
+        // hiçbir ipucu vermiyordu. Bilinen kodlar adıyla anlatılıyor; bilinmeyen
+        // için kodun kendisi parantez içinde yazılıyor. Ekran görüntüsü artık
+        // teşhisi taşıyor (ortak oturumdaki "adım notu" ile aynı fikir).
+        const KOD = {
+          'auth/invalid-custom-token': 'Giriş anahtarı geçersiz — bağlantı bozulmuş olabilir.',
+          'auth/custom-token-mismatch': 'Giriş anahtarı başka bir hesaba ait — sunucu ayarı yanlış.',
+          'auth/network-request-failed': 'İnternet bağlantısı sorunu. Lütfen tekrar dene.',
+          'auth/user-disabled': 'Bu hesap devre dışı bırakılmış.',
+        };
+        const kod = err?.code ? String(err.code) : '';
+        setMesaj(KOD[kod] || ('Giriş yapılamadı.' + (kod ? ' (' + kod + ')' : '')));
       }
     })();
   }, [navigate]);

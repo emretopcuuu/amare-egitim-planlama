@@ -74,6 +74,17 @@ const AdminEmailDuzeltTab = () => {
       setKyKayitSonuc(d);
     } catch (e) { setKyHata(e.message); } finally { setKyKaydediliyor(false); }
   };
+  // Maske temizliği: Amare back office maskeli ("*****") email/telefon veriyor, scraper
+  // düz metin yazıyor → kayıt hiçbir eşleşmeye girmiyor. Bu buton onları NULL'a çeker.
+  // Idempotent; her re-sync sonrası tekrar basılabilir.
+  const [kyMaske, setKyMaske] = useState(null);
+  const [kyMaskeCalisiyor, setKyMaskeCalisiyor] = useState(false);
+  const kyMaskeTemizle = async () => {
+    if (!confirm('Tüm sistemde maskeli ("*****") email/telefon değerleri boşaltılacak (NULL). Gerçek veri silinmez. Devam?')) return;
+    setKyMaskeCalisiyor(true); setKyHata(''); setKyMaske(null);
+    try { setKyMaske(await kyCall({ mode: 'maske-temizle' })); }
+    catch (e) { setKyHata(e.message); } finally { setKyMaskeCalisiyor(false); }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'email_duzeltme_talepleri'), orderBy('olusturulmaTarihi', 'desc'));
@@ -236,7 +247,17 @@ const AdminEmailDuzeltTab = () => {
             className="px-4 py-2 rounded-lg font-bold text-white bg-amare-purple hover:bg-amare-dark text-sm disabled:opacity-40 inline-flex items-center gap-1.5">
             {kyYukleniyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <User className="w-4 h-4" />} Ara
           </button>
+          <button onClick={kyMaskeTemizle} disabled={kyMaskeCalisiyor} title='Amare "*****" maskeli email/telefon değerlerini boşalt (NULL)'
+            className="ml-auto px-3 py-2 rounded-lg font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-xs disabled:opacity-40 inline-flex items-center gap-1.5">
+            {kyMaskeCalisiyor ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>🙈</span>} Maskeli kayıtları temizle
+          </button>
         </div>
+        {kyMaske && (
+          <div className={`mt-3 text-sm rounded-lg p-3 border ${kyMaske.ok ? 'text-green-800 bg-green-50 border-green-200' : 'text-amber-800 bg-amber-50 border-amber-200'}`}>
+            <div className="font-bold">{kyMaske.mesaj}</div>
+            <div className="text-xs mt-1 text-gray-600">{Object.entries(kyMaske.sonuc || {}).map(([k, v]) => `${k}: ${v}`).join(' · ')}</div>
+          </div>
+        )}
         {kyHata && <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-1.5"><AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />{kyHata}</div>}
         {kyAdaylar && (
           <div className="mt-3 rounded-xl border border-gray-200 overflow-hidden">
@@ -266,7 +287,7 @@ const AdminEmailDuzeltTab = () => {
                     <tr key={s.anahtar} className="border-t border-gray-100">
                       <td className="px-3 py-2 font-semibold text-gray-700">{s.ad}</td>
                       <td className="px-3 py-2 text-gray-600 break-all">
-                        {s.email && s.email.includes('*')
+                        {s.maskeli || (s.email && s.email.includes('*'))
                           ? <span className="text-[11px] text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full" title="Amare back office bu email'i maskeliyor — gerçek adres sistemde yok, aşağıya doğrusunu yazıp kaydet">🙈 maskeli — gerçek email yok</span>
                           : (s.email || <span className="text-gray-300">— boş —</span>)}
                       </td>
@@ -280,6 +301,19 @@ const AdminEmailDuzeltTab = () => {
                 </tbody>
               </table>
             </div>
+            {/* HBB/asistan/90gün girişi: email auth'ta yoksa Supabase kod GÖNDERMEZ —
+                kullanıcı "kod gelmiyor" der ve sebebi hiçbir ekranda görünmez. */}
+            {kySonuc.girisHesabi?.email && kySonuc.girisHesabi.var === false && (
+              <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
+                <span><b>Giriş hesabı yok</b> — bu e-postaya kod gitmez. Aşağıdan <b>Hepsine Kaydet</b>'e bas, hesap otomatik açılır.</span>
+              </div>
+            )}
+            {kySonuc.girisHesabi?.var === true && (
+              <div className="text-[11px] text-green-700 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" /><span>Giriş hesabı hazır — bu e-postaya kod gidebilir.</span>
+              </div>
+            )}
             {kySonuc.kilit && <div className="text-[11px] text-purple-700 bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5 flex-wrap"><ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" /><span>Bu e-posta <b>kilitli</b> (re-sync ezmez): <b>{kySonuc.kilit.email}</b></span>{kySonuc.kilit.duzelten && <span className="text-purple-400">— kilitleyen: {kySonuc.kilit.duzelten}</span>}</div>}
             <div className="flex gap-2 flex-wrap items-center pt-1">
               <input value={kyYeniEmail} onChange={e => setKyYeniEmail(e.target.value)} type="email" placeholder="doğru@email.com"
@@ -292,7 +326,7 @@ const AdminEmailDuzeltTab = () => {
             {kyKayitSonuc && (
               <div className={`text-sm rounded-lg p-3 border ${kyKayitSonuc.ok ? 'text-green-800 bg-green-50 border-green-200' : 'text-amber-800 bg-amber-50 border-amber-200'}`}>
                 <div className="font-bold flex items-center gap-1.5">{kyKayitSonuc.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}{kyKayitSonuc.mesaj}</div>
-                <div className="text-xs mt-1 text-gray-600">Kilit: {String(kyKayitSonuc.sonuc?.kilit)} · Eğitim Takvimi: {kyKayitSonuc.sonuc?.['Eğitim Takvimi']} · CRM/HBB/Vizyon: {kyKayitSonuc.sonuc?.['CRM/HBB/Vizyon']}</div>
+                <div className="text-xs mt-1 text-gray-600">Kilit: {String(kyKayitSonuc.sonuc?.kilit)} · Eğitim Takvimi: {kyKayitSonuc.sonuc?.['Eğitim Takvimi']} · CRM/HBB/Vizyon: {kyKayitSonuc.sonuc?.['CRM/HBB/Vizyon']} · HBB Girişi: {kyKayitSonuc.sonuc?.['HBB Girişi']}</div>
               </div>
             )}
           </div>

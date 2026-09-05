@@ -11,6 +11,7 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import Link from "next/link";
 import {
   AnimatePresence,
   animate,
@@ -46,6 +47,7 @@ import { sozKartiPaylas, sozStoryPaylas, projKartiPaylas } from "@/lib/sozKart";
 import { soruCevaplar, enIyiCevap } from "@/lib/soruCevap";
 import { olcum } from "@/lib/olcum";
 import { POPULER } from "@/lib/populer";
+import { IMZA } from "@/lib/imzaPath";
 import {
   EPOSTA,
   INSTAGRAM_URL,
@@ -114,7 +116,7 @@ function Acilis() {
       return;
     }
     setGoster(true);
-    const t = setTimeout(() => setGoster(false), 1700);
+    const t = setTimeout(() => setGoster(false), 2150);
     return () => clearTimeout(t);
   }, [azalt]);
   return (
@@ -139,14 +141,40 @@ function Acilis() {
             transition={{ delay: 0.45, duration: 0.8, ease: GECIS }}
             className="mt-6 h-[2px] w-44 origin-center bg-altin"
           />
+          {/* İmza anı: mühür çizgisinin ardından imza soldan sağa yazılır */}
+          <motion.span
+            initial={{ opacity: 0, clipPath: "inset(0 100% 0 0)" }}
+            animate={{ opacity: 1, clipPath: "inset(0 0% 0 0)" }}
+            transition={{ delay: 0.75, duration: 0.95, ease: "easeInOut" }}
+            className="mt-7 block text-altin"
+            aria-hidden
+          >
+            <svg
+              viewBox={IMZA.viewBox}
+              style={{ height: "3rem", width: "auto" }}
+              fill="none"
+            >
+              <g transform={`translate(${IMZA.pad},${IMZA.base}) scale(1,-1)`}>
+                <path d={IMZA.d} fill="currentColor" />
+              </g>
+              <path
+                d={IMZA.kuyruk}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={IMZA.kuyrukKalinlik}
+                strokeLinecap="round"
+                opacity={0.9}
+              />
+            </svg>
+          </motion.span>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
 
-/* El yazısı imza — soldan sağa "yazılarak" belirir.
-   (Şimdilik stilize; gerçek imza SVG'siyle birebir değiştirilebilir.) */
+/* El yazısı imza — Emre'nin seçtiği tasarım imza (vektör), soldan sağa
+   "yazılarak" belirir. Renk currentColor ile temadan (altın) gelir. */
 function Imza({ className = "" }: { className?: string }) {
   const azalt = useReducedMotion();
   return (
@@ -155,10 +183,28 @@ function Imza({ className = "" }: { className?: string }) {
       whileInView={{ clipPath: "inset(0 0% 0 0)" }}
       viewport={{ once: true, amount: 0.8 }}
       transition={{ duration: 1.5, delay: 0.3, ease: "easeInOut" }}
-      className={`inline-block font-imza text-altin ${className}`}
+      className={`inline-block text-altin ${className}`}
       aria-label="Emre Topçu"
+      role="img"
     >
-      Emre Topçu
+      <svg
+        viewBox={IMZA.viewBox}
+        style={{ height: "1.6em", width: "auto" }}
+        fill="none"
+        aria-hidden
+      >
+        <g transform={`translate(${IMZA.pad},${IMZA.base}) scale(1,-1)`}>
+          <path d={IMZA.d} fill="currentColor" />
+        </g>
+        <path
+          d={IMZA.kuyruk}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={IMZA.kuyrukKalinlik}
+          strokeLinecap="round"
+          opacity={0.9}
+        />
+      </svg>
     </motion.span>
   );
 }
@@ -466,6 +512,82 @@ function DunyaBolum() {
   );
 }
 
+/* Sahadan tek video kartı — yalnız görünürken oynar (pil dostu). */
+function SahaVideo({
+  src,
+  poster,
+  not,
+  sinif = "",
+}: {
+  src: string;
+  poster: string;
+  not: string;
+  sinif?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const goz = new IntersectionObserver(
+      ([g]) => {
+        if (g.isIntersecting) v.play().catch(() => {});
+        else v.pause();
+      },
+      { threshold: 0.35 },
+    );
+    goz.observe(v);
+    return () => goz.disconnect();
+  }, []);
+  return (
+    <figure className={sinif}>
+      <div className="h-full overflow-hidden rounded-3xl border border-altin/20 shadow-[0_24px_70px_rgba(26,26,29,0.16)]">
+        <video
+          ref={videoRef}
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster={poster}
+          className="block h-full w-full object-cover"
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      </div>
+      <figcaption className="mt-4 text-center font-lux text-lg leading-snug text-fildisi md:text-xl">
+        {not}
+      </figcaption>
+    </figure>
+  );
+}
+
+/* Dünya bölümünün insan yüzü — sahadan gerçek anlar: yüzler + şehirler. */
+function DunyaVideo() {
+  const c = useC();
+  return (
+    <section className="pb-20 md:pb-28">
+      <motion.div
+        initial={{ opacity: 0, y: 32 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.8, ease: GECIS }}
+        className="mx-auto grid max-w-4xl items-stretch gap-8 px-6 md:grid-cols-[5fr_3fr]"
+      >
+        <SahaVideo
+          src="/video/afrika.mp4"
+          poster="/video/afrika-poster.webp"
+          not={c.ui.dunyaVideoNot}
+        />
+        <SahaVideo
+          src="/video/newyork.mp4"
+          poster="/video/newyork-poster.webp"
+          not={c.ui.dunyaVideoNot2}
+          sinif="mx-auto w-full max-w-[300px] md:max-w-none"
+        />
+      </motion.div>
+    </section>
+  );
+}
+
 /* Dil değiştirici: TR / EN / RU / AZ (statik route'lara link). */
 const DILLER: Dil[] = ["tr", "en", "de", "es", "ru", "az"];
 function DilSecici() {
@@ -737,6 +859,28 @@ function PerdeSatir({
   );
 }
 
+/* Ziyaret kaynağı + test durumu — hero metnini bağlama göre kişiselleştirir.
+   Instagram'dan gelen selamlanır; testi bitiren farklı bir CTA notu görür. */
+function useKaynak() {
+  const [k, setK] = useState({ ig: false, test: false });
+  useEffect(() => {
+    let ig = false;
+    let test = false;
+    try {
+      const p = new URLSearchParams(window.location.search);
+      ig =
+        /instagram/i.test(document.referrer) ||
+        p.get("utm_source") === "instagram" ||
+        p.get("k") === "ig";
+      test = !!localStorage.getItem("emretopcu_test");
+    } catch {
+      /* yoksay */
+    }
+    setK({ ig, test });
+  }, []);
+  return k;
+}
+
 /* Kinetik başlık satırı: Outfit variable ekseninde harf harf ağırlık dalgası.
    İmleç harfe yaklaştıkça kalınlaşır; reduced-motion'da sabit kalır. */
 function KinetikSatir({
@@ -747,21 +891,30 @@ function KinetikSatir({
   className?: string;
 }) {
   const azalt = useReducedMotion();
-  const harfler = Array.from(metin);
   if (azalt) return <span className={className}>{metin}</span>;
+  // Harfler tek tek animasyonlu ama her KELİME bölünmez bir grup —
+  // satır sonu yalnız boşluklara denk gelir (dar ekranda "DE-ĞİL" kırılmaz).
+  const kelimeler = metin.split(" ");
   return (
     <span className={className}>
-      {harfler.map((h, i) => (
-        <motion.span
-          key={i}
-          className="inline-block"
-          style={{ fontWeight: 600 }}
-          initial={{ fontWeight: 600 }}
-          whileHover={{ fontWeight: 900, scaleY: 1.04 }}
-          transition={{ type: "spring", stiffness: 320, damping: 18 }}
-        >
-          {h === " " ? " " : h}
-        </motion.span>
+      {kelimeler.map((kelime, ki) => (
+        <span key={ki}>
+          {ki > 0 && " "}
+          <span className="inline-block whitespace-nowrap">
+            {Array.from(kelime).map((h, i) => (
+              <motion.span
+                key={i}
+                className="inline-block"
+                style={{ fontWeight: 600 }}
+                initial={{ fontWeight: 600 }}
+                whileHover={{ fontWeight: 900, scaleY: 1.04 }}
+                transition={{ type: "spring", stiffness: 320, damping: 18 }}
+              >
+                {h}
+              </motion.span>
+            ))}
+          </span>
+        </span>
       ))}
     </span>
   );
@@ -769,7 +922,9 @@ function KinetikSatir({
 
 function Hero() {
   const c = useC();
+  const dil = useDil();
   const azalt = useReducedMotion();
+  const kaynak = useKaynak();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -796,10 +951,21 @@ function Hero() {
           initial={azalt ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.05, ease: GECIS }}
-          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+          className="mb-3 text-sm font-medium tracking-[0.2em] text-altin uppercase"
         >
           {c.hero.isim} <span className="text-duman">— {c.hero.rol}</span>
         </motion.p>
+        {kaynak.ig && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="mb-3 text-sm text-altin"
+          >
+            {c.ui.igSelam}
+          </motion.p>
+        )}
+        <div className="mb-3" />
         <h1 className="text-[16vw] leading-[0.9] font-semibold tracking-tighter uppercase md:text-[9.5rem]">
           <PerdeSatir gecikme={0.15}>
             <KinetikSatir metin={c.hero.baslikSatir1} />
@@ -808,7 +974,7 @@ function Hero() {
             <KinetikSatir metin={c.hero.baslikSatir2} className="text-altin" />
           </PerdeSatir>
         </h1>
-        <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
+        <div className="mt-8 max-w-2xl">
           <motion.p
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -817,46 +983,142 @@ function Hero() {
           >
             {c.hero.altMetin}
           </motion.p>
+          {/* Kanıt şeridi — herkese açık, doğrulanabilir üç işaret */}
+          <motion.div
+            initial={azalt ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.62, ease: GECIS }}
+            className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-duman"
+          >
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-altin"
+            >
+              <InstagramLogo size={15} weight="bold" />
+              {c.ui.kanitTakipci}
+            </a>
+            <span aria-hidden className="h-3 w-px bg-duman/40" />
+            <span>{c.ui.kanitYazar}</span>
+            <span aria-hidden className="h-3 w-px bg-duman/40" />
+            <span>{c.ui.kanitUlke}</span>
+          </motion.div>
+          {/* CTA mimarisi: birincil + ikincil, başlığın hemen altında */}
           <motion.div
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.68, ease: GECIS }}
-            className="flex flex-col items-start gap-2"
+            transition={{ duration: 0.8, delay: 0.7, ease: GECIS }}
           >
-            <Manyetik>
-              <a
-                href={whatsappUrl("hero")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-fildisi transition-transform active:scale-[0.98]"
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Manyetik>
+                <a
+                  href={whatsappUrl("hero")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-fildisi transition-transform active:scale-[0.98]"
+                >
+                  <WhatsappLogo size={18} weight="fill" />
+                  {c.ui.calis}
+                </a>
+              </Manyetik>
+              <Link
+                href={dil === "tr" ? "/basvuru" : "/dusunuyorum"}
+                className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-6 py-3.5 font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
               >
-                <WhatsappLogo size={18} weight="fill" />
-                {c.ui.calis}
-              </a>
-            </Manyetik>
-            <p className="max-w-[30ch] text-sm leading-snug text-duman">
-              {c.ui.whatsappNot}
+                {dil === "tr" ? c.ui.basvuruLink : c.ui.testDugme}
+              </Link>
+            </div>
+            <p className="mt-3 max-w-[52ch] text-sm leading-snug text-duman">
+              {kaynak.test ? c.ui.ctaTestNot : c.ui.whatsappNot}
             </p>
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Kaydırma ipucu — ilk scroll'da yumuşakça kaybolur */}
+      {/* Kaydırma ipucu — sağ kenarda dikey mikro yazı; ilk scroll'da kaybolur */}
       <motion.div
         aria-hidden
         style={azalt ? undefined : { opacity: sonuklesme }}
-        className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-duman"
+        className="pointer-events-none absolute right-4 bottom-8 hidden flex-col items-center gap-2 text-duman sm:flex md:right-6"
       >
-        <span className="text-[11px] font-medium tracking-[0.2em] uppercase">
+        <span
+          className="text-xs font-medium tracking-[0.3em] uppercase"
+          style={{ writingMode: "vertical-rl" }}
+        >
           {c.ui.kaydir}
         </span>
         <motion.span
           animate={azalt ? undefined : { y: [0, 6, 0] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         >
-          <CaretDown size={18} weight="bold" />
+          <CaretDown size={16} weight="bold" />
         </motion.span>
       </motion.div>
+    </section>
+  );
+}
+
+/* Üç kapı — ziyaretçi kendini seçer, yalnız kendi yolunu görür.
+   Kapı 1 → karar testi, Kapı 2 → tam hikâye, Kapı 3 → medya kiti. */
+function UcKapi() {
+  const c = useC();
+  const dil = useDil();
+  const hikayeYolu = dil === "tr" ? "/hikaye" : `/${dil}/hikaye`;
+  const kapilar = [
+    { href: "/dusunuyorum", baslik: c.ui.kapi1, alt: c.ui.kapi1Alt },
+    { href: hikayeYolu, baslik: c.ui.kapi2, alt: c.ui.kapi2Alt },
+    { href: "/medya", baslik: c.ui.kapi3, alt: c.ui.kapi3Alt },
+  ];
+  return (
+    <section className="py-14 md:py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.ui.kapiBaslik}
+        </motion.p>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {kapilar.map((k, i) => (
+            <motion.div
+              key={k.href}
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.6, delay: i * 0.08, ease: GECIS }}
+            >
+              <Link
+                href={k.href}
+                onClick={() => olcum(`kapi-${i + 1}`)}
+                className="group flex h-full flex-col justify-between rounded-2xl border border-altin/20 bg-abanoz-2/70 p-6 backdrop-blur-sm transition-colors hover:border-altin/60"
+              >
+                <div>
+                  <p className="font-lux text-2xl leading-none text-altin/30">
+                    0{i + 1}
+                  </p>
+                  <p className="mt-3 text-lg font-semibold tracking-tight text-fildisi">
+                    {k.baslik}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-snug text-duman">
+                    {k.alt}
+                  </p>
+                </div>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-altin">
+                  <ArrowUpRight
+                    size={15}
+                    weight="bold"
+                    className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  />
+                </span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
@@ -963,10 +1225,9 @@ function Manifesto() {
   const c = useC();
   const azalt = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 0.8", "end 0.45"],
-  });
+  // Boyama scroll'a değil ZAMANA bağlı: paragraf görünür olunca 1.2 sn'de
+  // tamamlanır — yarım boyalı metin ekranda asılı kalmaz.
+  const ilerleme = useMotionValue(0);
   const kelimeler = c.hakkimda.paragraflar[0].split(" ");
 
   const ilkKelime = kelimeler[0] ?? "";
@@ -997,8 +1258,12 @@ function Manifesto() {
         </motion.div>
 
         <div>
-          <p
+          <motion.p
             aria-label={c.hakkimda.paragraflar[0]}
+            onViewportEnter={() =>
+              animate(ilerleme, 1, { duration: 1.2, ease: "easeOut" })
+            }
+            viewport={{ once: true, amount: 0.35 }}
             className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-[2.1rem] md:leading-snug"
           >
             <span aria-hidden>
@@ -1009,7 +1274,7 @@ function Manifesto() {
                 <>
                   <Kelime
                     kelime={ilkKalan}
-                    ilerleme={scrollYProgress}
+                    ilerleme={ilerleme}
                     bas={0}
                     son={1 / kelimeler.length}
                   />
@@ -1017,7 +1282,7 @@ function Manifesto() {
                     <Kelime
                       key={i}
                       kelime={kelime}
-                      ilerleme={scrollYProgress}
+                      ilerleme={ilerleme}
                       bas={(i + 1) / kelimeler.length}
                       son={(i + 2) / kelimeler.length}
                     />
@@ -1025,7 +1290,7 @@ function Manifesto() {
                 </>
               )}
             </span>
-          </p>
+          </motion.p>
           <motion.p
             initial={azalt ? false : { opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1045,7 +1310,7 @@ function Manifesto() {
 function Teori() {
   const c = useC();
   return (
-    <section id="teori" className="scroll-mt-24 py-24 md:py-40">
+    <section id="teori" className="perde-koyu relative scroll-mt-24 py-20 md:py-32">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -1083,9 +1348,6 @@ function Teori() {
         >
           — {c.teori.imza}
         </motion.p>
-
-        {/* Katlamayı dokunarak yaşa */}
-        <KatlamaSim />
       </div>
     </section>
   );
@@ -1258,14 +1520,13 @@ function EmreyeSor() {
     setCevap(sc ? { bulundu: true, metin: sc.cevap } : { bulundu: false, metin: c.ui.sorBos });
   };
   return (
-    <section className="py-16 md:py-24">
-      <div className="mx-auto max-w-3xl px-6">
-        <div className="rounded-[2rem] border border-black/5 bg-abanoz/80 p-8 shadow-[0_20px_60px_rgba(26,26,29,0.06)] backdrop-blur-md md:p-12">
-        <H2Perde className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
+    <div className="rounded-[2rem] border border-black/5 bg-abanoz/80 p-8 shadow-[0_20px_60px_rgba(26,26,29,0.06)] backdrop-blur-md md:p-10">
+        <p className="flex items-center gap-2 text-sm font-medium tracking-[0.2em] text-altin uppercase">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-altin" />
           {c.ui.sorBaslik}
-        </H2Perde>
-        <p className="mt-4 max-w-[52ch] text-duman">{c.ui.sorAlt}</p>
-        <form onSubmit={sor} className="mt-8 flex gap-3">
+        </p>
+        <p className="mt-3 max-w-[52ch] text-duman">{c.ui.sorAlt}</p>
+        <form onSubmit={sor} className="mt-6 flex gap-3">
           <input
             value={sorgu}
             onChange={(e) => setSorgu(e.target.value)}
@@ -1306,9 +1567,7 @@ function EmreyeSor() {
             </motion.div>
           )}
         </AnimatePresence>
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }
 
@@ -1330,6 +1589,9 @@ function Sss() {
         >
           {c.sss.altMetin}
         </motion.p>
+        <div className="mt-8">
+          <EmreyeSor />
+        </div>
         <div className="mt-10">
           {c.sss.sorular.map((s, i) => {
             const secili = acik === i;
@@ -1380,10 +1642,70 @@ function Sss() {
 }
 
 /* Kapanış — davet mektubu: mühür + söz + imza. */
+/* Sahne perdesi — gerçek sahne fotoğrafı tam genişlik; üstünde tek cümle,
+   köşesinde kulis kartı ("Üşenme. Erteleme. Vazgeçme." avuç yazısı). */
+function SahnePerdesi() {
+  const c = useC();
+  return (
+    <section className="relative overflow-hidden">
+      <div className="relative h-[70vh] min-h-[420px] md:h-[85vh]">
+        <Image
+          src="/sahne-taninma.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        {/* Üst ve alt yumuşak geçiş + okunurluk için koyu degrade */}
+        <div className="absolute inset-0 bg-gradient-to-b from-abanoz via-transparent to-black/60" />
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.9, ease: GECIS }}
+          className="absolute inset-x-0 bottom-10 mx-auto max-w-[34ch] px-6 text-center font-lux text-2xl leading-snug text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.55)] md:bottom-16 md:text-4xl"
+        >
+          {c.ui.sahneFotoNot}
+        </motion.p>
+        {/* Kulis kartı — polaroid hissi, hafif dönük */}
+        <motion.figure
+          initial={{ opacity: 0, y: 24, rotate: 0 }}
+          whileInView={{ opacity: 1, y: 0, rotate: -2.5 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.25, ease: GECIS }}
+          className="absolute top-8 right-6 hidden w-44 rounded-xl bg-white p-2.5 pb-3 shadow-[0_18px_50px_rgba(0,0,0,0.35)] md:top-14 md:right-14 md:block md:w-56"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sahne-kulis.webp"
+            alt={c.ui.kulisNot}
+            className="w-full rounded-lg"
+          />
+          <figcaption className="mt-2 px-1 text-[0.68rem] leading-snug text-neutral-600">
+            {c.ui.kulisNot}
+          </figcaption>
+        </motion.figure>
+      </div>
+      {/* Mobilde kulis kartı fotoğrafın altında ayrı satır */}
+      <div className="bg-abanoz px-6 py-8 md:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-4 rounded-2xl border border-altin/20 bg-abanoz-2/70 p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sahne-kulis.webp"
+            alt=""
+            className="w-20 shrink-0 rounded-lg"
+          />
+          <p className="text-sm leading-snug text-duman">{c.ui.kulisNot}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function KapanisCumlesi() {
   const c = useC();
   return (
-    <section className="py-20 md:py-28">
+    <section id="iletisim" className="perde-koyu scroll-mt-24 py-20 md:py-28">
       <div className="mx-auto max-w-xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 28, rotate: 0 }}
@@ -1402,7 +1724,21 @@ function KapanisCumlesi() {
             {c.kapanisCumlesi}
           </p>
           <Imza className="mt-8 text-4xl" />
-          <p className="mt-6 text-sm text-duman">{c.ui.mektupNot}</p>
+          {/* Kart eylemsiz bitmesin: davetin kendisi de kartın içinde */}
+          <div className="mt-8 flex justify-center">
+            <Manyetik>
+              <a
+                href={whatsappUrl("kapanış")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-fildisi transition-transform active:scale-[0.98]"
+              >
+                <WhatsappLogo size={18} weight="fill" />
+                {c.ui.calis}
+              </a>
+            </Manyetik>
+          </div>
+          <p className="mt-5 text-sm text-duman">{c.ui.mektupNot}</p>
         </motion.div>
       </div>
     </section>
@@ -1447,7 +1783,7 @@ function FilmBolumu({
         <p className="text-sm font-medium tracking-widest text-altin uppercase">
           {adim.yil}
         </p>
-        <h3 className="mt-4 max-w-[16ch] text-4xl font-semibold tracking-tight text-fildisi md:text-6xl">
+        <h3 className="mt-4 max-w-[16ch] font-lux text-4xl font-semibold tracking-tight text-fildisi md:text-6xl">
           {adim.baslik}
         </h3>
         <p className="mt-6 max-w-[48ch] text-lg leading-relaxed text-fildisi/75 md:text-xl">
@@ -1484,7 +1820,7 @@ function Yolculuk() {
               <p className="text-sm font-medium tracking-widest text-altin uppercase">
                 {adim.yil}
               </p>
-              <h3 className="mt-3 text-3xl font-semibold">{adim.baslik}</h3>
+              <h3 className="mt-3 font-lux text-3xl font-semibold">{adim.baslik}</h3>
               <p className="mt-4 max-w-[52ch] text-lg text-duman">
                 {adim.aciklama}
               </p>
@@ -1618,7 +1954,7 @@ function KatlamaProjeksiyon() {
   );
 }
 
-function Rakamlar() {
+function Rakamlar({ kaydirici = true }: { kaydirici?: boolean }) {
   const c = useC();
   return (
     <section id="rakamlar" className="relative scroll-mt-24 overflow-hidden py-24 md:py-32">
@@ -1668,45 +2004,7 @@ function Rakamlar() {
             </motion.div>
           ))}
         </div>
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-x-3 gap-y-8 border-t border-black/10 pt-14 md:gap-x-5">
-          {c.katlamaSeridi.adimlar.map((adim, i) => (
-            <div key={adim.etiket} className="flex items-center gap-x-3 md:gap-x-5">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.6, delay: i * 0.12, ease: GECIS }}
-                className="text-center"
-              >
-                <p
-                  className={`font-semibold tracking-tighter ${
-                    i === c.katlamaSeridi.adimlar.length - 1
-                      ? "text-4xl text-altin md:text-6xl"
-                      : "text-2xl text-fildisi/70 md:text-4xl"
-                  }`}
-                >
-                  {adim.deger}
-                </p>
-                <p className="mt-2 max-w-[16ch] text-xs leading-snug text-duman md:text-sm">
-                  {adim.etiket}
-                </p>
-              </motion.div>
-              {i < c.katlamaSeridi.adimlar.length - 1 && (
-                <motion.span
-                  aria-hidden
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, amount: 0.6 }}
-                  transition={{ duration: 0.5, delay: i * 0.12 + 0.1, ease: GECIS }}
-                  className="text-xl text-altin/40 md:text-2xl"
-                >
-                  →
-                </motion.span>
-              )}
-            </div>
-          ))}
-        </div>
-        <KariyerKaydirici />
+        {kaydirici && <KariyerKaydirici />}
       </div>
     </section>
   );
@@ -1716,14 +2014,38 @@ function Rakamlar() {
    (uydurma ağ sayısı yok — yalnız doğrulanmış kariyer basamakları). */
 function KariyerKaydirici() {
   const c = useC();
+  const azalt = useReducedMotion();
   const veri = c.kariyerZaman;
-  const [i, setI] = useState(veri.length - 1);
+  const [i, setI] = useState(0);
+  const [oto, setOto] = useState(true);
+  const [sahnede, setSahnede] = useState(false);
   const akt = veri[i];
+  // Görünür olunca duraklar kendiliğinden ilerler (3 sn); kullanıcı dokununca
+  // otomatik oynatma biter, kontrol tamamen ona geçer. Sona gelince durur.
+  useEffect(() => {
+    if (!oto || azalt || !sahnede) return;
+    const t = window.setInterval(() => {
+      setI((v) => {
+        if (v + 1 >= veri.length) {
+          setOto(false);
+          return v;
+        }
+        return v + 1;
+      });
+    }, 3000);
+    return () => window.clearInterval(t);
+  }, [oto, azalt, sahnede, veri.length]);
+  const elle = (k: number) => {
+    setOto(false);
+    setI(k);
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
+      onViewportEnter={() => setSahnede(true)}
+      onViewportLeave={() => setSahnede(false)}
       transition={{ duration: 0.7, ease: GECIS }}
       className="mt-16 rounded-3xl border border-altin/15 bg-abanoz-2/50 p-8 backdrop-blur-sm md:p-10"
     >
@@ -1744,7 +2066,7 @@ function KariyerKaydirici() {
         max={veri.length - 1}
         step={1}
         value={i}
-        onChange={(e) => setI(Number(e.target.value))}
+        onChange={(e) => elle(Number(e.target.value))}
         aria-label={c.ui.kariyerKaydirBaslik}
         className="mt-8 w-full cursor-pointer accent-altin"
       />
@@ -1753,13 +2075,13 @@ function KariyerKaydirici() {
           <button
             key={`${v.yil}-${k}`}
             type="button"
-            onClick={() => setI(k)}
+            onClick={() => elle(k)}
             aria-label={`${v.yil} ${v.rutbe}`}
             className={`text-xs tabular-nums transition-colors ${
               k === i ? "font-semibold text-altin" : "text-duman hover:text-fildisi"
             }`}
           >
-            {v.yil}
+            {v.ay || v.yil}
           </button>
         ))}
       </div>
@@ -1767,12 +2089,97 @@ function KariyerKaydirici() {
   );
 }
 
-/* Felsefe: kendi sözleri; dokununca sözün arka yüzü (açılımı) görünür. */
+/* Felsefe: kendi sözleri — ilk söz tam genişlik editoryal "spread",
+   kalanlar yatay kaydırmalı galeri kartları. Dokununca arka yüzü görünür. */
+function SozKartIcerik({
+  s,
+  acikMi,
+  onToggle,
+  onSpread,
+}: {
+  s: Icerik["sozler"][number];
+  acikMi: boolean;
+  onToggle: () => void;
+  onSpread?: boolean;
+}) {
+  const c = useC();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={acikMi}
+        className="block w-full cursor-pointer text-left"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {acikMi ? (
+            <motion.span
+              key="arka"
+              initial={{ opacity: 0, rotateX: 70 }}
+              animate={{ opacity: 1, rotateX: 0 }}
+              exit={{ opacity: 0, rotateX: -70 }}
+              transition={{ duration: 0.35, ease: GECIS }}
+              className={`block leading-relaxed text-duman ${
+                onSpread ? "text-xl md:text-3xl" : "text-base md:text-lg"
+              }`}
+            >
+              {s.arka}
+            </motion.span>
+          ) : (
+            <motion.span
+              key="on"
+              initial={{ opacity: 0, rotateX: 70 }}
+              animate={{ opacity: 1, rotateX: 0 }}
+              exit={{ opacity: 0, rotateX: -70 }}
+              transition={{ duration: 0.35, ease: GECIS }}
+              className={`block font-lux leading-[1.15] font-semibold tracking-tight ${
+                onSpread ? "text-3xl md:text-6xl" : "text-2xl md:text-3xl"
+              }`}
+            >
+              <span className="text-altin/40">“</span>
+              {s.soz}
+              <span className="text-altin/40">”</span>
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
+      <div className="mt-4 flex gap-4">
+        <button
+          type="button"
+          onClick={() => { sozKartiPaylas(s.soz); olcum("soz-paylas"); }}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin"
+        >
+          <ShareNetwork size={15} weight="bold" />
+          {c.ui.sozKartPaylas}
+        </button>
+        <button
+          type="button"
+          onClick={() => { sozStoryPaylas(s.soz); olcum("soz-story"); }}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin"
+        >
+          {c.ui.sozKartStory}
+        </button>
+      </div>
+    </>
+  );
+}
+
 function Sozler() {
   const c = useC();
+  const azalt = useReducedMotion();
   const [acik, setAcik] = useState<number | null>(null);
+  const onizlendi = useRef(false);
+  const [ilk, ...digerleri] = c.sozler;
+  // İlk söz görünüme girince bir kez kendiliğinden çevrilip döner —
+  // "dokununca arkası var" davranışını sözsüz öğretir.
+  const onizle = () => {
+    if (onizlendi.current || azalt) return;
+    onizlendi.current = true;
+    window.setTimeout(() => setAcik((v) => (v === null ? 0 : v)), 900);
+    window.setTimeout(() => setAcik((v) => (v === 0 ? null : v)), 3200);
+  };
   return (
-    <section id="sozler" className="relative scroll-mt-24 overflow-hidden py-24 md:py-40">
+    <section id="sozler" className="relative scroll-mt-24 overflow-hidden py-24 md:py-32">
       {/* Filigran tırnak */}
       <span
         aria-hidden
@@ -1780,86 +2187,74 @@ function Sozler() {
       >
         “
       </span>
-      <div className="relative mx-auto max-w-5xl px-6">
+      <div className="relative mx-auto max-w-6xl px-6">
         <p className="mb-12 flex items-center gap-2 text-sm font-medium tracking-[0.2em] text-duman uppercase">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-altin" />
           {c.ui.sozIpucu}
         </p>
-        <div className="space-y-16 md:space-y-28">
-          {c.sozler.map((s, i) => {
-            const secili = acik === i;
+        {/* Editoryal spread: ilk söz tam genişlik */}
+        <motion.blockquote
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8, ease: GECIS }}
+          onViewportEnter={onizle}
+          className="max-w-[26ch]"
+        >
+          <SozKartIcerik
+            s={ilk}
+            acikMi={acik === 0}
+            onToggle={() => setAcik(acik === 0 ? null : 0)}
+            onSpread
+          />
+        </motion.blockquote>
+        {/* Kalan sözler: yatay kaydırmalı galeri */}
+        <div className="mt-14 flex snap-x gap-5 overflow-x-auto pb-4 [scrollbar-width:thin]">
+          {digerleri.map((s, k) => {
+            const i = k + 1;
             return (
               <motion.blockquote
                 key={s.soz}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.7 }}
-                transition={{ duration: 0.8, ease: GECIS }}
-                className={`max-w-[24ch] ${i % 2 === 1 ? "ml-auto text-right" : ""}`}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, delay: (k % 3) * 0.07, ease: GECIS }}
+                className="flex w-[82vw] shrink-0 snap-start flex-col justify-between rounded-3xl border border-altin/15 bg-abanoz-2/70 p-7 backdrop-blur-sm sm:w-[400px]"
               >
-                <button
-                  type="button"
-                  onClick={() => setAcik(secili ? null : i)}
-                  aria-expanded={secili}
-                  className={`block w-full cursor-pointer ${
-                    i % 2 === 1 ? "text-right" : "text-left"
-                  }`}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    {secili ? (
-                      <motion.span
-                        key="arka"
-                        initial={{ opacity: 0, rotateX: 70 }}
-                        animate={{ opacity: 1, rotateX: 0 }}
-                        exit={{ opacity: 0, rotateX: -70 }}
-                        transition={{ duration: 0.35, ease: GECIS }}
-                        className="block text-xl leading-relaxed text-duman md:text-2xl"
-                      >
-                        {s.arka}
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="on"
-                        initial={{ opacity: 0, rotateX: 70 }}
-                        animate={{ opacity: 1, rotateX: 0 }}
-                        exit={{ opacity: 0, rotateX: -70 }}
-                        transition={{ duration: 0.35, ease: GECIS }}
-                        className="block font-lux text-3xl leading-[1.15] font-semibold tracking-tight md:text-6xl"
-                      >
-                        <span className="text-altin/40">“</span>
-                        {s.soz}
-                        <span className="text-altin/40">”</span>
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
-                <div
-                  className={`mt-4 flex gap-4 ${
-                    i % 2 === 1 ? "flex-row-reverse" : ""
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => { sozKartiPaylas(s.soz); olcum("soz-paylas"); }}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin"
-                  >
-                    <ShareNetwork size={15} weight="bold" />
-                    {c.ui.sozKartPaylas}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { sozStoryPaylas(s.soz); olcum("soz-story"); }}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin"
-                  >
-                    {c.ui.sozKartStory}
-                  </button>
-                </div>
+                <SozKartIcerik
+                  s={s}
+                  acikMi={acik === i}
+                  onToggle={() => setAcik(acik === i ? null : i)}
+                />
               </motion.blockquote>
             );
           })}
         </div>
       </div>
     </section>
+  );
+}
+
+/* YouTube kapağı — önce build'de indirilen YEREL kopya (/kapak/<id>.jpg);
+   dosya yoksa YouTube'a düşer. Dış bağlantı koparsa kart kırık görünmez. */
+function YtKapak({
+  id,
+  alt,
+  className,
+}: {
+  id: string;
+  alt: string;
+  className: string;
+}) {
+  const [uzak, setUzak] = useState(false);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={uzak ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : `/kapak/${id}.jpg`}
+      onError={() => setUzak(true)}
+      alt={alt}
+      className={className}
+    />
   );
 }
 
@@ -1923,10 +2318,22 @@ function VideoKart({
 
 /* Kamera karşısında — gerçek eğitim videoları (Vimeo/YouTube). */
 /* Popüler bir YouTube videosu kartı — kalıcı thumbnail, tıklayınca oynatıcı. */
-function PopulerKart({ id, baslik }: { id: string; baslik: string }) {
+function PopulerKart({
+  id,
+  baslik,
+  genis = false,
+}: {
+  id: string;
+  baslik: string;
+  genis?: boolean;
+}) {
   const [oynat, setOynat] = useState(false);
   return (
-    <div className="w-[76vw] shrink-0 snap-start sm:w-[340px]">
+    <div
+      className={`shrink-0 snap-start ${
+        genis ? "w-[88vw] sm:w-[520px]" : "w-[76vw] sm:w-[340px]"
+      }`}
+    >
       <div className="relative aspect-video overflow-hidden rounded-2xl border border-black/10 bg-abanoz-2">
         {oynat ? (
           <iframe
@@ -1946,9 +2353,8 @@ function PopulerKart({ id, baslik }: { id: string; baslik: string }) {
             className="group absolute inset-0 h-full w-full cursor-pointer"
             aria-label={baslik}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+            <YtKapak
+              id={id}
               alt={baslik}
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -1977,8 +2383,8 @@ function PopulerStrip() {
         <span className="text-sm text-duman">{c.ui.populerAlt}</span>
       </div>
       <div className="mt-5 flex snap-x gap-5 overflow-x-auto pb-4 [scrollbar-width:thin]">
-        {POPULER.map((v) => (
-          <PopulerKart key={v.id} id={v.id} baslik={v.baslik} />
+        {POPULER.map((v, i) => (
+          <PopulerKart key={v.id} id={v.id} baslik={v.baslik} genis={i === 0} />
         ))}
       </div>
     </div>
@@ -2019,9 +2425,8 @@ function SonVideo() {
               className="absolute inset-0 h-full w-full cursor-pointer"
               aria-label={v.baslik}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`}
+              <YtKapak
+                id={v.id}
                 alt={v.baslik}
                 className="absolute inset-0 h-full w-full object-cover"
               />
@@ -2161,6 +2566,15 @@ function Vaat() {
               <p className="mt-3 leading-relaxed text-duman">
                 {adim.aciklama}
               </p>
+              {i === 2 && (
+                <Link
+                  href="/plan"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-altin underline-offset-2 hover:underline"
+                >
+                  {c.ui.planLink}
+                  <ArrowUpRight size={14} weight="bold" />
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>
@@ -2191,8 +2605,8 @@ function VideoKapak({ id }: { id: string }) {
           className="group absolute inset-0 h-full w-full cursor-pointer"
           aria-label="Videoyu oynat"
         >
-          <img
-            src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+          <YtKapak
+            id={id}
             alt="Emre Topçu — tanıyanların gözünden"
             className="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100"
           />
@@ -2243,6 +2657,55 @@ function Arsiv() {
             </a>
           </Manyetik>
         </motion.div>
+
+        {/* Boş arena bandı — "her dolu salon önce boştu" */}
+        <motion.figure
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: GECIS }}
+          className="relative mt-12 overflow-hidden rounded-3xl border border-altin/20"
+        >
+          <Image
+            src="/salon-bos.webp"
+            alt=""
+            width={960}
+            height={640}
+            sizes="(min-width: 1152px) 1104px, 100vw"
+            className="h-[300px] w-full object-cover md:h-[420px]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+          <figcaption className="absolute inset-x-0 bottom-6 px-6 text-center font-lux text-xl leading-snug text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.6)] md:bottom-8 md:text-3xl">
+            {c.ui.salonBosNot}
+          </figcaption>
+        </motion.figure>
+
+        {/* Dolu salonlar — üçlü kanıt şeridi */}
+        <div className="mt-5 grid grid-cols-3 gap-3 md:gap-5">
+          {["/salon-1.webp", "/salon-2.webp", "/salon-3.webp"].map((src, i) => (
+            <motion.div
+              key={src}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: i * 0.08, ease: GECIS }}
+              className="overflow-hidden rounded-2xl border border-black/10"
+            >
+              <Image
+                src={src}
+                alt=""
+                width={1100}
+                height={825}
+                sizes="(min-width: 768px) 33vw, 33vw"
+                className="aspect-[4/3] w-full object-cover"
+              />
+            </motion.div>
+          ))}
+        </div>
+        <p className="mt-4 text-center text-sm text-duman">
+          {c.ui.salonDoluNot}
+        </p>
+
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {tumler.map((k, i) => (
             <motion.article
@@ -2308,8 +2771,8 @@ function Deyince() {
           </p>
         </motion.div>
 
-        {/* Öne çıkan sözler */}
-        <div className="mt-14 grid gap-6 md:grid-cols-2">
+        {/* Öne çıkan sözler + ekipten bir an — sıkı masonry, boş kart yok */}
+        <div className="mt-14 gap-6 md:columns-2">
           {c.deyince.sozler.map((soz, i) => (
             <motion.blockquote
               key={soz}
@@ -2317,13 +2780,34 @@ function Deyince() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.6, delay: (i % 2) * 0.08, ease: GECIS }}
-              className="rounded-2xl border border-black/10 bg-abanoz-2 p-7 text-xl leading-snug font-medium tracking-tight text-fildisi/90 md:text-2xl"
+              className="mb-6 break-inside-avoid rounded-2xl border border-black/10 bg-abanoz-2 p-7 font-lux text-xl leading-snug font-medium tracking-tight text-fildisi/90 md:text-2xl"
             >
               <span className="text-altin/50">“</span>
               {soz}
               <span className="text-altin/50">”</span>
             </motion.blockquote>
           ))}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.08, ease: GECIS }}
+            className="relative mb-6 break-inside-avoid overflow-hidden rounded-2xl border border-altin/20"
+          >
+            {/* Duotone maske: kutlama karesi marka paletine çekilir */}
+            <Image
+              src="/ekip.webp"
+              alt=""
+              width={1200}
+              height={900}
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="h-full w-full object-cover grayscale-100 sepia-[0.28]"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-altin/15 mix-blend-multiply"
+            />
+          </motion.div>
         </div>
       </div>
     </section>
@@ -2515,13 +2999,9 @@ function Footer() {
   return (
     <footer className="border-t border-black/5 bg-abanoz py-14">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-6 text-center">
-        <div
-          aria-hidden
-          className="grid h-11 w-11 place-items-center rounded-full border border-altin/50 font-lux text-sm text-altin"
-        >
-          ET
-        </div>
+        <Imza className="text-4xl" />
         <p className="font-lux text-lg text-fildisi/80">{c.ui.footerFelsefe}</p>
+        <p className="max-w-[44ch] text-sm text-duman">{c.hero.rol}</p>
         <div className="flex items-center gap-5 text-duman">
           <a
             href={WHATSAPP_URL}
@@ -2562,6 +3042,14 @@ function Footer() {
           <span className="text-black/15">·</span>
           <a href="/medya" className="transition-colors hover:text-altin">
             {c.ui.medyaLink}
+          </a>
+          <span className="text-black/15">·</span>
+          <a href="/basvuru" className="transition-colors hover:text-altin">
+            {c.ui.basvuruLink}
+          </a>
+          <span className="text-black/15">·</span>
+          <a href="/salon" className="transition-colors hover:text-altin">
+            {c.ui.salonLink}
           </a>
         </div>
         <p className="text-sm text-duman">© 2026 Emre Topçu</p>
@@ -2848,6 +3336,14 @@ function SaatSayaci() {
   const [kapali, setKapali] = useState(true);
   const [saat, setSaat] = useState(1);
   const [doldu, setDoldu] = useState(false);
+  // Tam bildirim yalnız 6 sn görünür; sonra köşede sessiz mini rozete
+  // küçülür (dikkat vampirliği yok). Rozete dokununca tekrar açılır.
+  const [mini, setMini] = useState(false);
+  useEffect(() => {
+    if (kapali || mini || !gorunur) return;
+    const t = window.setTimeout(() => setMini(true), 6000);
+    return () => window.clearTimeout(t);
+  }, [kapali, mini, gorunur]);
 
   useEffect(() => {
     try {
@@ -2878,6 +3374,27 @@ function SaatSayaci() {
     ? c.ui.saatDoldu
     : c.ui.saatIcinde.replace("{s}", String(saat));
 
+  if (mini) {
+    return (
+      <AnimatePresence>
+        {gorunur && (
+          <motion.button
+            type="button"
+            onClick={() => setMini(false)}
+            aria-label={c.ui.saatMini}
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+            transition={{ duration: 0.25, ease: GECIS }}
+            className="fixed bottom-5 left-5 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-altin/30 bg-abanoz-2/90 font-lux text-[0.66rem] leading-none text-altin shadow-lg backdrop-blur"
+          >
+            {doldu ? "72s" : `${saat}s`}
+          </motion.button>
+        )}
+      </AnimatePresence>
+    );
+  }
+
   return (
     <AnimatePresence>
       {gorunur && (
@@ -2886,6 +3403,7 @@ function SaatSayaci() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ duration: 0.3, ease: GECIS }}
+          role="status"
           className="fixed bottom-5 left-5 z-40 flex max-w-[15.5rem] items-center gap-2.5 rounded-full border border-altin/25 bg-abanoz-2/90 py-2 pr-2 pl-3.5 text-xs shadow-lg backdrop-blur"
         >
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-altin" />
@@ -3050,6 +3568,16 @@ function FasilRayi() {
   const c = useC();
   const aktif = useAktifFasil();
   const [kopyalandi, setKopyalandi] = useState(false);
+  // Fragman/hikâye ayrımı: ray yalnız bu sayfada gerçekten VAR olan
+  // fasılları gösterir (ölü bağlantı yok, numaralar yeniden sayılır).
+  const [mevcut, setMevcut] = useState<number[]>([]);
+  useEffect(() => {
+    setMevcut(
+      FASIL_IDLERI.map((id, i) => (document.getElementById(id) ? i : -1)).filter(
+        (i) => i >= 0,
+      ),
+    );
+  }, []);
   const kopyala = () => {
     try {
       const id = FASIL_IDLERI[aktif];
@@ -3062,8 +3590,12 @@ function FasilRayi() {
     }
   };
   return (
-    <div className="group fixed top-1/2 left-5 z-40 hidden -translate-y-1/2 flex-col gap-2.5 lg:flex">
-      {FASIL_IDLERI.map((id, i) => {
+    <nav
+      aria-label="Fasıllar"
+      className="group fixed top-1/2 left-5 z-40 hidden -translate-y-1/2 flex-col gap-2.5 lg:flex"
+    >
+      {mevcut.map((i, sira) => {
+        const id = FASIL_IDLERI[i];
         const s = i === aktif;
         return (
           <a key={id} href={`#${id}`} className="flex items-center gap-3">
@@ -3072,7 +3604,7 @@ function FasilRayi() {
                 s ? "text-altin" : "text-duman/40"
               }`}
             >
-              {String(i + 1).padStart(2, "0")}
+              {String(sira + 1).padStart(2, "0")}
             </span>
             <span
               className={`h-px transition-all duration-300 ${
@@ -3110,16 +3642,94 @@ function FasilRayi() {
           {kopyalandi ? c.ui.baglantiKopyalandi : c.ui.baglantiKopyala}
         </span>
       </button>
-    </div>
+    </nav>
   );
 }
 
 /* Sayfa gövdesi — dil context'i içinde çalışır. */
+/* Metin-yoğun bölümlerde arka küre soluklaşır (görsel gürültü düşer). */
+const SOLUK_BOLUMLER = ["sozler", "videolar", "sss"] as const;
+
+/* Küre sanat yönetimi kancası: söz/video/soru bölümleri ekranı kaplarken
+   küre %35 opaklığa iner; sahneyi geri alınca döner. */
+function useKureSoluk() {
+  const [kureSoluk, setKureSoluk] = useState(false);
+  useEffect(() => {
+    const gorunenler = new Set<string>();
+    const goz = new IntersectionObserver(
+      (girisler) => {
+        for (const g of girisler) {
+          if (g.isIntersecting) gorunenler.add(g.target.id);
+          else gorunenler.delete(g.target.id);
+        }
+        setKureSoluk(gorunenler.size > 0);
+      },
+      { rootMargin: "-30% 0px -30% 0px" },
+    );
+    for (const id of SOLUK_BOLUMLER) {
+      const el = document.getElementById(id);
+      if (el) goz.observe(el);
+    }
+    return () => goz.disconnect();
+  }, []);
+  return kureSoluk;
+}
+
+/* Fasıl bazlı ölçüm: her bölümde geçirilen süre, sayfadan ayrılırken
+   isimsiz tek olay olarak gönderilir (fasil-<id>-<sn>s). */
+function FasilTakip() {
+  useEffect(() => {
+    const sure: Record<string, number> = {};
+    const giris: Record<string, number> = {};
+    const goz = new IntersectionObserver(
+      (girisler) => {
+        for (const g of girisler) {
+          const id = g.target.id;
+          if (g.isIntersecting) giris[id] = performance.now();
+          else if (giris[id]) {
+            sure[id] = (sure[id] ?? 0) + performance.now() - giris[id];
+            delete giris[id];
+          }
+        }
+      },
+      { threshold: 0.4 },
+    );
+    for (const id of FASIL_IDLERI) {
+      const el = document.getElementById(id);
+      if (el) goz.observe(el);
+    }
+    const gonder = () => {
+      const simdi = performance.now();
+      for (const id of Object.keys(giris)) {
+        sure[id] = (sure[id] ?? 0) + simdi - giris[id];
+        giris[id] = simdi;
+      }
+      for (const id of Object.keys(sure)) {
+        const sn = Math.round(sure[id] / 1000);
+        if (sn >= 3) olcum(`fasil-${id}-${sn}s`);
+        delete sure[id];
+      }
+    };
+    const gizlenince = () => {
+      if (document.visibilityState === "hidden") gonder();
+    };
+    window.addEventListener("pagehide", gonder);
+    document.addEventListener("visibilitychange", gizlenince);
+    return () => {
+      goz.disconnect();
+      window.removeEventListener("pagehide", gonder);
+      document.removeEventListener("visibilitychange", gizlenince);
+    };
+  }, []);
+  return null;
+}
+
 function ZirveIc() {
   const dil = useDil();
   const azalt = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const morf = useMotionValue(0); // ağ → dünya morfu (DunyaBolum sürer)
+  const kureSoluk = useKureSoluk();
 
   return (
     <MorfContext.Provider value={morf}>
@@ -3130,14 +3740,17 @@ function ZirveIc() {
     >
       {/* İlk ziyarette sinematik açılış perdesi */}
       <Acilis />
-      {/* Dönen ziyaretçiye "kaldığın yer" şeridi */}
-      <DevamSeridi />
       {/* Masaüstünde imleci izleyen altın ışık */}
       <ImlecIsigi />
       {/* Ortam sesi düğmesi (kapalı başlar) */}
       <AmbiyansDugme />
       {/* Tüm sayfanın arkasında yaşayan sinematik 3D sahne */}
-      <Ag3D ilerleme={scrollYProgress} morf={morf} hareket={!azalt} />
+      <Ag3D
+        ilerleme={scrollYProgress}
+        morf={morf}
+        hareket={!azalt}
+        soluk={kureSoluk}
+      />
       {/* İnce altın scroll-ilerleme çizgisi */}
       <motion.div
         aria-hidden
@@ -3147,25 +3760,16 @@ function ZirveIc() {
       <Nav />
       <FasilRayi />
       <DilSeridi />
+      <FasilTakip />
       <main>
         <Hero />
+        <UcKapi />
         <Manifesto />
         <Teori />
-        <KatlamaProjeksiyon />
-        <Rakamlar />
-        <DunyaBolum />
-        <Yolculuk />
-        <LiderTipleri />
-        <Gercekler />
-        <Sozler />
-        <Arsiv />
-        <Videolar />
+        <Rakamlar kaydirici={false} />
+        <SahnePerdesi />
         <Vaat />
-        <EmreyeSor />
-        <Sss />
-        <Deyince />
         <KapanisCumlesi />
-        <Iletisim />
       </main>
       <KitapBulten />
       <Footer />
@@ -3174,6 +3778,101 @@ function ZirveIc() {
       <SecAlintila />
     </div>
     </MorfContext.Provider>
+  );
+}
+
+/* /hikaye girişi — "fragman bitti, film başlıyor". */
+function HikayeGiris() {
+  const c = useC();
+  return (
+    <section className="px-6 pt-36 pb-6 md:pt-44">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-sm font-medium tracking-[0.2em] text-altin uppercase">
+          {c.hero.isim}
+        </p>
+        <h1 className="mt-4 font-lux text-4xl font-semibold tracking-tight md:text-6xl">
+          {c.ui.hikayeBaslik}
+        </h1>
+        <p className="mt-5 max-w-[56ch] text-lg leading-relaxed text-duman">
+          {c.ui.hikayeAlt}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* /hikaye gövdesi — derinlik isteyenin sayfası: ana sayfadan taşınan
+   tüm fasıllar burada, aynı sahne (küre, ray, tema) üzerinde yaşar. */
+function HikayeIc() {
+  const dil = useDil();
+  const azalt = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const morf = useMotionValue(0);
+  const kureSoluk = useKureSoluk();
+
+  return (
+    <MorfContext.Provider value={morf}>
+    <div
+      lang={dil}
+      className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-fildisi"
+      style={{ colorScheme: "light" }}
+    >
+      <ImlecIsigi />
+      <AmbiyansDugme />
+      <Ag3D
+        ilerleme={scrollYProgress}
+        morf={morf}
+        hareket={!azalt}
+        soluk={kureSoluk}
+      />
+      <motion.div
+        aria-hidden
+        style={azalt ? undefined : { scaleX: scrollYProgress }}
+        className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-altin"
+      />
+      <Nav />
+      <FasilRayi />
+      <DevamSeridi />
+      <FasilTakip />
+      <main>
+        <HikayeGiris />
+        <KatlamaProjeksiyon />
+        {/* Katlamayı dokunarak yaşa — fragmandan taşındı */}
+        <section className="pb-6">
+          <div className="mx-auto max-w-4xl px-6">
+            <KatlamaSim />
+          </div>
+        </section>
+        <section className="pb-10">
+          <div className="mx-auto max-w-4xl px-6">
+            <KariyerKaydirici />
+          </div>
+        </section>
+        <DunyaBolum />
+        <DunyaVideo />
+        <Yolculuk />
+        <LiderTipleri />
+        <Gercekler />
+        <Sozler />
+        <Arsiv />
+        <Videolar />
+        <Sss />
+        <Deyince />
+        <Iletisim />
+      </main>
+      <Footer />
+      <BasaDon />
+      <SecAlintila />
+    </div>
+    </MorfContext.Provider>
+  );
+}
+
+export function ZirveHikaye({ dil = "tr" }: { dil?: Dil }) {
+  return (
+    <DilProvider dil={dil}>
+      <HikayeIc />
+    </DilProvider>
   );
 }
 

@@ -9,10 +9,10 @@ export function jsonLd() {
     "@type": "Person",
     "@id": `${SITE}/#emretopcu`,
     name: "Emre Topçu",
-    jobTitle: "Presidential Diamond",
+    jobTitle: "OneTeam kurucu ortağı",
     worksFor: { "@type": "Organization", name: "One Team Global" },
     description:
-      "Doğrudan satış lideri. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir Presidential Diamond.",
+      "OneTeam kurucu ortağı. Doğrudan satış profesyonelleri yetiştiren, ölçeklenebilir sistemler kuran bir girişimci; gezgin ve yazar.",
     url: SITE,
     image: `${SITE}/og.png`,
     homeLocation: { "@type": "Place", name: "İstanbul, Türkiye" },

@@ -1219,13 +1219,26 @@ const TakvimView = () => {
       )}
       <div ref={contentRef}>
         {/* Header */}
-        <div className="pt-6 pb-2 px-4">
+        {/* data-kabuk="ustpay": gömülü modda üst pay küçülüyor. Uygulamanın
+            kendi başlığı hemen üstte duruyor; buradaki 24px'lik pay iki başlık
+            arasında boş bir şerit bırakıyordu (Emre, 12 Ağu: "çok boş alan"). */}
+        <div className="pt-6 pb-2 px-4" data-kabuk="ustpay">
           <div className="container mx-auto max-w-7xl">
-            <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf>
-              <button onClick={() => navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
+            {/* Gömülü modda (OneTeam uygulamasının çerçevesi) bu barın tekrar
+                eden parçaları gizleniyor — geri/dil zaten uygulamanın kendi
+                başlığında var, ikisi üst üste biniyordu.
+                🔴 GİRİŞ DÜĞMESİ İSTİSNA: barın tamamını koşulsuz gizlemiştim
+                ve köprü kurulamadığında (Firebase SSO ayarı eksikken tam da
+                bu oluyor) kişi çerçevenin içinde MİSAFİR kalıyor, giriş yapacak
+                hiçbir yer bulamıyordu — kabuk temizlerken bir çıkış yolunu
+                kapatmak olurdu. Bu yüzden bar ancak KİŞİ GİRİŞLİYSE tamamen
+                gidiyor; girişsizken yalnız tekrar eden parçalar gidiyor. */}
+            <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf
+              data-kabuk={isAuthenticated ? 'ust' : undefined}>
+              <button onClick={() => navigate('/')} data-kabuk="ust" className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {/* MOBİL: dil+PDF "⋯" menüsünde (#4) — üst bar sade kalsın */}
-                <div className="relative md:hidden">
+                <div className="relative md:hidden" data-kabuk="ust">
                   <button onClick={() => setMobilMenuAcik(v => !v)} aria-label="Diğer seçenekler"
                     className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-white font-extrabold text-lg leading-none spring-tap">⋯</button>
                   {mobilMenuAcik && (

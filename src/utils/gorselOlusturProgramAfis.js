@@ -2,7 +2,8 @@
 // Dikey zaman çizelgesi: her satır = saat + aktivite + (atanmış) konuşmacı foto/ad/rol + alt notlar.
 // Temalı: Marka Afiş ile aynı palet/font/ayar mantığını kullanır (ekPrompt → varyasyon).
 import { imgYukle as urlToImage } from './imgYukle';
-import { paletKoyu, paletAdla, fontSec, gunCevir, ayarCikar } from './gorselOlusturMarkaAfis';
+import { paletKoyu, paletAdla, fontSec, gunCevir, ayarCikar, euSaatCevir, euBayrakCiz, dalgaliBayrakCiz } from './gorselOlusturMarkaAfis';
+import { afisFontYukle } from './afisFontlari';
 
 const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 const tarihYaz = (tarih, gun) => {
@@ -45,6 +46,7 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 3) => {
 
 export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], ekPrompt = '', baslik = '' }) => {
   const W = 1080;
+  await afisFontYukle(); // paket fontlar ölçümden önce hazır olsun (fail-open)
   const ayar = ayarCikar(ekPrompt);
   let palet = (ayar.tema && paletAdla(ayar.tema)) ? paletAdla(ayar.tema)() : paletKoyu();
   if (ayar.zemin !== 1) { palet.bg1 = renkAyarla(palet.bg1, ayar.zemin); palet.bg2 = renkAyarla(palet.bg2, ayar.zemin); }
@@ -95,7 +97,13 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   // şehir rozeti + tarih + saat (ortalı, çakışmasız)
   const sehir = (egitim.sehir || '').toLocaleUpperCase('tr-TR');
   const tarihTxt = tarihYaz(egitim.tarih, gunCevir(egitim.gun, ayar.dil));
-  const saatTxt = `${egitim.saat || ''}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`.trim();
+  let saatTxt = `${egitim.saat || ''}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`.trim();
+  // EU saati seçeneği: "20:00 - 22:00 TR · 19:00 - 21:00 EU"
+  const euS = ayar.euSaat ? euSaatCevir(egitim.saat, egitim.tarih) : '';
+  if (saatTxt && euS) {
+    const euB = egitim.bitisSaati ? euSaatCevir(egitim.bitisSaati, egitim.tarih) : '';
+    saatTxt += ` TR · ${euS}${euB ? ' - ' + euB : ''} EU`;
+  }
   const rozetH = Math.round(W * 0.05 * ys);
   const pillFont = `800 ${Math.round(W * 0.03 * ys)}px ${FF.govde}`;
   const tarihFont = `700 ${Math.round(W * 0.03 * ys)}px ${FF.govde}`;
@@ -190,6 +198,12 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
       ctx.drawImage(oc, ax, ayy, aw, ah);
     } else ctx.drawImage(amare, ax, ayy, aw, ah);
   } catch {}
+
+  // ── AB BAYRAĞI (sol üst) — dalgalı direkli veya düz rozet, en üstte ──
+  if (ayar.euBayrak) {
+    if (ayar.bayrakDalgali) dalgaliBayrakCiz(ctx, Math.round(W * 0.065), Math.round(W * 0.04), Math.round(W * 0.16), palet);
+    else euBayrakCiz(ctx, Math.round(W * 0.04), Math.round(W * 0.04), Math.round(W * 0.09), true);
+  }
 
   const dataUrl = canvas.toDataURL('image/png');
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };

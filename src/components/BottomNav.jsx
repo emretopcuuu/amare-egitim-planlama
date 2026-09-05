@@ -4,6 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { Home, Calendar, Users, Video, UserCircle } from 'lucide-react';
 import { preloadRoute } from '../utils/useRoutePreload';
 import { useTranslation } from '../context/LanguageContext';
+import { gomuluMu } from '../utils/gomulu';
 
 // Etiketler çeviri anahtarı — dil değişince alt menü de değişir (2026-07-12:
 // eskiden sabit Türkçe'ydi, EN/DE/NL seçilince mobilde Türkçe kalıyordu).
@@ -16,6 +17,11 @@ const ITEMS = [
 ];
 
 const BottomNav = () => {
+  // 🔴 HİÇBİR HOOK'TAN ÖNCE. OneTeam uygulamasının çerçevesindeysek çubuk
+  // HİÇ çizilmiyor: orada zaten bir alt çubuk var ve ikisi üst üste biniyordu
+  // (Emre, 12 Ağu). CSS ile gizlemek yerine bileşeni hiç kurmuyoruz — gizli
+  // bir çubuk yine dokunmaya açık kalır ve ekran okuyucuya okunurdu.
+  if (gomuluMu()) return null;
   const { t } = useTranslation();
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-purple-950 border-t border-white/10 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">

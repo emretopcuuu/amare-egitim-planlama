@@ -357,19 +357,35 @@ export default function Ag3D({
   ilerleme,
   morf,
   hareket = true,
+  soluk = false,
 }: {
   ilerleme: MotionValue<number>;
   morf: MotionValue<number>;
   hareket?: boolean;
+  /* Metin-yoğun bölümlerde küre soluklaşır (Zirve yönetir). */
+  soluk?: boolean;
 }) {
   // Mobilde daha az düğüm; düşük dpr. İlk render'da ölç, sonra sabit tut.
   const [mobil, setMobil] = useState(false);
   // Sekme arka plandayken render'ı durdur (pil/CPU tasarrufu).
   const [gorunur, setGorunur] = useState(true);
+  // Mobilde WebGL, ilk boyamayı bloklamasın: sahne boşta bir ana ertelenir
+  // (zemin rengi aynı olduğundan görsel sıçrama olmaz; LCP metin erken gelir).
+  const [hazir, setHazir] = useState(false);
   const [tema] = useTema();
 
   useEffect(() => {
-    setMobil(window.matchMedia("(max-width: 767px)").matches);
+    const m = window.matchMedia("(max-width: 767px)").matches;
+    setMobil(m);
+    if (!m) {
+      setHazir(true);
+    } else {
+      const t = window.setTimeout(() => setHazir(true), 500);
+      return () => window.clearTimeout(t);
+    }
+  }, []);
+
+  useEffect(() => {
     const gorunurluk = () => setGorunur(!document.hidden);
     document.addEventListener("visibilitychange", gorunurluk);
     return () => document.removeEventListener("visibilitychange", gorunurluk);
@@ -377,8 +393,22 @@ export default function Ag3D({
 
   const zemin = PALET[tema].zemin;
 
+  if (!hazir) {
+    return (
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ backgroundColor: zemin }}
+        aria-hidden
+      />
+    );
+  }
+
   return (
-    <div className="fixed inset-0 -z-10" aria-hidden>
+    <div
+      className="fixed inset-0 -z-10 transition-opacity duration-1000"
+      style={{ opacity: soluk ? 0.35 : 1 }}
+      aria-hidden
+    >
       <Canvas
         camera={{ position: [0, 0, 6.2], fov: 45 }}
         dpr={mobil ? [1, 1.3] : [1, 1.75]}

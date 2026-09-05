@@ -29,12 +29,13 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://emretopcu.ai"),
   title: "Emre Topçu | Doğrudan satış lideri",
   description:
-    "One Team Global Presidential Diamond lideri Emre Topçu. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
+    "OneTeam kurucu ortağı Emre Topçu — 4 kıtada 200.000+ kişilik ağ. Doğrudan satış profesyonelleri yetiştiriyor, ölçeklenebilir sistemler kuruyor.",
   keywords: [
     "Emre Topçu",
     "doğrudan satış",
-    "One Team Global",
-    "Presidential Diamond",
+    "OneTeam",
+    "girişimcilik",
+    "ekip kurma",
     "liderlik",
     "İlk 72 Saat",
   ],

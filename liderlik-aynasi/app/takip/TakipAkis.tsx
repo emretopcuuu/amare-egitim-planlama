@@ -60,6 +60,59 @@ function milestoneBul(durum: Durum, hafta: Hafta, kota: number | null): Mileston
   return null;
 }
 
+// [UX] SAYAÇ — günlük check-in'de "kaç görüşme / kaç kayıt" için klavyesiz giriş.
+// Eskiden iki sayı input'u vardı: cevap günlerin çoğunda 0-3 olmasına rağmen kişi
+// her gün İKİ KEZ sayı klavyesi açmak zorundaydı (günlük ritüelde ciddi sürtünme).
+// Artık tek dokunuş. MODÜL SEVİYESİNDE tanımlı — render içinde tanımlansa her
+// tuşta yeniden kurulur ve odak/klavye kaybı olurdu (bkz. SahitlikPanel düzeltmesi).
+function Sayac({
+  etiket,
+  deger,
+  ayarla,
+  ust = 99,
+}: {
+  etiket: string;
+  deger: number;
+  ayarla: (n: number) => void;
+  ust?: number;
+}) {
+  const dugme =
+    "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 text-xl font-bold text-slate-200 transition-colors active:scale-95 disabled:opacity-30 hover:border-gold/40 hover:text-gold-light";
+  return (
+    <div>
+      <span className="text-xs text-slate-400">{etiket}</span>
+      <div className="mt-1 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => ayarla(Math.max(0, deger - 1))}
+          disabled={deger <= 0}
+          aria-label={`${etiket} azalt`}
+          className={dugme}
+        >
+          −
+        </button>
+        <span
+          aria-live="polite"
+          className={`min-w-[2.25rem] flex-1 text-center text-lg font-bold tabular-nums ${
+            deger > 0 ? "text-gold-light" : "text-slate-500"
+          }`}
+        >
+          {deger}
+        </span>
+        <button
+          type="button"
+          onClick={() => ayarla(Math.min(ust, deger + 1))}
+          disabled={deger >= ust}
+          aria-label={`${etiket} artır`}
+          className={dugme}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function TakipAkis({
   durum: durumBaslangic,
   aksiyonlar,
@@ -88,6 +141,8 @@ export default function TakipAkis({
   arkadas = null,
   arkadasAlev = 0,
   arkadasAdaylar = [],
+  defter = [],
+  adayIsimleri = [],
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -131,6 +186,10 @@ export default function TakipAkis({
   arkadas?: { id: string; ad: string } | null;
   arkadasAlev?: number;
   arkadasAdaylar?: { id: string; ad: string }[];
+  // [DEFTER] Kişinin geri okunabilir kendi check-in notları (en yeni önce).
+  defter?: { gun: string; notlar: string; gorusme: number; kayit: number }[];
+  // [DEFTER] Sıcak listesindeki aday isimleri — nota tek dokunuşla eklenir.
+  adayIsimleri?: string[];
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -367,40 +426,58 @@ export default function TakipAkis({
         ) : (
           <>
             <p className="text-base font-semibold text-slate-100">{t.bugunSoru}</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className="text-xs text-slate-400">Kaç görüşme?</span>
-                <input
-                  inputMode="numeric"
-                  value={gorusme}
-                  onChange={(e) => setGorusme(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="0"
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-400">Kaç kayıt?</span>
-                <input
-                  inputMode="numeric"
-                  value={kayit}
-                  onChange={(e) => setKayit(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="0"
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
-                />
-              </label>
+            {/* [UX] Klavyesiz sayaçlar — günde iki kez sayı klavyesi açma derdi bitti. */}
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <Sayac
+                etiket="Görüşme"
+                deger={Number(gorusme) || 0}
+                ayarla={(n) => setGorusme(String(n))}
+              />
+              <Sayac
+                etiket="Kayıt"
+                deger={Number(kayit) || 0}
+                ayarla={(n) => setKayit(String(n))}
+              />
             </div>
-            <textarea
-              value={not}
-              onChange={(e) => setNot(e.target.value.slice(0, 500))}
-              rows={2}
-              placeholder={t.notYer}
-              className="mt-2 w-full resize-none rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
-            />
-            <div className="mt-2">
+            {/* [UX] Mikrofon artık tam genişlikte bir satır DEĞİL: not alanının
+                sağında ikon olarak duruyor → kart kısaldı, asıl buton ekranda kaldı. */}
+            <div className="mt-3 flex items-start gap-2">
+              <textarea
+                value={not}
+                onChange={(e) => setNot(e.target.value.slice(0, 500))}
+                rows={3}
+                placeholder={t.notYer}
+                className="min-w-0 flex-1 resize-none rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+              />
               <MikrofonButonu
+                ikon
                 onMetin={(p) => setNot((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 500))}
               />
             </div>
+            {/* [DEFTER] Sıcak listendeki isimler — tek dokunuşla nota ekle.
+                Saha isteği "görüşme yaptığımız isimleri yazabilelim": isim yazmak
+                zahmet olmasın, kendi listesinden seçsin. */}
+            {adayIsimleri.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {adayIsimleri.slice(0, 8).map((isim) => (
+                  <button
+                    key={isim}
+                    type="button"
+                    onClick={() =>
+                      setNot((g) => {
+                        const temiz = g.trim();
+                        // Zaten yazılmışsa tekrar ekleme.
+                        if (temiz.includes(isim)) return g;
+                        return (temiz ? `${temiz}\n${isim} — ` : `${isim} — `).slice(0, 500);
+                      })
+                    }
+                    className="rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs text-slate-300 transition-colors hover:border-gold/40 hover:text-gold-light"
+                  >
+                    + {isim}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => checkin(true)}
@@ -420,6 +497,54 @@ export default function TakipAkis({
           </>
         )}
       </section>
+
+      {/* ═══ 1.5) DEFTERİM — yazdıklarını geri okuma ═══
+          Saha bildirimi: "Görüşme yaptığımız isimleri ve sonucunu yazabileceğimiz,
+          sonra o yazdıklarımızı görebileceğimiz bir şey var mı?" Notlar kaydediliyor
+          ama hiç gösterilmiyordu. Akordeon: ekranı şişirmez, arayan bulur. */}
+      {defter.length > 0 && (
+        <details className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4">
+            <span className="text-sm font-semibold text-slate-200">
+              📔 Defterim
+              <span className="ml-1.5 text-xs font-normal text-slate-500">
+                ({defter.length} gün)
+              </span>
+            </span>
+            <span className="text-xs text-slate-500 transition-transform group-open:rotate-180" aria-hidden>
+              ▼
+            </span>
+          </summary>
+          <div className="space-y-2 border-t border-white/8 p-3">
+            <p className="px-1 text-xs text-slate-500">
+              Her gün yazdıkların burada birikir — kiminle görüştün, ne oldu.
+            </p>
+            {defter.map((d) => (
+              <div key={d.gun} className="rounded-xl bg-midnight-soft/60 p-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-semibold text-gold-light">
+                    {new Intl.DateTimeFormat("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      weekday: "short",
+                    }).format(new Date(`${d.gun}T12:00:00+03:00`))}
+                  </span>
+                  {(d.gorusme > 0 || d.kayit > 0) && (
+                    <span className="shrink-0 text-[0.7rem] text-slate-400">
+                      {d.gorusme > 0 && `${d.gorusme} görüşme`}
+                      {d.gorusme > 0 && d.kayit > 0 && " · "}
+                      {d.kayit > 0 && `${d.kayit} kayıt`}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                  {d.notlar}
+                </p>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {/* ═══ 2) TEK ÖZET SATIRI: seri + 90 gün (1. gün yumuşatma) ═══ */}
       {durum.toplam > 0 || durum.seri > 0 || isaretli ? (

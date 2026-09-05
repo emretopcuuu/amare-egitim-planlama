@@ -4,7 +4,7 @@ import Zirve from "@/components/varyantlar/Zirve";
 export const metadata: Metadata = {
   title: "Emre Topçu | Direktvertriebs-Leader",
   description:
-    "Presidential Diamond bei One Team Global. Ein Direktvertriebs-Leader, der Teams aufbaut, Führungskräfte entwickelt und alles mit System macht.",
+    "OneTeam-Mitgründer mit über 200.000 Menschen auf 4 Kontinenten — er bildet Direktvertriebs-Profis aus und baut skalierbare Systeme.",
   alternates: {
     canonical: "/de",
     languages: {
@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     siteName: "Emre Topçu",
     locale: "de_DE",
     type: "website",
+    images: [{ url: "/og-de.png", width: 1200, height: 630 }],
   },
 };
 

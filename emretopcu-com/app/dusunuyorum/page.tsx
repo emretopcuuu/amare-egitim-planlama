@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function Dusunuyorum() {
   return (
-    <main className="min-h-[100dvh] bg-abanoz font-sahne text-fildisi">
+    <main className="perde-koyu min-h-[100dvh] bg-abanoz font-sahne text-fildisi">
       <KararTesti />
     </main>
   );

@@ -13,33 +13,36 @@ import OnboardingTour from './components/OnboardingTour';
 import OfflineBanner from './components/OfflineBanner';
 import { ConfirmDialogProvider } from './components/ConfirmDialog';
 import KeyboardHelpModal from './components/KeyboardHelpModal';
+import { gecYukle, parcaHatasiMi } from './utils/gecYukle';
 
 // Code-split — public sayfalar dahil hepsi route-level lazy load
 // İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
-const TakvimView = lazy(() => import('./pages/TakvimView'));
-const EgitimDetay = lazy(() => import('./pages/EgitimDetay'));
-const KonusmacilarSayfasi = lazy(() => import('./pages/KonusmacilarSayfasi'));
-const KayitliEgitimlerSayfasi = lazy(() => import('./pages/KayitliEgitimlerSayfasi'));
-const DurumSayfasi = lazy(() => import('./pages/DurumSayfasi'));
-const ZoomAnaliz = lazy(() => import('./pages/ZoomAnaliz'));
-const AraSayfasi = lazy(() => import('./pages/AraSayfasi'));
-const EgitmenBasvuru = lazy(() => import('./pages/EgitmenBasvuru'));
-const GirisTamamla = lazy(() => import('./pages/GirisTamamla'));
-const SsoCallback = lazy(() => import('./pages/SsoCallback'));
-const Profil = lazy(() => import('./pages/Profil'));
-const Ekibim = lazy(() => import('./pages/Ekibim'));
-const LiderlerSayfasi = lazy(() => import('./pages/LiderlerSayfasi'));
+// gecYukle: yeni sürüm yayınlandıysa eski parça adı 404 verir → sayfa bir kez
+// kendiliğinden yenilenir (bkz. utils/gecYukle.js).
+const TakvimView = lazy(gecYukle(() => import('./pages/TakvimView')));
+const EgitimDetay = lazy(gecYukle(() => import('./pages/EgitimDetay')));
+const KonusmacilarSayfasi = lazy(gecYukle(() => import('./pages/KonusmacilarSayfasi')));
+const KayitliEgitimlerSayfasi = lazy(gecYukle(() => import('./pages/KayitliEgitimlerSayfasi')));
+const DurumSayfasi = lazy(gecYukle(() => import('./pages/DurumSayfasi')));
+const ZoomAnaliz = lazy(gecYukle(() => import('./pages/ZoomAnaliz')));
+const AraSayfasi = lazy(gecYukle(() => import('./pages/AraSayfasi')));
+const EgitmenBasvuru = lazy(gecYukle(() => import('./pages/EgitmenBasvuru')));
+const GirisTamamla = lazy(gecYukle(() => import('./pages/GirisTamamla')));
+const SsoCallback = lazy(gecYukle(() => import('./pages/SsoCallback')));
+const Profil = lazy(gecYukle(() => import('./pages/Profil')));
+const Ekibim = lazy(gecYukle(() => import('./pages/Ekibim')));
+const LiderlerSayfasi = lazy(gecYukle(() => import('./pages/LiderlerSayfasi')));
 // Komisyonlar — public sayfa, detay sayfasına yönlendiriyor
-const KomisyonlarSayfasi = lazy(() => import('./pages/KomisyonlarSayfasi'));
-const KomisyonDetay = lazy(() => import('./pages/KomisyonDetay'));
-const HakkimizdaSayfasi = lazy(() => import('./pages/HakkimizdaSayfasi'));
-const EkipYonetimSayfasi = lazy(() => import('./pages/EkipYonetimSayfasi'));
-const YurutmekuruluSayfasi = lazy(() => import('./pages/YurutmekuruluSayfasi'));
+const KomisyonlarSayfasi = lazy(gecYukle(() => import('./pages/KomisyonlarSayfasi')));
+const KomisyonDetay = lazy(gecYukle(() => import('./pages/KomisyonDetay')));
+const HakkimizdaSayfasi = lazy(gecYukle(() => import('./pages/HakkimizdaSayfasi')));
+const EkipYonetimSayfasi = lazy(gecYukle(() => import('./pages/EkipYonetimSayfasi')));
+const YurutmekuruluSayfasi = lazy(gecYukle(() => import('./pages/YurutmekuruluSayfasi')));
 // Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
-const AdminLogin = lazy(() => import('./pages/AdminLogin'));
-const AdminPanel = lazy(() => import('./pages/AdminPanel'));
-const GorselStudyo = lazy(() => import('./pages/GorselStudyo'));
-const LiderProfil = lazy(() => import('./pages/LiderProfil'));
+const AdminLogin = lazy(gecYukle(() => import('./pages/AdminLogin')));
+const AdminPanel = lazy(gecYukle(() => import('./pages/AdminPanel')));
+const GorselStudyo = lazy(gecYukle(() => import('./pages/GorselStudyo')));
+const LiderProfil = lazy(gecYukle(() => import('./pages/LiderProfil')));
 
 // Hatayı ekrana basan basit error boundary
 class ErrorBoundary extends React.Component {
@@ -48,6 +51,25 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(err, info) { this.setState({ info }); console.error('[ErrorBoundary]', err, info); }
   render() {
     if (this.state.err) {
+      // Parça indirilemedi: kullanıcıya yığın dökümü DEĞİL, insanca bir ekran.
+      // (gecYukle zaten bir kez yenilemeyi denedi; buraya düştüyse ağ sorunu var.)
+      if (parcaHatasiMi(this.state.err)) {
+        return (
+          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+            <div style={{ maxWidth: 360 }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🔄</div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Güncelleme yüklenemedi</h2>
+              <p style={{ fontSize: 14, opacity: .75, marginBottom: 20 }}>
+                İnternet bağlantını kontrol edip tekrar dene.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{ background: '#fbbf24', color: '#3b1772', fontWeight: 700, padding: '12px 28px', borderRadius: 12, border: 'none', fontSize: 15 }}
+              >Yeniden dene</button>
+            </div>
+          </div>
+        );
+      }
       return (
         <div style={{ padding: 20, fontFamily: 'monospace', background: '#fee', color: '#900', whiteSpace: 'pre-wrap', fontSize: 13 }}>
           <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>UI Hatası</h2>

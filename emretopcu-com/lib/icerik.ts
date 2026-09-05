@@ -75,9 +75,9 @@ export const DIL_ETIKET: Record<Dil, string> = {
 const TR = {
   nav: [
     { href: "#manifesto", etiket: "Hakkımda" },
-    { href: "#yolculuk", etiket: "Yolculuk" },
-    { href: "#videolar", etiket: "Videolar" },
-    { href: "#konusmalar", etiket: "Konuşmalar" },
+    { href: "/hikaye#yolculuk", etiket: "Yolculuk" },
+    { href: "/hikaye#videolar", etiket: "Videolar" },
+    { href: "/hikaye#konusmalar", etiket: "Konuşmalar" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -85,12 +85,12 @@ const TR = {
     baslikSatir2: "katlama.",
     altMetin:
       "Bu sektörde herkes eklemeyi bir şekilde keşfeder. Katlanacağını ise sadece umar — en büyük oyuncular dahil. Kimse, ama kimse tek başına başarmadı.",
-    rol: "Presidential Diamond | One Team Global",
+    rol: "OneTeam kurucu ortağı · 4 kıtada 200.000+ kişilik ağ",
   },
   hakkimda: {
-    unvan: "Presidential Diamond | One Team Global",
+    unvan: "OneTeam kurucu ortağı · 4 kıtada 200.000+ kişilik ağ",
     paragraflar: [
-      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: sekiz ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
+      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: sekiz ayda ilk büyük liderlik seviyesine, üç buçuk yılda şirketin en üst liderlik seviyesine ulaştım. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
       "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
     ],
   },
@@ -145,13 +145,13 @@ const TR = {
     },
     {
       yil: "2013",
-      baslik: "Sekiz ayda Diamond",
+      baslik: "Sekiz ayda ilk zirve",
       aciklama:
-        "Şubat'ta başladım, 8. ayda Diamond oldum; aynı yılın sonunda 1 Star Diamond. İlk ay 5 kişiyle el sıkıştım, ay sonunda 19 kişilik bir ağ oldu; ikinci ayda 88'e katlandı. Hız, doğru sistemin ilk kanıtıydı.",
+        "Şubat'ta başladım, 8. ayda şirketin ilk büyük liderlik seviyesine ulaştım; aynı yılın sonunda bir basamak daha çıktım. İlk ay 5 kişiyle el sıkıştım, ay sonunda 19 kişilik bir ağ oldu; ikinci ayda 88'e katlandı. Hız, doğru sistemin ilk kanıtıydı.",
     },
     {
       yil: "2016–2020",
-      baslik: "Presidential Diamond ve online'a geçiş",
+      baslik: "En üst seviye ve online'a geçiş",
       aciklama:
         "Üç buçuk yılda şirketin en üst liderlik seviyesine ulaştım; asıl iş o gün başladı, aynı yolu ekibime açmak. Pandemi döneminde ekibin tamamını online çalışma prensipleriyle uzaktan işleyen bir düzene taşıdım.",
     },
@@ -159,11 +159,11 @@ const TR = {
       yil: "Sırada",
       baslik: "Çoğalan liderler",
       aciklama:
-        "Sıradaki hedef kendi kariyerim değil: ekibimden yeni Diamond'lar ve Presidential Diamond'lar çıkarmak.",
+        "Sıradaki hedef kendi kariyerim değil: ekibimden aynı zirveye ulaşan yeni liderler çıkarmak.",
     },
   ],
   rakamlar: [
-    { deger: "8", ek: " ay", etiket: "Diamond'a giden süre" },
+    { deger: "8", ek: " ay", etiket: "İlk zirveye giden süre" },
     { deger: "250.000", ek: "", etiket: "Kişilik ağ (2026 itibarıyla)" },
     { deger: "4", ek: " kıta", etiket: "Ulaşılan coğrafya" },
     { deger: "38", ek: " ülke", etiket: "Gezilen, eğitim verilen" },
@@ -312,8 +312,8 @@ const TR = {
     },
     {
       yil: "2025",
-      baslik: "4 Ayda Diamond",
-      ozet: "Diamond yolculuğunun ay ay, hafta hafta planlanmış anlatımı.",
+      baslik: "4 Ayda İlk Zirve",
+      ozet: "İlk büyük kariyer seviyesine giden yolun ay ay, hafta hafta planlanmış anlatımı.",
     },
     {
       yil: "2025",
@@ -464,6 +464,31 @@ const TR = {
     sorBos: "Bu soruya buradaki metinlerde net bir cevap yok — WhatsApp'tan doğrudan sor.",
     sonEtiket: "En yeni video",
     planLink: "İlk 72 saat planı",
+    testDavet: "Kararsız mısın? 2 dakikalık teste başla; cevaplarına göre konuşalım.",
+    sahneFotoNot: "Işıklar söner, alkış biter; geriye birlikte yürünen yol kalır.",
+    kulisNot: "Kulis, sahne öncesi. Avucumda üç söz: Üşenme. Erteleme. Vazgeçme.",
+    dunyaVideoNot: "38 ülkenin en güzel tarafı rakamlar değil: yüzler.",
+    dunyaVideoNot2: "New York — 38 ülkeden bir kare.",
+    salonBosNot: "Her dolu salon, önce boş bir salondu.",
+    salonDoluNot: "Şehir şehir, salon salon — yıllardır her hafta.",
+    testDugme: "Teste başla",
+    kanitTakipci: "267K takipçi",
+    kanitYazar: "‘İlk 72 Saat’in yazarı",
+    kanitUlke: "38 ülke",
+    igSelam: "Instagram'dan geldin — devamı burada.",
+    ctaTestNot: "Testi bitirdin — cevaplarınla birlikte yaz, kaldığımız yerden konuşalım.",
+    saatMini: "İlk 72 saat sayacı",
+    salonLink: "Sahne ekranı",
+    kapiBaslik: "Neden buradasın?",
+    kapi1: "Doğrudan satışı düşünüyorum",
+    kapi1Alt: "2 dakikalık test; cevaplarına göre konuşalım.",
+    kapi2: "Emre'yi merak ediyorum",
+    kapi2Alt: "Yolculuk, salonlar, videolar — hikâyenin tamamı.",
+    kapi3: "Sahneye davet edeceğim",
+    kapi3Alt: "Portreler, hazır biyografi, konuşma başlıkları.",
+    hikayeBaslik: "Hikâyenin tamamı",
+    hikayeAlt: "Ana sayfa fragmandı; burası filmin kendisi. 2003'ten bugüne her adım, her salon, her söz.",
+    basvuruLink: "Görüşmeye başvur",
     salonNot: "Bu ekran sahne içindir.",
   },
   proj: {
@@ -499,9 +524,9 @@ const TR = {
   },
   kariyerZaman: [
     { yil: "2013", ay: "Şubat", rutbe: "Başladı", not: "İlk ay 5 kişiyle el sıkıştım." },
-    { yil: "2013", ay: "8. ay", rutbe: "Diamond", not: "Sekiz ayda Diamond oldum." },
-    { yil: "2013", ay: "Yıl sonu", rutbe: "1 Star Diamond", not: "Aynı yılın sonunda 1 Star Diamond." },
-    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "Üç buçuk yılda şirketin en üst seviyesi." },
+    { yil: "2013", ay: "8. ay", rutbe: "İlk büyük seviye", not: "Sekiz ayda şirketin ilk büyük liderlik seviyesi." },
+    { yil: "2013", ay: "Yıl sonu", rutbe: "Bir basamak daha", not: "Aynı yılın sonunda bir üst seviyeye." },
+    { yil: "2016", ay: "", rutbe: "En üst seviye", not: "Üç buçuk yılda şirketin en üst seviyesi." },
     { yil: "2020", ay: "", rutbe: "Online sistem", not: "Ekibin tamamı uzaktan çalışan düzene geçti." },
     { yil: "2026", ay: "", rutbe: "4 kıta", not: "250.000'e yakın kişilik bir ağ." },
   ],
@@ -512,9 +537,9 @@ export type Icerik = typeof TR;
 const EN: Icerik = {
   nav: [
     { href: "#manifesto", etiket: "About" },
-    { href: "#yolculuk", etiket: "Journey" },
-    { href: "#videolar", etiket: "Videos" },
-    { href: "#konusmalar", etiket: "Talks" },
+    { href: "/en/hikaye#yolculuk", etiket: "Journey" },
+    { href: "/en/hikaye#videolar", etiket: "Videos" },
+    { href: "/en/hikaye#konusmalar", etiket: "Talks" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -522,12 +547,12 @@ const EN: Icerik = {
     baslikSatir2: "Multiplying.",
     altMetin:
       "In this industry everyone discovers how to add sooner or later. Whether it multiplies, they only hope — even the biggest players. No one, but no one, ever made it alone.",
-    rol: "Presidential Diamond | One Team Global",
+    rol: "Co-founder of OneTeam · 200,000+ people across 4 continents",
   },
   hakkimda: {
-    unvan: "Presidential Diamond | One Team Global",
+    unvan: "Co-founder of OneTeam · 200,000+ people across 4 continents",
     paragraflar: [
-      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: Diamond in eight months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
+      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: the company's first major leadership level in eight months, its very top level in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
       "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of nearly 250,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",
     ],
   },
@@ -582,13 +607,13 @@ const EN: Icerik = {
     },
     {
       yil: "2013",
-      baslik: "Diamond in eight months",
+      baslik: "The first summit in eight months",
       aciklama:
-        "I started in February and became Diamond by month 8; 1 Star Diamond by year's end. In month one I shook hands with 5 people and closed the month with a network of 19; by month two it had multiplied to 88. Speed was the first proof of the right system.",
+        "I started in February and reached the company's first major leadership level by month 8 — one more step up by year's end. In month one I shook hands with 5 people and closed the month with a network of 19; by month two it had multiplied to 88. Speed was the first proof of the right system.",
     },
     {
       yil: "2016–2020",
-      baslik: "Presidential Diamond & moving online",
+      baslik: "The very top & moving online",
       aciklama:
         "In three and a half years I reached the company's highest leadership rank; the real work began that day, opening the same path for my team. During the pandemic I moved the entire team onto a remote-first system built on online working principles.",
     },
@@ -596,11 +621,11 @@ const EN: Icerik = {
       yil: "Next",
       baslik: "Multiplying leaders",
       aciklama:
-        "The next goal isn't my own career: it's raising new Diamonds and Presidential Diamonds from my team.",
+        "The next goal isn't my own career: it's raising new leaders from my team who reach the same summit.",
     },
   ],
   rakamlar: [
-    { deger: "8", ek: " mo", etiket: "Months to Diamond" },
+    { deger: "8", ek: " mo", etiket: "Months to the first summit" },
     { deger: "250,000", ek: "", etiket: "People in the network (as of 2026)" },
     { deger: "4", ek: "", etiket: "Continents reached" },
     { deger: "38", ek: "", etiket: "Countries visited & taught" },
@@ -749,8 +774,8 @@ const EN: Icerik = {
     },
     {
       yil: "2025",
-      baslik: "4 Months to Diamond",
-      ozet: "The Diamond journey mapped month by month, week by week.",
+      baslik: "The First Summit in 4 Months",
+      ozet: "The road to the first major career level, mapped month by month, week by week.",
     },
     {
       yil: "2025",
@@ -901,6 +926,31 @@ const EN: Icerik = {
     sorBos: "There's no clear answer to that in these pages — ask directly on WhatsApp.",
     sonEtiket: "Latest video",
     planLink: "First 72 hours plan",
+    testDavet: "Undecided? Take the 2-minute test; we'll talk based on your answers.",
+    sahneFotoNot: "The lights go down, the applause fades; what remains is the road walked together.",
+    kulisNot: "Backstage, before going on. Three words on my palm: Don't be lazy. Don't procrastinate. Don't quit.",
+    dunyaVideoNot: "The best part of 38 countries isn't the numbers — it's the faces.",
+    dunyaVideoNot2: "New York — one frame out of 38 countries.",
+    salonBosNot: "Every full room starts as an empty one.",
+    salonDoluNot: "City after city, room after room — every week, for years.",
+    testDugme: "Start the test",
+    kanitTakipci: "267K followers",
+    kanitYazar: "Author of ‘The First 72 Hours’",
+    kanitUlke: "38 countries",
+    igSelam: "You came from Instagram — the rest lives here.",
+    ctaTestNot: "You finished the test — write with your answers and we'll pick up from there.",
+    saatMini: "First 72 hours counter",
+    salonLink: "Stage screen",
+    kapiBaslik: "Why are you here?",
+    kapi1: "I'm considering direct sales",
+    kapi1Alt: "A 2-minute test; we talk based on your answers.",
+    kapi2: "I'm curious about Emre",
+    kapi2Alt: "The journey, the halls, the videos — the full story.",
+    kapi3: "I'm booking a speaker",
+    kapi3Alt: "Portraits, ready-made bio, talk topics.",
+    hikayeBaslik: "The full story",
+    hikayeAlt: "The homepage was the trailer; this is the film. Every step since 2003 — every hall, every word.",
+    basvuruLink: "Apply for a meeting",
     salonNot: "This screen is for the stage.",
   },
   proj: {
@@ -936,9 +986,9 @@ const EN: Icerik = {
   },
   kariyerZaman: [
     { yil: "2013", ay: "February", rutbe: "Started", not: "Month one, I shook hands with 5 people." },
-    { yil: "2013", ay: "Month 8", rutbe: "Diamond", not: "Diamond in eight months." },
-    { yil: "2013", ay: "Year end", rutbe: "1 Star Diamond", not: "1 Star Diamond by the end of that year." },
-    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "The company's top rank in three and a half years." },
+    { yil: "2013", ay: "Month 8", rutbe: "First major level", not: "The company's first major leadership level in eight months." },
+    { yil: "2013", ay: "Year end", rutbe: "One step higher", not: "One more step up by the end of that year." },
+    { yil: "2016", ay: "", rutbe: "The very top", not: "The company's highest level in three and a half years." },
     { yil: "2020", ay: "", rutbe: "Online system", not: "The whole team moved to a remote-first way of working." },
     { yil: "2026", ay: "", rutbe: "4 continents", not: "A network of nearly 250,000 people." },
   ],

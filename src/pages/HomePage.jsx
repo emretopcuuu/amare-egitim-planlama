@@ -211,8 +211,9 @@ const HomePage = () => {
       <div className="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
 
       <div className="relative container mx-auto px-4 py-6 sm:py-10">
-        {/* Top bar — Bülten + Marka Ortağı Girişi + Dil */}
-        <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
+        {/* Top bar — Bülten + Marka Ortağı Girişi + Dil
+            data-kabuk="ust": gömülü modda gizlenir (bkz. utils/gomulu.js). */}
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-2" data-kabuk="ust">
           <button onClick={() => setBultenModal(true)}
             className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
             <Newspaper className="w-4 h-4" />

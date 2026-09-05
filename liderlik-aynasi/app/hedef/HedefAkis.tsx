@@ -822,6 +822,13 @@ function HbbKarti() {
           </tr>
         </tbody>
       </table>
+      {/* Son şart — kademe tutulsun tutulmasın HER ZAMAN görünür. Rakamlar rütbeyi
+          anlatır; bonusu kesinleştiren ikinci şartı kimse atlamasın. */}
+      <div className="border-t border-amber-300/25 bg-amber-300/[0.07] px-4 py-3">
+        <p className="text-xs font-bold text-amber-200">⚠️ {t.hbbSartBaslik}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-300">{t.hbbSartMetin}</p>
+        <p className="mt-1.5 text-[0.68rem] leading-relaxed text-slate-400">{t.hbbSartTeyit}</p>
+      </div>
       <div className="px-4 py-2.5">
         <p className="text-xs leading-relaxed text-slate-400">{t.hbbNot}</p>
       </div>

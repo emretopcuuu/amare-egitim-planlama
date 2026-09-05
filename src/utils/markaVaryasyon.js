@@ -19,10 +19,13 @@ export const MARKA_VARYASYON = [
     { key: 'duzen-iki', label: '2\'li sütun', cmd: '2 sütun' },
     { key: 'duzen-uc', label: '3\'lü sütun', cmd: '3 sütun' },
     { key: 'duzen-dort', label: '4\'lü sütun', cmd: '4 sütun' },
+    { key: 'duzen-dergi', label: 'Dergi kapağı', cmd: 'dergi düzeni' },
+    { key: 'duzen-yay', label: 'Yay dizilim', cmd: 'yay düzeni' },
   ] },
   { grup: 'Aralık', tekil: true, secenekler: [
     { key: 'aralik-siki', label: 'Sıkı', cmd: 'sıkı aralık' },
     { key: 'aralik-genis', label: 'Geniş', cmd: 'geniş aralık' },
+    { key: 'aralik-dahagenis', label: 'Daha Geniş', cmd: 'daha geniş aralık' },
   ] },
   { grup: 'Tema', tekil: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
@@ -40,6 +43,9 @@ export const MARKA_VARYASYON = [
     { key: 'font-karisik', label: 'Şık isimler', cmd: 'şık isim' },
     { key: 'font-modern', label: 'Modern', cmd: 'modern font' },
     { key: 'font-times', label: 'Klasik serif', cmd: 'klasik serif' },
+    { key: 'font-elit', label: 'Elit ✦', cmd: 'elit font' },
+    { key: 'font-imparator', label: 'İmparator ✦', cmd: 'imparator font' },
+    { key: 'font-vitrin', label: 'Vitrin ✦', cmd: 'vitrin font' },
   ] },
   { grup: 'Başlık', tekil: false, secenekler: [
     { key: 'baslik-cift', label: 'İki renkli', cmd: 'iki renkli başlık' },
@@ -80,6 +86,27 @@ export const MARKA_VARYASYON = [
     { key: 'dil-tr', label: 'Türkçe', cmd: 'türkçe' },
     { key: 'dil-en', label: 'English', cmd: 'ingilizce' },
   ] },
+  { grup: 'Avrupa', tekil: false, secenekler: [
+    { key: 'eu-saat', label: 'EU saati', cmd: 'eu saati' },
+    { key: 'eu-bayrak', label: 'Avrupa bayrağı', cmd: 'avrupa bayrağı' },
+    { key: 'eu-bayrak-dalgali', label: 'Dalgalı bayrak', cmd: 'dalgalı bayrak' },
+  ] },
+  { grup: 'Lüks', tekil: false, secenekler: [
+    { key: 'isilti', label: 'Altın ışıltı', cmd: 'altın ışıltı' },
+    { key: 'suslu-kose', label: 'Süslü köşeler', cmd: 'süslü köşe' },
+    { key: 'altin-folyo', label: 'Altın folyo', cmd: 'altın folyo' },
+    { key: 'sahne-isigi', label: 'Sahne ışığı', cmd: 'sahne ışığı' },
+    { key: 'gren', label: 'Film greni', cmd: 'film greni' },
+    { key: 'derin-renk', label: 'Derin renk', cmd: 'derin renk' },
+    { key: 'foto-rotus', label: 'Foto rötuş', cmd: 'foto rötuş' },
+    { key: 'rutbe-rozet', label: 'Rütbe rozeti', cmd: 'rütbe rozeti' },
+  ] },
+  { grup: 'Arka plan sanatı', tekil: true, secenekler: [
+    { key: 'sanat-berlin', label: '🌃 Berlin silüeti', cmd: 'berlin arka plan' },
+    { key: 'sanat-sahne', label: '🎭 Altın sahne', cmd: 'sahne arka plan' },
+    { key: 'sanat-gokyuzu', label: '🌌 Gece göğü', cmd: 'gece göğü arka plan' },
+    { key: 'sanat-ipek', label: '🪙 Altın ipek', cmd: 'altın ipek arka plan' },
+  ] },
   { grup: 'İçerik', tekil: false, secenekler: [
     { key: 'no-qr', label: 'QR yok', cmd: 'qr kaldır' },
     { key: 'no-program', label: 'Program yok', cmd: 'program gizle' },
@@ -91,6 +118,9 @@ export const MARKA_VARYASYON_INDEX = MARKA_VARYASYON.flatMap(g => g.secenekler.m
 
 // Hazır stil setleri — tek tıkla birden çok çip seçer
 export const MARKA_PRESETLER = [
+  { ad: '🇪🇺 Avrupa Gala', keys: ['tema-mor', 'eu-saat', 'eu-bayrak-dalgali', 'isilti', 'suslu-kose', 'font-elit', 'altin-folyo', 'foto-rotus', 'rutbe-rozet'] },
+  { ad: '👑 Zirve Gecesi', keys: ['tema-siyah', 'font-imparator', 'sanat-sahne', 'altin-folyo', 'gren', 'suslu-kose', 'foto-rotus', 'rutbe-rozet', 'baslik-cift'] },
+  { ad: '🌃 Berlin Gecesi', keys: ['tema-mor', 'font-elit', 'sanat-berlin', 'isilti', 'altin-folyo', 'eu-saat', 'eu-bayrak-dalgali', 'foto-rotus', 'derin-renk'] },
   { ad: '🌙 Lüks Gece', keys: ['tema-siyah', 'font-karisik', 'baslik-cift'] },
   { ad: '🤍 Zarif Krem', keys: ['tema-krem', 'font-zarif'] },
   { ad: '🌊 Kurumsal Lacivert', keys: ['tema-lacivert', 'font-modern'] },
