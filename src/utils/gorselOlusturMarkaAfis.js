@@ -789,7 +789,17 @@ const onlineHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   return y + h;
 };
 
-export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }) => {
+// Dış API: İKİ GEÇİŞLİ çizim. İlk geçişte konuşmacı alanı dar kaldıysa (uzun
+// başlık / çok satırlı metin) afiş eksik kadar AŞAĞI uzatılıp yeniden çizilir.
+// Böylece yazı arttıkça FOTOLAR KÜÇÜLMEZ (saha geri bildirimi, Eyl 2026).
+export const gorselOlusturMarkaAfis = async (params) => {
+  let r = await markaAfisCiz(params, 0);
+  if (r.eksikH > 0) r = await markaAfisCiz(params, r.eksikH);
+  const dataUrl = r.canvas.toDataURL('image/png');
+  return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
+};
+
+const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }, ekstraH = 0) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -837,11 +847,13 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
   const notExtra = Math.max(0, notSatirlari.length - 2) * Math.round(H * 0.045);
   const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow + notExtra;
-  const CANVAS_H = H + extra; // fiziksel yükseklik; oranlar hâlâ H=1350 tabanlı
+  // ekstraH: ilk geçişte konuşmacı alanı dar kaldıysa ikinci geçişin uzatma payı
+  const CANVAS_H = H + extra + ekstraH; // fiziksel yükseklik; oranlar hâlâ H=1350 tabanlı
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = CANVAS_H;
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high'; // fotolar küçültülürken kalite kaybını azalt
   const M = Math.round(W * 0.07);
 
   await zeminCiz(ctx, W, CANVAS_H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku, susluKose: ayar.susluKose, artalan: ayar.artalan, sahneIsigi: ayar.sahneIsigi, derinRenk: ayar.derinRenk });
@@ -953,6 +965,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
 
   // ── KONUŞMACILAR (altın halkalı foto + altın hap isim + rol) ──
   // liste / dagilim / rows yukarıda (canvas yüksekliği için) hesaplandı.
+  let eksikH = 0; // konuşmacı alanı foto tabanına dar geldiyse afişin uzaması gereken pay
   if (liste.length) {
     const areaH = speakersBottom - speakersTop;
     const perRowH = areaH / rows;
@@ -963,26 +976,43 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     const boyutAdetler = heroVar ? dagilim.slice(1) : dagilim;
     const maxAdet = Math.max(1, ...boyutAdetler);
     const cellW = (W - sidePad * 2) / maxAdet;
+    // Aralık çarpanları (konuşmacı arası boşluk) — satırdan bağımsız.
+    const gapMul = ayar.aralik === 'siki' ? 0.6 : ayar.aralik === 'genis' ? 1.7 : ayar.aralik === 'cokgenis' ? 2.4 : 1;
+    const capMul = ayar.aralik === 'siki' ? 0.92 : ayar.aralik === 'genis' ? 0.72 : ayar.aralik === 'cokgenis' ? 0.62 : 0.86;
+    // Satır metrikleri TEK yerde: hem asgari alan ölçümü hem çizim bunları kullanır.
+    const metrik = dagilim.map((adet, r) => {
+      const heroSatir = heroVar && r === 0;
+      const buCellW = heroSatir ? Math.round(W * (dergiDuzen ? 0.58 : 0.5)) : cellW;
+      const nameSize = Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.052), 28)) * ayar.yazi);
+      const roleSize = Math.round(Math.max(14, Math.min(Math.round(buCellW * 0.038), 20)) * ayar.yazi);
+      const pillH = Math.round(nameSize * 1.7);
+      const wTavan = heroSatir ? (dergiDuzen ? 0.64 : 0.6) : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
+      // ── FOTO TABANI: sütun sayısına göre asgari çap — yazı uzadı diye foto KÜÇÜLMEZ ──
+      const sutun = heroSatir ? 1 : maxAdet;
+      const tabanOran = sutun <= 1 ? 0.30 : sutun === 2 ? 0.24 : sutun === 3 ? 0.20 : 0.16;
+      const fotoTaban = Math.min(Math.round(W * tabanOran * ayar.foto), Math.round(buCellW * capMul), Math.round(W * wTavan));
+      // Bu tabanı verecek asgari satır yüksekliği (bütçe formülünün tersi; yay
+      // düzeninde kenar fotolar 0.11·satır aşağı kayar → o payı da denkleme kat):
+      // foto = 0.93·satır − 0.095·gapMul·satır − pillH − roleSize
+      const yayPay = (ayar.duzen === 'yay' && adet > 1) ? 0.11 : 0;
+      const minSatirH = (fotoTaban + pillH + roleSize) / (0.93 - 0.095 * gapMul - yayPay);
+      return { adet, buCellW, nameSize, roleSize, pillH, wTavan, minSatirH };
+    });
+    // Alan, en yüksek satır ihtiyacına göre yetersizse eksik kadar afiş AŞAĞI uzar
+    // (ikinci geçiş) — "çok kişide boy uzar" deseninin metin uzunluğuna genellemesi.
+    const enBuyukSatirH = Math.max(...metrik.map(m => m.minSatirH));
+    eksikH = Math.max(0, Math.ceil(enBuyukSatirH * rows - areaH));
     let idx = 0;
     for (let r = 0; r < rows; r++) {
-      const adet = dagilim[r];
+      const { adet, buCellW, nameSize, roleSize, pillH, wTavan } = metrik[r];
       const rowY = speakersTop + r * perRowH;
-      // ana vurgu 1. satır → daha geniş hücre (dev oval); diğerleri tutarlı cellW
-      const buCellW = (heroVar && r === 0) ? Math.round(W * (dergiDuzen ? 0.58 : 0.5)) : cellW;
       const startX = Math.round((W - adet * buCellW) / 2); // satırı ortala
       // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
-      // Aralık: konuşmacı arası boşluk (dikey gap + yatay hücre doluluğu).
-      const gapMul = ayar.aralik === 'siki' ? 0.6 : ayar.aralik === 'genis' ? 1.7 : ayar.aralik === 'cokgenis' ? 2.4 : 1;
-      const capMul = ayar.aralik === 'siki' ? 0.92 : ayar.aralik === 'genis' ? 0.72 : ayar.aralik === 'cokgenis' ? 0.62 : 0.86;
-      const nameSize = Math.round(Math.max(15, Math.min(Math.round(buCellW * 0.048), 26)) * ayar.yazi);
-      const roleSize = Math.round(Math.max(13, Math.min(Math.round(buCellW * 0.038), 18)) * ayar.yazi);
-      const pillH = Math.round(nameSize * 1.7);
       const topPad = Math.round(perRowH * 0.04 * gapMul);
       const g1 = Math.round(perRowH * 0.035 * gapMul);
       const g2 = Math.round(perRowH * 0.02 * gapMul);
       let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
-      const wTavan = (heroVar && r === 0) ? (dergiDuzen ? 0.64 : 0.6) : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
       foto = Math.max(72, Math.min(foto, Math.round(buCellW * capMul), Math.round(W * wTavan)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
@@ -1053,7 +1083,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
         // rol — hapın altında (rütbe rozeti açıksa Diamond ailesine pırlanta+yıldız ikonları)
         if (e.unvan) {
           ctx.fillStyle = palet.alt;
-          ctx.font = `500 ${roleSize}px ${FF.govde}`;
+          ctx.font = `600 ${roleSize}px ${FF.govde}`;
           ctx.textAlign = 'center';
           const rY = hapBottom + g2 + roleSize;
           const rb = ayar.rutbe ? rutbeCoz(e.unvan) : null;
@@ -1099,7 +1129,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       }
       // aktivite — saat varsa hapın altında, yoksa bandın üstünde (boşluk bırakma)
       ctx.fillStyle = palet.metin;
-      ctx.font = `600 ${Math.round(W * 0.022)}px ${FF.govde}`;
+      ctx.font = `700 ${Math.round(W * 0.023)}px ${FF.govde}`;
       const aktY = saat ? bandTop + sh + Math.round(W * 0.028) : bandTop + Math.round(W * 0.026);
       wrapText(ctx, (p.baslik || '').toLocaleUpperCase('tr-TR'), cx, aktY, cellW * 0.92, Math.round(W * 0.026), 2);
     }
@@ -1117,10 +1147,12 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   ctx.textAlign = 'center';
   // ── 1) PROGRAM SAATLERİ / ALT NOT — footer ÜSTÜNDE (kullanıcı: adres en alta) ──
   if (notSatirlari.length) {
-    const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#9c2b2b' : '#f0b3b3') };
+    // Okunaklılık: daha büyük punto + kalın + canlı renk (saha geri bildirimi —
+    // soluk pembe küçük yazı telefondan okunmuyordu).
+    const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#8f1f1f' : '#ff9d9d') };
     const uyariRenk = altNotRenkMap[altNotRenk] || altNotRenkMap.kirmizi;
-    const nlH = Math.round(W * 0.026);
-    ctx.font = `600 ${Math.round(W * 0.021)}px ${FF.govde}`;
+    const nlH = Math.round(W * 0.03);
+    ctx.font = `700 ${Math.round(W * 0.024)}px ${FF.govde}`;
     notSatirlari.forEach((ln, i) => {
       ctx.fillStyle = uyariRenk;
       ctx.fillText(ln, adresCX, footerTop + Math.round(H * 0.032) + i * nlH, adresW);
@@ -1138,9 +1170,9 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       ctx.fillText(mekan, adresCX, adresBlokTop + Math.round(H * 0.028), adresW);
     }
     if (adresMetni) {
-      ctx.fillStyle = palet.alt; ctx.font = `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
+      ctx.fillStyle = palet.alt; ctx.font = `500 ${Math.round(W * 0.023)}px ${FF.govde}`;
       const adresY = adresBlokTop + Math.round(H * (mekan ? 0.056 : 0.04));
-      wrapText(ctx, adresMetni, adresCX, adresY, adresW, Math.round(W * 0.026), 2);
+      wrapText(ctx, adresMetni, adresCX, adresY, adresW, Math.round(W * 0.028), 2);
     }
   } else {
     const zoom = (egitim.yer || '').replace(/zoom\s*salon\s*id[:\s]*/i, '').trim();
@@ -1215,6 +1247,5 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // ── FİLM GRENİ — en üst katman (basılı malzeme hissi) ──
   if (ayar.gren) grenCiz(ctx, W, CANVAS_H);
 
-  const dataUrl = canvas.toDataURL('image/png');
-  return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
+  return { canvas, eksikH };
 };
