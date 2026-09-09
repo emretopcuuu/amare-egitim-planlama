@@ -984,7 +984,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
       const heroSatir = heroVar && r === 0;
       const buCellW = heroSatir ? Math.round(W * (dergiDuzen ? 0.58 : 0.5)) : cellW;
       const nameSize = Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.052), 28)) * ayar.yazi);
-      const roleSize = Math.round(Math.max(14, Math.min(Math.round(buCellW * 0.038), 20)) * ayar.yazi);
+      const roleSize = Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.044), 23)) * ayar.yazi); // saha isteği: meslek puntosu büyüdü
       const pillH = Math.round(nameSize * 1.7);
       const wTavan = heroSatir ? (dergiDuzen ? 0.64 : 0.6) : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
       // ── FOTO TABANI: sütun sayısına göre asgari çap — yazı uzadı diye foto KÜÇÜLMEZ ──
