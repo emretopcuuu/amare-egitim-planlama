@@ -51,20 +51,27 @@ const KATEGORILER = [
   'Kişisel Gelişim', 'Vizyon Günü', 'Panel', 'Diğer',
 ];
 
-// Türkiye 81 il + Çorlu (büyük etkinlik merkezi) + yurtdışı (Almanya, Hollanda) — Türkçe alfabetik sıralı
+// Türkiye 81 il + Çorlu (büyük etkinlik merkezi) — Türkçe alfabetik sıralı
 const SEHIRLER_LISTESI = [
-  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Almanya', 'Amasya', 'Ankara',
+  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara',
   'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman',
   'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa',
   'Çanakkale', 'Çankırı', 'Çorlu', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce',
   'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun',
-  'Gümüşhane', 'Hakkari', 'Hatay', 'Hollanda', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir',
+  'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir',
   'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis',
   'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya',
   'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu',
   'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Siirt', 'Sinop', 'Sivas', 'Şanlıurfa',
   'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova',
   'Yozgat', 'Zonguldak',
+];
+// Avrupa şehirleri (saha isteği, Eyl 2026: "Berlin, Viyana, Ulm, Amsterdam da açılsın").
+// yurtdisi.js bu şehirleri bayrakla tanır; afiş/filtre sehir'i olduğu gibi kullanır.
+// 'Almanya'/'Hollanda' eski kayıtlarda şehir olarak seçilmişti — listeden çıkarılmaz.
+const AVRUPA_LISTESI = [
+  'Amsterdam', 'Berlin', 'Brüksel', 'Frankfurt', 'Hamburg', 'Köln', 'Londra',
+  'Münih', 'Paris', 'Ulm', 'Viyana', 'Zürih', 'Almanya', 'Hollanda',
 ];
 
 const BOŞ_FORM = {
@@ -140,7 +147,12 @@ const EgitimFormAlanlari = ({ form, setForm }) => {
         <select value={form.sehir} onChange={e => setForm(f => ({ ...f, sehir: e.target.value }))} className={inputCls} required>
           <option value="">— Seçin —</option>
           <option value="Online">Online (Zoom)</option>
-          {SEHIRLER_LISTESI.map(s => <option key={s}>{s}</option>)}
+          <optgroup label="Türkiye">
+            {SEHIRLER_LISTESI.map(s => <option key={s}>{s}</option>)}
+          </optgroup>
+          <optgroup label="Avrupa">
+            {AVRUPA_LISTESI.map(s => <option key={s}>{s}</option>)}
+          </optgroup>
           <option value="Diğer">Diğer</option>
         </select>
       </FormField>

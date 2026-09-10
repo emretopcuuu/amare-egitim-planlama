@@ -20,6 +20,9 @@ export const YURTDISI_ULKELER = {
   'HAMBURG': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
   'KÖLN': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
   'KOLN': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  // ' ULM' bilerek boşluklu: 3 harf, 'KURULMUŞTUR' gibi kelimelerin içinde de geçiyor —
+  // aranan metin baş tarafına boşluk eklendiği için kelime başı eşleşmesi güvenli.
+  ' ULM': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
   'BELÇİKA': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
   'BELGIUM': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
   'BRÜKSEL': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
@@ -106,9 +109,14 @@ export const getYurtdisi = (egitim) => {
   if (!egitim) return null;
   const yer = (egitim.yer || '').normalize('NFC').toLocaleUpperCase('tr-TR');
   const baslik = (egitim.egitim || '').normalize('NFC').toLocaleUpperCase('tr-TR');
+  // Formda seçilen şehir de taranır (Eyl 2026: Avrupa şehirleri artık dropdown'da —
+  // Berlin/Ulm seçilip yer'de adres yazılınca da bayrak çıksın). Online hariç.
+  const sehir = (egitim.sehir && egitim.sehir !== 'Online')
+    ? String(egitim.sehir).normalize('NFC').toLocaleUpperCase('tr-TR') : '';
   // ZOOM ise yurtdışı sayma (genelde online)
   if (yer.includes('ZOOM')) return null;
-  const arananMetin = duzI(yer + ' ' + baslik);
+  // Baştaki boşluk: ' ULM' gibi kelime-başı anahtarlar metin başında da eşleşsin
+  const arananMetin = duzI(' ' + sehir + ' ' + yer + ' ' + baslik);
   for (const [anahtar, val] of Object.entries(YURTDISI_ULKELER)) {
     if (arananMetin.includes(duzI(anahtar))) return { ...val, anahtar };
   }
