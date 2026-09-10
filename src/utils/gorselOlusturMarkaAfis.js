@@ -395,33 +395,47 @@ const elmasIkon = (ctx, cx, cy, s, palet) => {
 
 // Dalgalanan AB bayrağı + gümüş direk (sol üst). x,y = bayrağın direğe bağlanma noktası, w = bayrak genişliği.
 // Dikey dilim tekniği: sinüs dalgası uca doğru büyür, eğime göre kumaş gölgelenir; yıldızlar dalgayı izler.
+// AB bayrağı — SAPSIZ, dökümlü kumaş (saha isteği Eyl 2026: "büyük, dalgalı,
+// dökümlü olsun ve bayrak sapı olmasın"). İki harmonikli dalga + serbest uca
+// doğru sarkma; dilim başına ışık/gölge kumaş kıvrımlarını verir.
 export const dalgaliBayrakCiz = (ctx, x, y, w, palet) => {
   const h = Math.round(w * 0.62);
-  const direkW = Math.max(5, Math.round(w * 0.05));
-  const amp = h * 0.07, k = (Math.PI * 2.3) / w, faz = 0.9;
-  const dalgaY = (sx) => Math.sin(faz + sx * k) * amp * (0.2 + 0.8 * sx / w);
+  const amp = h * 0.11, k = (Math.PI * 2.6) / w, faz = 0.9;
+  const amp2 = h * 0.045, k2 = (Math.PI * 5.1) / w, faz2 = 2.1;
+  const sark = h * 0.16; // serbest uca doğru kumaş sarkması (dökümlü his)
+  const dalgaY = (sx) => {
+    const t = sx / w;
+    return Math.sin(faz + sx * k) * amp * (0.25 + 0.75 * t)
+         + Math.sin(faz2 + sx * k2) * amp2 * t
+         + sark * Math.pow(t, 1.6);
+  };
+  const egimF = (sx) => {
+    const t = sx / w;
+    return Math.cos(faz + sx * k) * (0.25 + 0.75 * t)
+         + Math.cos(faz2 + sx * k2) * 0.45 * t;
+  };
   ctx.save();
   // bayrak gölgesi (tek silüet, dilimlerin altına)
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6;
+  ctx.shadowColor = 'rgba(0,0,0,0.42)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
   ctx.fillStyle = 'rgba(0,20,80,0.9)';
   ctx.beginPath();
   ctx.moveTo(x, y + dalgaY(0));
   for (let sx = 0; sx <= w; sx += 6) ctx.lineTo(x + sx, y + dalgaY(sx));
-  for (let sx = w; sx >= 0; sx -= 6) ctx.lineTo(x + sx, y + dalgaY(sx) + h * (1 - 0.05 * (sx / w)));
+  for (let sx = w; sx >= 0; sx -= 6) ctx.lineTo(x + sx, y + dalgaY(sx) + h * (1 - 0.06 * (sx / w)));
   ctx.closePath(); ctx.fill();
   ctx.restore();
-  // kumaş dilimleri
+  // kumaş dilimleri (ışık/gölge kıvrımları)
   const dilim = 3;
   for (let sx = 0; sx < w; sx += dilim) {
     const t = sx / w;
     const yTop = y + dalgaY(sx);
-    const hh = h * (1 - 0.05 * t);
+    const hh = h * (1 - 0.06 * t);
     ctx.fillStyle = '#003399';
     ctx.fillRect(x + sx, yTop, dilim + 1, hh);
-    const egim = Math.cos(faz + sx * k) * (0.2 + 0.8 * t);
-    if (egim > 0) ctx.fillStyle = `rgba(255,255,255,${egim * 0.22})`;
-    else ctx.fillStyle = `rgba(0,0,30,${-egim * 0.34})`;
+    const egim = egimF(sx);
+    if (egim > 0) ctx.fillStyle = `rgba(255,255,255,${Math.min(0.3, egim * 0.24).toFixed(3)})`;
+    else ctx.fillStyle = `rgba(0,0,30,${Math.min(0.42, -egim * 0.36).toFixed(3)})`;
     ctx.fillRect(x + sx, yTop, dilim + 1, hh);
   }
   // 12 yıldız — çember üzerinde, her biri kendi dilimindeki dalgayı izler
@@ -429,22 +443,9 @@ export const dalgaliBayrakCiz = (ctx, x, y, w, palet) => {
   for (let i = 0; i < 12; i++) {
     const a = -Math.PI / 2 + i * Math.PI / 6;
     const sxI = cxF + R * Math.cos(a) - x;
-    const cyI = y + dalgaY(sxI) + h * 0.5 * (1 - 0.05 * (sxI / w)) + R * 0.9 * Math.sin(a);
+    const cyI = y + dalgaY(sxI) + h * 0.5 * (1 - 0.06 * (sxI / w)) + R * 0.9 * Math.sin(a);
     yildizCiz(ctx, x + sxI, cyI, Math.max(2, h / 19), '#ffcc00');
   }
-  // direk (gümüş gradient) + altın tepe topu — bayrağın soluna, üstte
-  const dTop = y - Math.round(h * 0.16), dBoy = Math.round(h * 2.3);
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
-  const dg = ctx.createLinearGradient(x - direkW, 0, x, 0);
-  dg.addColorStop(0, '#8f929c'); dg.addColorStop(0.45, '#eceef4'); dg.addColorStop(1, '#71747e');
-  ctx.fillStyle = dg;
-  roundRect(ctx, x - direkW, dTop, direkW, dBoy, direkW / 2); ctx.fill();
-  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  const topR = direkW * 1.05;
-  const tg = ctx.createRadialGradient(x - direkW / 2 - topR * 0.3, dTop - topR * 0.4, topR * 0.15, x - direkW / 2, dTop - topR * 0.1, topR * 1.5);
-  tg.addColorStop(0, '#ffedad'); tg.addColorStop(1, palet.goldKoyu || '#8a6a1f');
-  ctx.fillStyle = tg;
-  ctx.beginPath(); ctx.arc(x - direkW / 2, dTop - topR * 0.1, topR, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 };
 
@@ -1299,7 +1300,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   // ── AB BAYRAĞI (sol üst): dalgalı direkli bayrak veya düz rozet ──
   if (ayar.euBayrak) {
     if (ayar.bayrakDalgali) {
-      dalgaliBayrakCiz(ctx, Math.round(W * 0.062), Math.round(W * 0.028), Math.round(W * 0.155), palet);
+      dalgaliBayrakCiz(ctx, Math.round(W * 0.05), Math.round(W * 0.024), Math.round(W * 0.20), palet); // saha isteği: büyük + sapsız
     } else {
       const fx = Math.round(W * 0.045) + 8, fw = Math.round(W * 0.10);
       euBayrakCiz(ctx, fx, fx, fw, true);
