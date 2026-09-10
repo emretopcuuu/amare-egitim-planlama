@@ -799,7 +799,7 @@ export const gorselOlusturMarkaAfis = async (params) => {
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
 };
 
-const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }, ekstraH = 0) => {
+const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' }, grupBasliklari = [] }, ekstraH = 0) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -833,13 +833,37 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const perMap = { iki: 2, uc: 3, dort: 4 };
   const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };
   const dergiDuzen = ayar.duzen === 'dergi' && liste.length > 1; // dergi kapağı: dev ana konuşmacı + altta 5'li şerit
-  const dagilim = !liste.length ? []
-    : ayar.tekSira ? [liste.length]
-    : dergiDuzen ? [1, ...chunkRows(liste.length - 1, 5)]
-    : (ayar.anaVurgu && liste.length > 1) ? [1, ...fotoYerlesim(liste.length - 1)]
-    : (ayar.duzen && perMap[ayar.duzen]) ? chunkRows(liste.length, perMap[ayar.duzen])
-    : fotoYerlesim(liste.length);
-  const rows = dagilim.length;
+  // ── SATIR PLANI (Eyl 2026 saha isteği): konuşmacı buyuk:true taşıyabilir
+  // (birden fazla "ana konuşmacı" büyük çizilir, satırda en çok 2 büyük) ve
+  // grup:2 ile ikinci bölüğe girer (ör. Sağlık Profesyonelleri / İş İnsanları);
+  // grupBasliklari[i] bölük başlığı olarak altın bantla çizilir. ──
+  const grupluMu = liste.some(e => (e.grup || 1) > 1);
+  const satirlar = [];
+  const bolukKur = (uyeler, basligi, ayracIste) => {
+    if (!uyeler.length) return;
+    let biglar = uyeler.filter(e => e.buyuk);
+    let kalan = uyeler.filter(e => !e.buyuk);
+    // eski davranış: "ana konuşmacı"/dergi çipi seçili ve hiç yıldız yoksa ilk kişi büyük
+    if (!biglar.length && (ayar.anaVurgu || dergiDuzen) && !grupluMu && uyeler.length > 1) {
+      biglar = [uyeler[0]]; kalan = uyeler.slice(1);
+    }
+    if (basligi || ayracIste) satirlar.push({ tip: 'baslik', metin: basligi || '' });
+    chunkRows(biglar.length, 2).reduce((off, n) => {
+      satirlar.push({ tip: 'foto', hero: true, kisiler: biglar.slice(off, off + n) }); return off + n;
+    }, 0);
+    const perN = ayar.tekSira ? kalan.length : dergiDuzen ? 5 : (ayar.duzen && perMap[ayar.duzen]) ? perMap[ayar.duzen] : null;
+    const dagKalan = !kalan.length ? [] : perN ? chunkRows(kalan.length, perN) : fotoYerlesim(kalan.length);
+    dagKalan.reduce((off, n) => {
+      satirlar.push({ tip: 'foto', hero: false, kisiler: kalan.slice(off, off + n) }); return off + n;
+    }, 0);
+  };
+  if (grupluMu) {
+    bolukKur(liste.filter(e => (e.grup || 1) === 1), (grupBasliklari[0] || '').trim(), false);
+    bolukKur(liste.filter(e => (e.grup || 1) > 1), (grupBasliklari[1] || '').trim(), true); // başlıksızsa da ince ayraç çiz
+  } else {
+    bolukKur(liste, '', false);
+  }
+  const rows = satirlar.filter(s => s.tip === 'foto').length;
   // 3 sıra taban afişe rahat sığar; üstüne her sıra için boy uzat (aralık geniş → biraz daha)
   const ROWS_FIT = 3;
   const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'cokgenis' ? 1.5 : ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
@@ -964,64 +988,104 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const speakersBottom = bandTop - Math.round(H * 0.02);
 
   // ── KONUŞMACILAR (altın halkalı foto + altın hap isim + rol) ──
-  // liste / dagilim / rows yukarıda (canvas yüksekliği için) hesaplandı.
+  // liste / satirlar / rows yukarıda (canvas yüksekliği için) hesaplandı.
   let eksikH = 0; // konuşmacı alanı foto tabanına dar geldiyse afişin uzaması gereken pay
   if (liste.length) {
     const areaH = speakersBottom - speakersTop;
-    const perRowH = areaH / rows;
-    // Hücre genişliği: en kalabalık satıra göre TUTARLI (eşit boyut), satırlar ortalı.
-    // Ana vurgu modunda 1. satır (tek kişi) hariç tutulur → o satır dev oval kalır.
+    // Hücre genişliği: en kalabalık NORMAL satıra göre TUTARLI (eşit boyut);
+    // büyük (hero) satırlar kendi geniş hücresini kullanır. Satırlar ortalı.
     const sidePad = Math.round(W * 0.035);
-    const heroVar = (ayar.anaVurgu || dergiDuzen) && rows > 1; // ilk satır dev tekil hücre
-    const boyutAdetler = heroVar ? dagilim.slice(1) : dagilim;
-    const maxAdet = Math.max(1, ...boyutAdetler);
+    const normalAdetler = satirlar.filter(s => s.tip === 'foto' && !s.hero).map(s => s.kisiler.length);
+    const maxAdet = Math.max(1, ...normalAdetler);
     const cellW = (W - sidePad * 2) / maxAdet;
     // Aralık çarpanları (konuşmacı arası boşluk) — satırdan bağımsız.
     const gapMul = ayar.aralik === 'siki' ? 0.6 : ayar.aralik === 'genis' ? 1.7 : ayar.aralik === 'cokgenis' ? 2.4 : 1;
     const capMul = ayar.aralik === 'siki' ? 0.92 : ayar.aralik === 'genis' ? 0.72 : ayar.aralik === 'cokgenis' ? 0.62 : 0.86;
     // Satır metrikleri TEK yerde: hem asgari alan ölçümü hem çizim bunları kullanır.
-    const metrik = dagilim.map((adet, r) => {
-      const heroSatir = heroVar && r === 0;
-      const buCellW = heroSatir ? Math.round(W * (dergiDuzen ? 0.58 : 0.5)) : cellW;
-      const nameSize = Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.052), 28)) * ayar.yazi);
-      const roleSize = Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.044), 23)) * ayar.yazi); // saha isteği: meslek puntosu büyüdü
+    const metrik = satirlar.map((s) => {
+      if (s.tip === 'baslik') return { ...s, minSatirH: Math.round(H * (s.metin ? 0.052 : 0.026)) };
+      const adet = s.kisiler.length;
+      const buCellW = s.hero
+        ? (adet === 1 ? Math.round(W * (dergiDuzen ? 0.58 : 0.5)) : Math.round((W - sidePad * 2) / 2))
+        : cellW;
+      // Büyük (hero) satırda isim/rol da bir kademe büyük — kişi "başlıca" okunmalı
+      const nameSize = s.hero
+        ? Math.round(Math.max(18, Math.min(Math.round(buCellW * 0.06), 31)) * ayar.yazi)
+        : Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.052), 28)) * ayar.yazi);
+      const roleSize = s.hero
+        ? Math.round(Math.max(17, Math.min(Math.round(buCellW * 0.05), 25)) * ayar.yazi)
+        : Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.044), 23)) * ayar.yazi); // saha isteği: meslek puntosu büyüdü
       const pillH = Math.round(nameSize * 1.7);
-      const wTavan = heroSatir ? (dergiDuzen ? 0.64 : 0.6) : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
-      // ── FOTO TABANI: sütun sayısına göre asgari çap — yazı uzadı diye foto KÜÇÜLMEZ ──
-      const sutun = heroSatir ? 1 : maxAdet;
-      const tabanOran = sutun <= 1 ? 0.30 : sutun === 2 ? 0.24 : sutun === 3 ? 0.20 : 0.16;
+      const wTavan = s.hero
+        ? (adet === 1 ? (dergiDuzen ? 0.64 : 0.6) : 0.46)
+        : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
+      // ── FOTO TABANI: sütun sayısına göre asgari çap — yazı uzadı diye foto KÜÇÜLMEZ.
+      //    Hero tabanı normal satırdan belirgin büyük (0.24'e karşı 0.30+) ki
+      //    "büyük konuşmacı" tek bakışta ayrılsın. ──
+      const tabanOran = s.hero
+        ? (adet === 1 ? 0.32 : 0.30)
+        : (maxAdet <= 1 ? 0.30 : maxAdet === 2 ? 0.24 : maxAdet === 3 ? 0.20 : 0.16);
       const fotoTaban = Math.min(Math.round(W * tabanOran * ayar.foto), Math.round(buCellW * capMul), Math.round(W * wTavan));
       // Bu tabanı verecek asgari satır yüksekliği (bütçe formülünün tersi; yay
       // düzeninde kenar fotolar 0.11·satır aşağı kayar → o payı da denkleme kat):
       // foto = 0.93·satır − 0.095·gapMul·satır − pillH − roleSize
       const yayPay = (ayar.duzen === 'yay' && adet > 1) ? 0.11 : 0;
       const minSatirH = (fotoTaban + pillH + roleSize) / (0.93 - 0.095 * gapMul - yayPay);
-      return { adet, buCellW, nameSize, roleSize, pillH, wTavan, minSatirH };
+      return { ...s, adet, buCellW, nameSize, roleSize, pillH, wTavan, minSatirH };
     });
-    // Alan, en yüksek satır ihtiyacına göre yetersizse eksik kadar afiş AŞAĞI uzar
-    // (ikinci geçiş) — "çok kişide boy uzar" deseninin metin uzunluğuna genellemesi.
-    const enBuyukSatirH = Math.max(...metrik.map(m => m.minSatirH));
-    eksikH = Math.max(0, Math.ceil(enBuyukSatirH * rows - areaH));
-    let idx = 0;
-    for (let r = 0; r < rows; r++) {
-      const { adet, buCellW, nameSize, roleSize, pillH, wTavan } = metrik[r];
-      const rowY = speakersTop + r * perRowH;
+    // Alan toplam ihtiyaca yetmiyorsa eksik kadar afiş AŞAĞI uzar (ikinci geçiş);
+    // alan boldaysa satırlar orantılı ferahlar — "çok kişide boy uzar" deseninin genellemesi.
+    const toplamMin = metrik.reduce((t, m) => t + m.minSatirH, 0);
+    eksikH = Math.max(0, Math.ceil(toplamMin - areaH));
+    const olcek = Math.max(1, areaH / toplamMin);
+    let rowTop = speakersTop;
+    for (const m of metrik) {
+      const rowH = m.minSatirH * olcek;
+      if (m.tip === 'baslik') {
+        // bölük başlığı — ortada harf aralıklı altın başlık, yanlarda ince çizgi
+        const cy = rowTop + rowH * 0.62;
+        if (m.metin) {
+          ctx.save();
+          ctx.font = `800 ${Math.round(W * 0.027)}px ${FF.govde}`;
+          ctx.letterSpacing = '4px';
+          const bTxt = m.metin.toLocaleUpperCase('tr-TR');
+          const bTw = Math.min(ctx.measureText(bTxt).width, W * 0.68);
+          ctx.fillStyle = palet.gold; ctx.textAlign = 'center';
+          ctx.fillText(bTxt, W / 2, cy, W * 0.68);
+          const cizgiW = (W * 0.84 - bTw) / 2 - Math.round(W * 0.025);
+          if (cizgiW > 14) {
+            ctx.fillStyle = `rgba(${palet.goldRGB},0.5)`;
+            ctx.fillRect(Math.round(W * 0.08), Math.round(cy - 5), Math.round(cizgiW), 2);
+            ctx.fillRect(Math.round(W * 0.92 - cizgiW), Math.round(cy - 5), Math.round(cizgiW), 2);
+          }
+          ctx.restore();
+          ctx.letterSpacing = '0px'; ctx.textAlign = 'center';
+        } else {
+          // başlıksız bölük ayracı — ince altın çizgi
+          ctx.fillStyle = `rgba(${palet.goldRGB},0.35)`;
+          ctx.fillRect(Math.round(W * 0.22), Math.round(rowTop + rowH * 0.5), Math.round(W * 0.56), 2);
+        }
+        rowTop += rowH;
+        continue;
+      }
+      const { adet, buCellW, nameSize, roleSize, pillH, wTavan } = m;
+      const rowY = rowTop;
       const startX = Math.round((W - adet * buCellW) / 2); // satırı ortala
       // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
-      const topPad = Math.round(perRowH * 0.04 * gapMul);
-      const g1 = Math.round(perRowH * 0.035 * gapMul);
-      const g2 = Math.round(perRowH * 0.02 * gapMul);
-      let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
+      const topPad = Math.round(rowH * 0.04 * gapMul);
+      const g1 = Math.round(rowH * 0.035 * gapMul);
+      const g2 = Math.round(rowH * 0.02 * gapMul);
+      let foto = Math.round(rowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
       foto = Math.max(72, Math.min(foto, Math.round(buCellW * capMul), Math.round(W * wTavan)));
-      for (let c = 0; c < adet; c++, idx++) {
-        const e = liste[idx];
+      for (let c = 0; c < adet; c++) {
+        const e = m.kisiler[c];
         const cx = startX + buCellW * c + buCellW / 2;
         let fy = rowY + topPad + foto / 2;
         // yay düzeni: satır içinde parabolik dikey kavis (ortadaki yüksekte, kenarlar aşağıda)
         if (ayar.duzen === 'yay' && adet > 1) {
           const t = (c - (adet - 1) / 2) / ((adet - 1) / 2);
-          fy += Math.round(t * t * perRowH * 0.11);
+          fy += Math.round(t * t * rowH * 0.11);
         }
         // yumuşak altın ışıltı (derinlik / modern his)
         const gl = ctx.createRadialGradient(cx, fy, foto * 0.32, cx, fy, foto * 0.88);
@@ -1106,6 +1170,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
           }
         }
       }
+      rowTop += rowH;
     }
   }
 
