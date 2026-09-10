@@ -201,7 +201,7 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
 
   // ── AB BAYRAĞI (sol üst) — dalgalı direkli veya düz rozet, en üstte ──
   if (ayar.euBayrak) {
-    if (ayar.bayrakDalgali) dalgaliBayrakCiz(ctx, Math.round(W * 0.065), Math.round(W * 0.04), Math.round(W * 0.16), palet);
+    if (ayar.bayrakDalgali) dalgaliBayrakCiz(ctx, Math.round(W * 0.05), Math.round(W * 0.03), Math.round(W * 0.19), palet); // saha isteği: büyük + sapsız
     else euBayrakCiz(ctx, Math.round(W * 0.04), Math.round(W * 0.04), Math.round(W * 0.09), true);
   }
 
