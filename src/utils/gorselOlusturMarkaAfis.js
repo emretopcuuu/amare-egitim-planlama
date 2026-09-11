@@ -756,16 +756,40 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
 };
 
 // Altın hap içinde metin (referanslardaki isim etiketi). Dönüş: alt Y.
-const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
-  ctx.font = `800 ${fontSize}px ${fontAd}`;
-  const tw = ctx.measureText((text || '').toLocaleUpperCase('tr-TR')).width;
-  const h = Math.round(fontSize * 1.7), padX = Math.round(fontSize * 0.7);
-  const w = tw + padX * 2;
+// maxW verilirse hap o genişliği AŞMAZ (saha isteği Eyl 2026: "isim uzunsa
+// isim kutucukları birbirine değmesin"): önce yazı hafif küçülür, hâlâ
+// sığmıyorsa isim dengeli İKİ SATIRA bölünür (hap uzar, komşuya değmez).
+const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial', maxW = 0) => {
+  const T = (text || '').toLocaleUpperCase('tr-TR');
+  let fs = fontSize;
+  const olc = (t) => { ctx.font = `800 ${fs}px ${fontAd}`; return ctx.measureText(t).width; };
+  let satirlar = [T];
+  let tw = olc(T);
+  if (maxW && tw + fs * 1.4 > maxW) {
+    while (fs > fontSize * 0.85 && olc(T) + fs * 1.4 > maxW) fs -= 1;
+    tw = olc(T);
+    const words = T.split(/\s+/).filter(Boolean);
+    if (tw + fs * 1.4 > maxW && words.length > 1) {
+      // dengeli iki satır: en geniş satırı en küçük yapan bölme noktası
+      let best = 1, bestW = Infinity;
+      for (let i = 1; i < words.length; i++) {
+        const mw = Math.max(olc(words.slice(0, i).join(' ')), olc(words.slice(i).join(' ')));
+        if (mw < bestW) { bestW = mw; best = i; }
+      }
+      satirlar = [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+      while (fs > fontSize * 0.7 && Math.max(olc(satirlar[0]), olc(satirlar[1])) + fs * 1.4 > maxW) fs -= 1;
+      tw = Math.max(olc(satirlar[0]), olc(satirlar[1]));
+    }
+  }
+  const padX = Math.round(fs * 0.7), lh = Math.round(fs * 1.15);
+  const h = Math.round(fs * 1.7) + (satirlar.length - 1) * lh;
+  const w = Math.min(tw + padX * 2, maxW || Infinity);
   ctx.fillStyle = palet.folyo ? folyoGrad(ctx, cx - w / 2, y, w, h, palet) : palet.gold;
-  roundRect(ctx, cx - w / 2, y, w, h, Math.round(h * 0.28)); ctx.fill();
+  roundRect(ctx, cx - w / 2, y, w, h, Math.round(Math.min(h, fs * 1.7) * 0.28)); ctx.fill();
   ctx.fillStyle = palet.pillText;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText((text || '').toLocaleUpperCase('tr-TR'), cx, y + h / 2);
+  if (satirlar.length === 1) ctx.fillText(satirlar[0], cx, y + h / 2, maxW ? maxW - padX : undefined);
+  else satirlar.forEach((ln, i) => ctx.fillText(ln, cx, y + h / 2 + (i - 0.5) * lh, maxW ? maxW - padX : undefined));
   ctx.textBaseline = 'alphabetic';
   return y + h;
 };
@@ -1025,7 +1049,13 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
       const roleSize = s.hero
         ? Math.round(Math.max(17, Math.min(Math.round(buCellW * 0.05), 25)) * ayar.yazi)
         : Math.round(Math.max(16, Math.min(Math.round(buCellW * 0.044), 23)) * ayar.yazi); // saha isteği: meslek puntosu büyüdü
-      const pillH = Math.round(nameSize * 1.7);
+      // Uzun isim hapta iki satıra kırılırsa hap uzar → satır bütçesine payını kat
+      // (altinHap %85'e kadar küçültüp yine sığmazsa böler; aynı eşik burada).
+      const hapMaxW = buCellW * 0.96;
+      ctx.font = `800 ${nameSize}px ${FF.isim}`;
+      const ikiSatirHap = s.kisiler.some(e =>
+        (ctx.measureText((e.ad || '').toLocaleUpperCase('tr-TR')).width + nameSize * 1.4) * 0.85 > hapMaxW);
+      const pillH = Math.round(nameSize * 1.7) + (ikiSatirHap ? Math.round(nameSize * 1.15) : 0);
       const wTavan = s.hero
         ? (adet === 1 ? (dergiDuzen ? 0.64 : 0.6) : 0.46)
         : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
@@ -1153,7 +1183,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
         } else { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
         // isim — altın hap, fotonun ALTINDA (çakışma yok) — şık isim fontu
-        const hapBottom = altinHap(ctx, cx, fy + foto / 2 + g1, e.ad || '', nameSize, palet, FF.isim);
+        const hapBottom = altinHap(ctx, cx, fy + foto / 2 + g1, e.ad || '', nameSize, palet, FF.isim, buCellW * 0.96);
         // rol — hapın altında (rütbe rozeti açıksa Diamond ailesine pırlanta+yıldız ikonları)
         if (e.unvan) {
           ctx.fillStyle = palet.alt;
