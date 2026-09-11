@@ -116,8 +116,8 @@ export default function GorselStudyo() {
 
   const [aiModel, setAiModel] = useState('marka-afis');
   const [speakers, setSpeakers] = useState([]);
-  const [grupModu, setGrupModu] = useState(false);        // afişi 2 bölüğe ayır (saha isteği, Eyl 2026)
-  const [grupBaslik, setGrupBaslik] = useState(['', '']); // bölük başlıkları (ör. Sağlık Profesyonelleri / İş İnsanları)
+  const [grupModu, setGrupModu] = useState(false);            // afişi bölüklere ayır (saha isteği, Eyl 2026)
+  const [grupBaslik, setGrupBaslik] = useState(['', '', '']); // 3 bölüğe kadar başlık (ör. Sunum / Sağlık Prof. / İş İnsanları)
   const [markaSecim, setMarkaSecim] = useState(() => {
     try { return JSON.parse(localStorage.getItem('markaSecim') || '{}'); } catch { return {}; }
   });
@@ -150,7 +150,7 @@ export default function GorselStudyo() {
   // eğitim değişince konuşmacıları çöz
   useEffect(() => {
     setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot(''); setBaslikOzel('');
-    setGrupModu(false); setGrupBaslik(['', '']);
+    setGrupModu(false); setGrupBaslik(['', '', '']);
     dosyaRef.current = null; setDosyaAdi(''); setAiGecmis([]); // yeni eğitim → yükleme/geçmiş sıfır
     // Program satırlarını eğitimin programAkışından başlat
     const pa = Array.isArray(egitim?.programAkisi) ? egitim.programAkisi : [];
@@ -558,10 +558,13 @@ export default function GorselStudyo() {
                         className={`p-0.5 rounded text-sm transition ${s.buyuk ? '' : 'opacity-30 grayscale hover:opacity-60'}`}>👑</button>
                     )}
                     {markaModu && grupModu && (
-                      <button onClick={() => setSpeakers(prev => prev.map((x, idx) => idx === i ? { ...x, grup: (x.grup || 1) === 1 ? 2 : 1 } : x))}
-                        title="Bölük değiştir (1 ↔ 2)"
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${(s.grup || 1) === 2 ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
-                        {(s.grup || 1) === 2 ? 'B2' : 'B1'}
+                      <button onClick={() => setSpeakers(prev => prev.map((x, idx) => idx === i ? { ...x, grup: ((x.grup || 1) % 3) + 1 } : x))}
+                        title="Bölük değiştir (1 → 2 → 3)"
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                          (s.grup || 1) === 2 ? 'bg-purple-100 border-purple-300 text-purple-700'
+                          : (s.grup || 1) === 3 ? 'bg-amber-100 border-amber-300 text-amber-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+                        B{s.grup || 1}
                       </button>
                     )}
                     <button onClick={() => konusmaciCikar(i)} title="Çıkar" className="text-gray-400 hover:text-red-500 p-1"><X className="w-4 h-4" /></button>
@@ -593,19 +596,19 @@ export default function GorselStudyo() {
                 <div className="mt-2.5 pt-2.5 border-t border-gray-100 space-y-1.5">
                   <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
                     <input type="checkbox" checked={grupModu} onChange={(e) => setGrupModu(e.target.checked)} className="accent-amare-purple" />
-                    Afişi 2 bölüğe ayır
-                    <span className="text-[10px] font-normal text-gray-400">(ör. Sağlık Profesyonelleri / İş İnsanları)</span>
+                    Afişi bölüklere ayır
+                    <span className="text-[10px] font-normal text-gray-400">(2-3 bölük — ör. Sunum / Sağlık Prof. / İş İnsanları)</span>
                   </label>
                   {grupModu && (
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <input value={grupBaslik[0]} onChange={(e) => setGrupBaslik(g => [e.target.value, g[1]])}
-                        placeholder="1. bölük başlığı" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
-                      <input value={grupBaslik[1]} onChange={(e) => setGrupBaslik(g => [g[0], e.target.value])}
-                        placeholder="2. bölük başlığı" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[0, 1, 2].map(bi => (
+                        <input key={bi} value={grupBaslik[bi]} onChange={(e) => setGrupBaslik(g => g.map((v, idx) => idx === bi ? e.target.value : v))}
+                          placeholder={`${bi + 1}. bölük başlığı`} className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                      ))}
                     </div>
                   )}
                   <p className="text-[10px] text-gray-400">
-                    👑 = kişiyi büyük göster (birden fazla seçilebilir){grupModu ? ' · B1/B2 = kişinin bölüğü' : ''}.
+                    👑 = kişiyi büyük göster (birden fazla seçilebilir){grupModu ? ' · B1/B2/B3 = kişinin bölüğü, sıra üstten alta (boş bölük atlanır)' : ''}.
                   </p>
                 </div>
               )}
