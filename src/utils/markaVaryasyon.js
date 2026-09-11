@@ -14,6 +14,7 @@ export const MARKA_VARYASYON = [
   ] },
   { grup: 'Vurgu', tekil: false, secenekler: [
     { key: 'ana-konusmaci', label: 'Ana konuşmacı büyük', cmd: 'ana konuşmacı' },
+    { key: 'sehir-buyuk', label: 'Şehir büyük', cmd: 'şehri büyüt' },
   ] },
   { grup: 'Yerleşim', tekil: true, secenekler: [
     { key: 'duzen-iki', label: '2\'li sütun', cmd: '2 sütun' },

@@ -619,6 +619,9 @@ export const ayarCikar = (ek) => {
   if (has('yay düzeni', 'yay dizilim', 'kavis düzeni')) a.duzen = 'yay';
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
+  // şehir rozeti boyutu (saha isteği Eyl 2026: "şehri boyut olarak büyütebilelim")
+  if (has('şehri büyüt', 'şehir büyük', 'büyük şehir', 'şehir rozeti büyük')) a.sehirBoyut = 1.45;
+  if (has('şehri küçült', 'şehir küçük')) a.sehirBoyut = 0.8;
   // filigran (arka amblem) yoğunluğu
   if (has('filigran belirgin', 'amblem belirgin')) a.filigran = 'belirgin';
   if (has('filigran soluk', 'amblem soluk')) a.filigran = 'soluk';
@@ -836,7 +839,8 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const dergiDuzen = ayar.duzen === 'dergi' && liste.length > 1; // dergi kapağı: dev ana konuşmacı + altta 5'li şerit
   // ── SATIR PLANI (Eyl 2026 saha isteği): konuşmacı buyuk:true taşıyabilir
   // (birden fazla "ana konuşmacı" büyük çizilir, satırda en çok 2 büyük) ve
-  // grup:2 ile ikinci bölüğe girer (ör. Sağlık Profesyonelleri / İş İnsanları);
+  // grup:1-3 ile bölüğüne girer (ör. Sunum / Sağlık Profesyonelleri /
+  // İş İnsanları — bölükler numara sırasıyla üstten alta);
   // grupBasliklari[i] bölük başlığı olarak altın bantla çizilir. ──
   const grupluMu = liste.some(e => (e.grup || 1) > 1);
   const satirlar = [];
@@ -859,8 +863,13 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     }, 0);
   };
   if (grupluMu) {
-    bolukKur(liste.filter(e => (e.grup || 1) === 1), (grupBasliklari[0] || '').trim(), false);
-    bolukKur(liste.filter(e => (e.grup || 1) > 1), (grupBasliklari[1] || '').trim(), true); // başlıksızsa da ince ayraç çiz
+    let ilkBoluk = true;
+    for (let g = 1; g <= 3; g++) {
+      const uyeler = liste.filter(e => Math.min(3, Math.max(1, e.grup || 1)) === g);
+      if (!uyeler.length) continue;
+      bolukKur(uyeler, (grupBasliklari[g - 1] || '').trim(), !ilkBoluk); // ilk bölük hariç başlıksızsa da ince ayraç
+      ilkBoluk = false;
+    }
   } else {
     bolukKur(liste, '', false);
   }
@@ -919,7 +928,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   //    Vizyon Günü ile online eğitimi afişte GÖRSEL olarak ayırır (online'da şehir yerine tip).
   if (fiziki && egitim.sehir) {
     y += Math.round(H * 0.005);
-    y = altinHap(ctx, W / 2, y, egitim.sehir, Math.round(W * 0.034 * ayar.yazi), palet, FF.govde) + Math.round(H * 0.012);
+    y = altinHap(ctx, W / 2, y, egitim.sehir, Math.round(W * 0.034 * ayar.yazi * (ayar.sehirBoyut || 1)), palet, FF.govde) + Math.round(H * 0.012);
   } else if (!fiziki) {
     y += Math.round(H * 0.005);
     y = onlineHap(ctx, W / 2, y, 'ONLINE CANLI YAYIN', Math.round(W * 0.030 * ayar.yazi), palet, FF.govde) + Math.round(H * 0.012);
