@@ -4,7 +4,7 @@
 // - Önceki rank'ler: otomatik tamamlanmış (accordion içinde)
 // - Sonraki rank'ler: AÇILABİLİR — ilki "sıradaki hedefin", gerisi "gelecek"
 //
-// 2026-09-07: üst rütbeler eskiden KİLİTLİ idi (tıklanmıyordu). Kilit yanıltıcıydı:
+// 2026-09-17: üst rütbeler eskiden KİLİTLİ idi (tıklanmıyordu). Kilit yanıltıcıydı:
 // o videolar Kayıtlı Eğitimler'de zaten herkese açık (orada tek şart giriş yapmak),
 // yani kilit içeriği değil sadece LİSTEYİ saklıyordu. Üstelik üyelerin %75'i
 // Brand Partner — yani çoğunluk tek açık kart + arkasında kilit duvarı görüyordu.

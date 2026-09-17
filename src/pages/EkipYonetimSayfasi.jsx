@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy, Award, TrendingUp, Gift } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy, Award, TrendingUp, Gift, Lightbulb, Gem } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -242,6 +242,33 @@ const MODULLER = [
     link: 'https://promosyon.oneteamglobal.ai/',
     renk: 'amber',
   },
+  {
+    id: 'ortak-akil',
+    ad: {
+      tr: 'Ortak Akıl Platformu',
+      en: 'Collective Wisdom Platform',
+      de: 'Plattform für kollektive Weisheit',
+      nl: 'Platform voor Collectieve Wijsheid',
+    },
+    kisaltma: 'OAP',
+    aciklama: {
+      tr: 'OneTeam Yönetim Kurulu ortak akıl platformu — görüş ve öneri havuzu.',
+      en: 'OneTeam Board collective wisdom platform — pool of views and proposals.',
+      de: 'OneTeam-Vorstand Plattform für kollektive Weisheit — Meinungen und Vorschläge.',
+      nl: 'OneTeam-bestuur platform voor collectieve wijsheid — meningen en voorstellen.',
+    },
+    // Erişim kisiti kartin sag ust kosesinde rozet olarak gorunur (bkz. m.kisitlama)
+    kisitlama: {
+      tr: 'Diamond ve üstü',
+      en: 'Diamond and above',
+      de: 'Diamond und höher',
+      nl: 'Diamond en hoger',
+    },
+    icon: Lightbulb,
+    aktif: true,
+    link: 'https://anket.oneteamglobal.ai/',
+    renk: 'amber',
+  },
   // İleride buraya yeni modüller eklenecek
 ];
 
@@ -369,6 +396,14 @@ const EkipYonetimSayfasi = () => {
                 }`}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
+                {/* Erişim kısıtı rozeti — sağ üst köşe (yalnız kısıtlı modüllerde) */}
+                {m.kisitlama && (
+                  <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-sky-400/15 border border-sky-300/40 text-sky-100 text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-sm">
+                    <Gem className="w-2.5 h-2.5" />
+                    {m.kisitlama[lang] || m.kisitlama.tr}
+                  </span>
+                )}
+
                 {/* İkon + OneTeam mini rozeti */}
                 <div className="relative w-16 h-16 mb-4">
                   <div className={`absolute inset-0 rounded-2xl ${
