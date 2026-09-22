@@ -266,7 +266,7 @@ const MODULLER = [
     },
     icon: Lightbulb,
     aktif: true,
-    link: 'https://anket.oneteamglobal.ai/',
+    link: 'https://yonetimkurulu.oneteamglobal.ai/',
     renk: 'amber',
   },
   // İleride buraya yeni modüller eklenecek
