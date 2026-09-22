@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { getClientIp } from './_clientIp.mjs';
 import { Resend } from 'resend';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 import { metinTemizle } from './_metinTemizle.mjs';
@@ -288,7 +289,7 @@ export default async (req) => {
     // TURNSTILE_SECRET env set + cfToken VAR → doğrula
     // Eğer fallback flag VAR ama cfToken YOK → bypass (kullanıcı widget yükleyemedi)
     // Aksi durumda token zorunlu
-    const ip = req.headers.get('x-nf-client-connection-ip') || '';
+    const ip = getClientIp(req);
     let cfBypassedFallback = false;
     if (turnstileFallback && !cfToken) {
       cfBypassedFallback = true; // log için işaretle

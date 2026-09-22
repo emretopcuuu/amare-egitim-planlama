@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/.netlify/*", "/d/*", "/e/*", "/lider/*", "/.env", "/.git", "/.git/*", "/swagger.json", "/metrics", "/debug"],
+  "exclude": []
+}

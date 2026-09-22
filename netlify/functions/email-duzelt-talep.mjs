@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { getClientIp } from './_clientIp.mjs';
 import { Resend } from 'resend';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 import { ADMIN_EMAILS } from './_adminEmails.mjs';
@@ -45,7 +46,7 @@ export default async (req) => {
     // Rate limit — spam koruması (rateLimitCheck signature: req, endpoint, opts)
     const rl = await rateLimitCheck(req, 'email-duzelt-talep', { perMinute: 5, perHour: 20 });
     if (!rl.ok) return rateLimitResponse(rl, CORS);
-    const ip = req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for') || 'anonymous';
+    const ip = getClientIp(req) || 'anonymous';
 
     const body = await req.json();
     const lookup = String(body.lookup || '').trim();

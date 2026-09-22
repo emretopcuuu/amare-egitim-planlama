@@ -1,0 +1,30 @@
+/*
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Content-Security-Policy: frame-ancestors 'self' https://app.oneteamglobal.ai
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), gyroscope=(), magnetometer=(), accelerometer=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.ingest.de.sentry.io https://challenges.cloudflare.com https://openrouter.ai https://monitor.oneteamglobal.ai https://egitimtakvimi.oneteamglobal.ai https://yvpstkbwglefxukfpgyd.supabase.co https://vimeo.com https://player.vimeo.com https://*.vimeocdn.com; frame-src 'self' https://player.vimeo.com https://challenges.cloudflare.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+
+/assets/*
+  ! Cache-Control
+  ! Pragma
+  ! Expires
+  Cache-Control: public, max-age=31536000, immutable
+
+/logos/*
+  ! Cache-Control
+  ! Pragma
+  ! Expires
+  Cache-Control: public, max-age=3600
+
+/sw-offline.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sw-push.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate

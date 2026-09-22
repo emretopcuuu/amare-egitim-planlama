@@ -10,6 +10,7 @@
 
 import admin from 'firebase-admin';
 import { createHash } from 'crypto';
+import { getClientIp as gercekIp } from './_clientIp.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -22,12 +23,8 @@ if (!admin.apps.length) {
 }
 
 function getClientIp(req) {
-  // Netlify header'ları (production)
-  const xff = req.headers.get('x-forwarded-for') || '';
-  const nfIp = req.headers.get('x-nf-client-connection-ip') || '';
-  const cfIp = req.headers.get('cf-connecting-ip') || '';
-  const ip = nfIp || cfIp || (xff.split(',')[0] || '').trim() || 'unknown';
-  return ip;
+  // Cloudflare vekili üzerinden gelse de gerçek istemci IP'si — bkz. _clientIp.mjs
+  return gercekIp(req) || 'unknown';
 }
 
 function hashIp(ip) {
