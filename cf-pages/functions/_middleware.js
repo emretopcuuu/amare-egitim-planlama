@@ -43,8 +43,7 @@ async function vekil(ctx) {
 export async function onRequest(ctx) {
   const p = new URL(ctx.request.url).pathname;
   if (HASSAS.test(p)) {
-    const nf = await ctx.env.ASSETS.fetch(new URL('/404.html', ctx.request.url));
-    return new Response(nf.body, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8' } });
+    return new Response('Not Found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
   }
   if (p.startsWith('/.netlify/') || p.startsWith('/d/')) return vekil(ctx);
   const og = p.startsWith('/e/') ? eventOg : p.startsWith('/lider/') ? liderOg : null;

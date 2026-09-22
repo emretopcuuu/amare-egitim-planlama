@@ -31,8 +31,12 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
           VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
-      - name: Cloudflare dosyalarını ekle (_headers, _redirects, _routes.json)
-        run: cp cf-pages/static/_headers cf-pages/static/_redirects cf-pages/static/_routes.json dist/
+      # 404.html kökte durursa Pages siteyi tek-sayfa uygulaması SAYMAZ (/takvim → 404).
+      # Kaldırınca bilinmeyen yollar index.html'e düşer (Netlify'daki /* → /index.html).
+      - name: Cloudflare dosyalarını ekle (_headers, _routes.json) + SPA modu
+        run: |
+          cp cf-pages/static/_headers cf-pages/static/_routes.json dist/
+          rm -f dist/404.html
       - name: Yayınla
         working-directory: cf-pages
         env:
