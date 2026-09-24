@@ -53,6 +53,7 @@ const splitEgitmen = (egitmen) => {
 
 const METOTLAR = [
   { id: 'marka-afis', ad: '🏆 Marka Afiş', not: 'Konuşmacı afişi · tema seç', stil: null, ai: false },
+  { id: 'kamp-afis', ad: '⛺ Kamp Afişi', not: 'Çok günlü · tarih serbest · saat opsiyonel', stil: null, ai: false },
   { id: 'program-icerigi', ad: '📋 Program İçeriği', not: 'Zaman çizelgesi · siyah & altın', stil: null, ai: false },
   { id: 'ai-afis', ad: '🎨 AI Afiş', not: 'Gemini · ~$0.08 · yavaş', stil: null, ai: true },
   { id: 'dosya-yukle', ad: '📎 Dosya Yükle', not: 'Kendi afişini yükle · bağla', stil: null, ai: false },
@@ -128,6 +129,11 @@ export default function GorselStudyo() {
   const [vurguKelime, setVurguKelime] = useState(1); // iki renkli başlıkta vurgulu kelime sayısı
   const [vurguYon, setVurguYon] = useState('son');   // 'son' | 'bas'
   const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
+  // Kamp Afişi alanları (saha isteği Eyl 2026): tarih SERBEST metin ("2-3-4 EKİM"),
+  // saat zorunlu değil. Boş bırakılırsa eğitimin kendi tarihi kullanılır.
+  const [kampTarih, setKampTarih] = useState('');
+  const [kampSaat, setKampSaat] = useState('');
+  const [kampBitis, setKampBitis] = useState('');
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
   const dosyaRef = useRef(null);       // Dosya Yükle: seçilen File (base64 yerine bunu bağlarız)
@@ -151,6 +157,7 @@ export default function GorselStudyo() {
   useEffect(() => {
     setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot(''); setBaslikOzel('');
     setGrupModu(false); setGrupBaslik(['', '', '']);
+    setKampTarih(''); setKampSaat(''); setKampBitis('');
     dosyaRef.current = null; setDosyaAdi(''); setAiGecmis([]); // yeni eğitim → yükleme/geçmiş sıfır
     // Program satırlarını eğitimin programAkışından başlat
     const pa = Array.isArray(egitim?.programAkisi) ? egitim.programAkisi : [];
@@ -169,7 +176,7 @@ export default function GorselStudyo() {
   // Her yöntemin taslağı takvim doc'unda AYRI alanda yaşar (admin-only write, cihazlar
   // arası senkron). DataContext LIGHT fetch bu alanları getirmediği için stüdyo
   // açılınca doc'tan taze okunur. Yöntem değişince taslak o yöntemin alanına döner.
-  const TASLAK_ALANI = { 'program-icerigi': 'programTaslak', 'marka-afis': 'markaAfisTaslak' };
+  const TASLAK_ALANI = { 'program-icerigi': 'programTaslak', 'marka-afis': 'markaAfisTaslak', 'kamp-afis': 'kampAfisTaslak' };
   const taslakAlan = TASLAK_ALANI[aiModel] || null;
 
   useEffect(() => {
@@ -186,9 +193,10 @@ export default function GorselStudyo() {
     if (!egitim || !taslakAlan) return;
     setTaslakIslem('kaydediliyor');
     const ortak = { kaydeden: auth.currentUser?.email || '', tarih: new Date().toISOString() };
-    const yeni = aiModel === 'marka-afis'
+    const yeni = markaModu
       ? {
           ...ortak,
+          kampTarih, kampSaat, kampBitis,
           secim: markaSecim,
           baslik: baslikOzel || '',
           vurguKelime, vurguYon,
@@ -206,7 +214,10 @@ export default function GorselStudyo() {
 
   const taslagiYukle = () => {
     if (!taslak) return;
-    if (aiModel === 'marka-afis') {
+    if (markaModu) {
+      setKampTarih(taslak.kampTarih || '');
+      setKampSaat(taslak.kampSaat || '');
+      setKampBitis(taslak.kampBitis || '');
       if (taslak.secim && typeof taslak.secim === 'object') setMarkaSecim(taslak.secim);
       if (taslak.baslik) setBaslikOzel(taslak.baslik);
       if (taslak.vurguKelime) setVurguKelime(taslak.vurguKelime);
@@ -261,11 +272,23 @@ export default function GorselStudyo() {
   );
 
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
-  const markaModu = aiModel === 'marka-afis';
+  const kampModu = aiModel === 'kamp-afis';
+  // Kamp afişi Marka Afiş motorunun bir kipi — tüm marka kontrolleri (stil, kişi,
+  // başlık, alt not, bölük) kampta da geçerli; farkı tarih/saat ve varsayılan tema.
+  const markaModu = aiModel === 'marka-afis' || kampModu;
   const programModu = aiModel === 'program-icerigi';
   const aiModu = aiModel === 'ai-afis';
   const dosyaModu = aiModel === 'dosya-yukle';
   const canliModu = markaModu || programModu; // deterministik → otomatik canlı önizleme
+  // Kampta afişe giden tarih/saat serbest alanlardan gelir (boşsa eğitimin kendisi).
+  // Serbest tarih girildiyse gün adı anlamını yitirir → temizlenir.
+  const afisEgitim = (!egitim || !kampModu) ? egitim : {
+    ...egitim,
+    tarih: kampTarih.trim() || egitim.tarih || '',
+    gun: kampTarih.trim() ? '' : egitim.gun,
+    saat: kampSaat.trim(),
+    bitisSaati: kampBitis.trim(),
+  };
 
   // ── Konuşmacı yönetimi (ekle/çıkar → hem görsele hem sisteme yazılır) ──
   const [kayit, setKayit] = useState(null); // null | 'saving' | 'saved' | 'err'
@@ -397,7 +420,7 @@ export default function GorselStudyo() {
       ];
       const gorseller = await Promise.all(kombolar.map(async (k) => {
         const secim = Object.fromEntries(k.keys.map(x => [x, true]));
-        const res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers.map(s => ({ ...s, grup: grupModu ? (s.grup || 1) : 1 })), format: 'portrait', ekPrompt: markaEkIstek(secim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
+        const res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: speakers.map(s => ({ ...s, grup: grupModu ? (s.grup || 1) : 1 })), format: 'portrait', ekPrompt: markaEkIstek(secim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
         return { ad: k.ad, keys: k.keys, url: b64ToUrl(res.base64, res.mimeType) };
       }));
       setMasaDurum({ gorseller });
@@ -420,7 +443,7 @@ export default function GorselStudyo() {
       let res;
       if (markaModu) {
         const egitmenlerParam = speakers.map(s => ({ ...s, grup: grupModu ? (s.grup || 1) : 1 }));
-        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenlerParam, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
+        res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: egitmenlerParam, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
       } else if (programModu) {
         const tur = afisTuru(egitim);
         const programSatirlari = programSatir.map(r => {
@@ -485,7 +508,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir)]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -565,6 +588,24 @@ export default function GorselStudyo() {
                 </div>
               )}
             </div>
+
+            {/* Kamp Afişi alanları — serbest tarih + opsiyonel saat (saha isteği Eyl 2026) */}
+            {kampModu && (
+              <div className="bg-white border border-emerald-200 rounded-xl p-3 space-y-2">
+                <span className="text-xs font-bold text-emerald-800">⛺ Kamp tarihi</span>
+                <input value={kampTarih} onChange={(e) => setKampTarih(e.target.value)}
+                  placeholder={egitim.tarih ? ('boş = ' + egitim.tarih) : 'Örn: 2-3-4 EKİM'}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+                <p className="text-[10px] text-gray-400">Serbest yaz — "2-3-4 EKİM", "2-4 Ekim 2026" hepsi olur. Afişte büyük levha olarak çıkar.</p>
+                <div className="flex gap-1.5 pt-1">
+                  <input value={kampSaat} onChange={(e) => setKampSaat(e.target.value)} placeholder="Saat (opsiyonel)"
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+                  <input value={kampBitis} onChange={(e) => setKampBitis(e.target.value)} placeholder="Bitiş (opsiyonel)"
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+                </div>
+                <p className="text-[10px] text-gray-400">Saat zorunlu değil — boş bırakırsan afişte hiç saat satırı olmaz.</p>
+              </div>
+            )}
 
             {/* Afiş taslağı — Marka Afiş (saha isteği Eyl 2026: marka afiş için de taslak) */}
             {markaModu && (

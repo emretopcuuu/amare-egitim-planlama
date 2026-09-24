@@ -827,7 +827,7 @@ export const gorselOlusturMarkaAfis = async (params) => {
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
 };
 
-const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' }, grupBasliklari = [] }, ekstraH = 0) => {
+const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' }, grupBasliklari = [], kampModu = false }, ekstraH = 0) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -841,6 +841,12 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   if (!stil && ayar.tema) {
     const yeni = paletAdla(ayar.tema);
     if (yeni) palet = yeni();
+  }
+  // Kamp afişi: kilitsiz ve tema istenmemişse zümrüt varsayılan — kamp afişi
+  // normal eğitim afişinden ilk bakışta ayrılsın (saha isteği, Eyl 2026).
+  if (kampModu && !stil && !ayar.tema) {
+    const kampPalet = paletAdla('zumrut');
+    if (kampPalet) palet = kampPalet();
   }
   // zemin tonu (koyulaştır / aç)
   if (ayar.zemin !== 1) {
@@ -960,8 +966,41 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     y += Math.round(H * 0.018);
   }
 
+  // ── KAMP TARİH LEVHASI ── (kamp afişi: tarih afişin kahramanı)
+  // Kamp çok günlü olduğu için tarih küçük ikon-satırı yerine altın çerçeveli
+  // büyük levha olarak çizilir. Serbest metin: "2-3-4 EKİM", "2-4 Ekim 2026"...
+  if (ayar.tarih && kampModu && egitim.tarih) {
+    const dTxt = String(egitim.tarih).toLocaleUpperCase('tr-TR');
+    const dFont = Math.round(W * 0.066 * ayar.yazi);
+    ctx.textAlign = 'center';
+    ctx.font = '800 ' + dFont + 'px ' + FF.baslik;
+    const dW = Math.min(W - M * 2, ctx.measureText(dTxt).width + Math.round(W * 0.10));
+    const dH = Math.round(dFont * 1.75);
+    const dX = Math.round((W - dW) / 2), dY = y + Math.round(H * 0.006);
+    // çerçeve + hafif altın dolgu
+    ctx.save();
+    roundRect(ctx, dX, dY, dW, dH, Math.round(dH * 0.22));
+    ctx.fillStyle = 'rgba(' + palet.goldRGB + ',0.10)';
+    ctx.fill();
+    ctx.lineWidth = Math.max(2, Math.round(W * 0.0035));
+    ctx.strokeStyle = palet.gold;
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = palet.gold;
+    ctx.fillText(dTxt, W / 2, dY + Math.round(dH * 0.70));
+    y = dY + dH + Math.round(H * 0.012);
+    // Saat kamp afişinde ZORUNLU DEĞİL — yalnız girilmişse levhanın altına ince satır
+    if (egitim.saat) {
+      const sFont = Math.round(W * 0.030 * ayar.yazi);
+      ctx.font = '600 ' + sFont + 'px ' + FF.govde;
+      ctx.fillStyle = palet.alt;
+      ctx.fillText(egitim.saat + (egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''), W / 2, y + Math.round(W * 0.026));
+      y += Math.round(W * 0.045);
+    }
+  }
+
   // ── Tarih + Saat ── (gizlenebilir, takvim/saat ikonlu)
-  if (ayar.tarih) {
+  if (ayar.tarih && !kampModu) {
     ctx.textAlign = 'left';
     const tFont = Math.round(W * 0.038 * ayar.yazi);
     ctx.font = `700 ${tFont}px ${FF.govde}`;
