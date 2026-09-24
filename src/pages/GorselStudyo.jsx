@@ -165,44 +165,100 @@ export default function GorselStudyo() {
   // Hedef görsel yuvası — yöntem Program İçeriği'yse akıllı varsayılan "2. görsel"; kullanıcı elle değiştirebilir.
   useEffect(() => { setHedefSlot(aiModel === 'program-icerigi' ? '2' : '1'); }, [aiModel, egitimId]);
 
-  // ── Program taslağı (Faz B) ──
-  // Taslak takvim doc'unun programTaslak alanında yaşar (admin-only write, cihazlar arası senkron).
-  // DataContext LIGHT fetch bu alanı getirmediği için stüdyo açılınca doc'tan taze okunur.
+  // ── Taslaklar (Program İçeriği: Faz B · Marka Afiş: Eyl 2026 saha isteği) ──
+  // Her yöntemin taslağı takvim doc'unda AYRI alanda yaşar (admin-only write, cihazlar
+  // arası senkron). DataContext LIGHT fetch bu alanları getirmediği için stüdyo
+  // açılınca doc'tan taze okunur. Yöntem değişince taslak o yöntemin alanına döner.
+  const TASLAK_ALANI = { 'program-icerigi': 'programTaslak', 'marka-afis': 'markaAfisTaslak' };
+  const taslakAlan = TASLAK_ALANI[aiModel] || null;
+
   useEffect(() => {
     setTaslak(null); setTaslakIslem('');
-    if (!egitimId || aiModel !== 'program-icerigi') return;
+    if (!egitimId || !taslakAlan) return;
     let iptal = false;
     getDoc(doc(db, 'takvim', egitimId))
-      .then(snap => { if (!iptal && snap.exists()) setTaslak(snap.data().programTaslak || null); })
+      .then(snap => { if (!iptal && snap.exists()) setTaslak(snap.data()[taslakAlan] || null); })
       .catch(() => {});
     return () => { iptal = true; };
-  }, [egitimId, aiModel]);
+  }, [egitimId, taslakAlan]);
 
   const taslagiKaydet = async () => {
-    if (!egitim) return;
+    if (!egitim || !taslakAlan) return;
     setTaslakIslem('kaydediliyor');
-    const yeni = {
-      satirlar: programSatir,
-      baslik: baslikOzel || '',
-      kaydeden: auth.currentUser?.email || '',
-      tarih: new Date().toISOString(),
-    };
-    const r = await egitimGuncelle(egitim.id, { programTaslak: yeni });
+    const ortak = { kaydeden: auth.currentUser?.email || '', tarih: new Date().toISOString() };
+    const yeni = aiModel === 'marka-afis'
+      ? {
+          ...ortak,
+          secim: markaSecim,
+          baslik: baslikOzel || '',
+          vurguKelime, vurguYon,
+          ekIstek: ekIstek || '',
+          altNot: altNot || '', altNotRenk,
+          grupModu, grupBaslik,
+          // Kişilerin afişe özel ayarları (unvan zaten sisteme yazılıyor; 👑/bölük afişe özel)
+          kisiler: speakers.map(k => ({ ad: k.ad, unvan: k.unvan || '', buyuk: !!k.buyuk, grup: k.grup || 1 })),
+        }
+      : { ...ortak, satirlar: programSatir, baslik: baslikOzel || '' };
+    const r = await egitimGuncelle(egitim.id, { [taslakAlan]: yeni });
     if (r?.success) { setTaslak(yeni); setTaslakIslem('kaydedildi'); setTimeout(() => setTaslakIslem(''), 2500); }
     else setTaslakIslem('hata');
   };
 
   const taslagiYukle = () => {
     if (!taslak) return;
+    if (aiModel === 'marka-afis') {
+      if (taslak.secim && typeof taslak.secim === 'object') setMarkaSecim(taslak.secim);
+      if (taslak.baslik) setBaslikOzel(taslak.baslik);
+      if (taslak.vurguKelime) setVurguKelime(taslak.vurguKelime);
+      if (taslak.vurguYon) setVurguYon(taslak.vurguYon);
+      setEkIstek(taslak.ekIstek || '');
+      setAltNot(taslak.altNot || '');
+      if (taslak.altNotRenk) setAltNotRenk(taslak.altNotRenk);
+      setGrupModu(!!taslak.grupModu);
+      if (Array.isArray(taslak.grupBaslik)) setGrupBaslik([0, 1, 2].map(i => taslak.grupBaslik[i] || ''));
+      // Kişi ayarlarını isme göre bindir — fotoğraf/biyografi sistemden gelmeye devam eder,
+      // taslakta olmayan kişi olduğu gibi kalır (taslak listeyi EZMEZ).
+      if (Array.isArray(taslak.kisiler) && taslak.kisiler.length) {
+        const harita = new Map(taslak.kisiler.map(k => [k.ad, k]));
+        setSpeakers(prev => prev.map(sp => {
+          const t = harita.get(sp.ad);
+          return t ? { ...sp, unvan: t.unvan || sp.unvan, buyuk: !!t.buyuk, grup: t.grup || 1 } : sp;
+        }));
+      }
+      return;
+    }
     setProgramSatir(Array.isArray(taslak.satirlar) ? taslak.satirlar : []);
     if (taslak.baslik) setBaslikOzel(taslak.baslik);
   };
 
   const taslagiSil = async () => {
-    if (!egitim) return;
-    const r = await egitimGuncelle(egitim.id, { programTaslak: deleteField() });
+    if (!egitim || !taslakAlan) return;
+    const r = await egitimGuncelle(egitim.id, { [taslakAlan]: deleteField() });
     if (r?.success) setTaslak(null);
   };
+
+  // Taslak şeridi + kaydet düğmesi — iki yöntemde de aynı (tek kaynak, iki yerde kullanılır)
+  const taslakSerit = !taslak ? null : (
+    <div className="flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+      <span className="text-[11px] text-amber-800 truncate">
+        📝 Kayıtlı taslak — {taslak.tarih ? new Date(taslak.tarih).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+        {taslak.kaydeden ? ' · ' + taslak.kaydeden.split('@')[0] : ''}
+      </span>
+      <span className="flex items-center gap-2 flex-shrink-0">
+        <button onClick={taslagiYukle} className="text-[11px] font-bold text-amber-700 hover:underline">Yükle</button>
+        <button onClick={taslagiSil} className="text-[11px] text-gray-400 hover:text-red-500">Sil</button>
+      </span>
+    </div>
+  );
+
+  const taslakKaydetDugmesi = (baslik) => (
+    <button onClick={taslagiKaydet} disabled={taslakIslem === 'kaydediliyor'}
+      title={baslik}
+      className="text-[11px] font-semibold text-amber-600 hover:underline flex items-center gap-0.5 disabled:opacity-50">
+      <Save className="w-3 h-3" />
+      {taslakIslem === 'kaydediliyor' ? '…' : taslakIslem === 'kaydedildi' ? '✓ kaydedildi' : taslakIslem === 'hata' ? 'hata — tekrar dene' : 'taslağı kaydet'}
+    </button>
+  );
 
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
   const markaModu = aiModel === 'marka-afis';
@@ -510,6 +566,18 @@ export default function GorselStudyo() {
               )}
             </div>
 
+            {/* Afiş taslağı — Marka Afiş (saha isteği Eyl 2026: marka afiş için de taslak) */}
+            {markaModu && (
+              <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-700">🎨 Afiş taslağı</span>
+                  {taslakKaydetDugmesi('Stil, başlık, notlar ve kişi ayarlarını taslak olarak kaydet — sonra kaldığın yerden devam et')}
+                </div>
+                {taslakSerit}
+                {!taslak && <div className="text-[11px] text-gray-400">Kayıtlı taslak yok. Afişi hazırlayıp taslağı kaydet'e bas — stil, başlık, alt not ve 👑/bölük ayarları saklanır.</div>}
+              </div>
+            )}
+
             {/* Özel başlık (boş = otomatik) — Marka + Program */}
             {canliModu && (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
@@ -621,28 +689,12 @@ export default function GorselStudyo() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-gray-700">📋 Program satırları</span>
                   <div className="flex items-center gap-2.5">
-                    <button onClick={taslagiKaydet} disabled={taslakIslem === 'kaydediliyor'}
-                      title="Program satırlarını taslak olarak kaydet — sonra kaldığın yerden devam et"
-                      className="text-[11px] font-semibold text-amber-600 hover:underline flex items-center gap-0.5 disabled:opacity-50">
-                      <Save className="w-3 h-3" />
-                      {taslakIslem === 'kaydediliyor' ? '…' : taslakIslem === 'kaydedildi' ? '✓ kaydedildi' : taslakIslem === 'hata' ? 'hata — tekrar dene' : 'taslağı kaydet'}
-                    </button>
+                    {taslakKaydetDugmesi('Program satırlarını taslak olarak kaydet — sonra kaldığın yerden devam et')}
                     <button onClick={() => setProgramSatir(prev => [...prev, { saat: '', baslik: '', konusmaciAd: '', notlar: '' }])}
                       className="text-[11px] text-amare-purple hover:underline flex items-center gap-0.5"><Plus className="w-3 h-3" /> satır ekle</button>
                   </div>
                 </div>
-                {taslak && (
-                  <div className="flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
-                    <span className="text-[11px] text-amber-800 truncate">
-                      📝 Kayıtlı taslak — {taslak.tarih ? new Date(taslak.tarih).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
-                      {taslak.kaydeden ? ` · ${taslak.kaydeden.split('@')[0]}` : ''}
-                    </span>
-                    <span className="flex items-center gap-2 flex-shrink-0">
-                      <button onClick={taslagiYukle} className="text-[11px] font-bold text-amber-700 hover:underline">Yükle</button>
-                      <button onClick={taslagiSil} className="text-[11px] text-gray-400 hover:text-red-500">Sil</button>
-                    </span>
-                  </div>
-                )}
+                {taslakSerit}
                 {programSatir.length === 0 && <div className="text-[11px] text-gray-400">Bu eğitimde program akışı yok. "+ satır ekle" ile oluştur.</div>}
                 {programSatir.map((r, i) => {
                   const upd = (alan, val) => setProgramSatir(prev => prev.map((x, idx) => idx === i ? { ...x, [alan]: val } : x));
