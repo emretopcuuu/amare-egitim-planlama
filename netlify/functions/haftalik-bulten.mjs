@@ -148,6 +148,7 @@ export default async (req) => {
     const egitimler = [];
     snap.forEach(doc => {
       const e = { id: doc.id, ...doc.data() };
+      if (e.gizli === true) return; // gizli eğitim bültene girmez (geri alınamaz gönderim)
       const d = parseTarih(e.tarih);
       if (d && d >= bugun && d < limit) egitimler.push({ ...e, _d: d });
     });

@@ -47,6 +47,8 @@ export default async (request, context) => {
     if (!res.ok) return context.next();
     const doc = await res.json();
     const egitim = parseFirestoreDoc(doc);
+    // Gizli eğitim: paylaşım önizlemesi (başlık/açıklama/afiş/JSON-LD) HİÇ üretilmez.
+    if (egitim.gizli === true) return context.next();
 
     // SPA HTML'ini al
     const spaResponse = await context.next();
@@ -68,7 +70,8 @@ export default async (request, context) => {
     // og:image — sadece HTTPS URL olabilir. base64 data: URL ise (Firestore inline)
     // WhatsApp/FB preview gösteremez, fallback olarak One Team logosu kullan
     let ogImage = 'https://egitimtakvimi.oneteamglobal.ai/logos/oneteam%20logo.JPG';
-    if (egitim.gorselUrl && /^https?:\/\//.test(egitim.gorselUrl)) {
+    // Afişi gizli olan eğitimde afiş paylaşılmaz — logo fallback'i kalır.
+    if (egitim.gorselGizli !== true && egitim.gorselUrl && /^https?:\/\//.test(egitim.gorselUrl)) {
       ogImage = egitim.gorselUrl;
     }
     const canonicalUrl = `https://egitimtakvimi.oneteamglobal.ai/e/${encodeURIComponent(egitimId)}`;

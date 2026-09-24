@@ -85,7 +85,11 @@ export default async (req) => {
 
     if (!(col in WHITELIST)) return jsonRes('{"error":"col"}', 403, hataHeaders(headers));
     const snap = await db.collection(col).limit(500).get();
-    const docs = snap.docs.map(d => ({ id: d.id, ...filtrele(d.data(), WHITELIST[col]) }));
+    // Gizli eğitim (saha isteği Eyl 2026): hazırlık aşamasındaki etkinlik hiçbir public yüzeyde görünmez.
+    // Bayrak whitelist'te DEĞİL — dışarı sızmasın, doc'un kendisi elenir.
+    const docs = snap.docs
+      .filter(d => !(col === 'takvim' && d.data()?.gizli === true))
+      .map(d => ({ id: d.id, ...filtrele(d.data(), WHITELIST[col]) }));
     return jsonRes({ docs }, 200, headers);
   } catch (e) {
     console.error('[veri-proxy]', col, e?.message);

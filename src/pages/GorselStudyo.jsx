@@ -242,6 +242,19 @@ export default function GorselStudyo() {
     if (taslak.baslik) setBaslikOzel(taslak.baslik);
   };
 
+  // ── GÖRÜNÜRLÜK (saha isteği Eyl 2026: "İndir ve eğitime bağla altına gizli/görünür") ──
+  // İki ayrı bayrak: afişi gizle (eğitim görünür, afiş yayınlanmaz) ve
+  // eğitimi gizle (etkinlik hiçbir public yüzeyde yok). DataContext süzgeci +
+  // sunucu tarafı (veri-proxy/ical/event-og/bülten/katil-tikla) bunları uygular.
+  const [gorunurlukIslem, setGorunurlukIslem] = useState('');
+  const gorunurlukYaz = async (alan, gizliMi) => {
+    if (!egitim) return;
+    setGorunurlukIslem(alan);
+    const r = await egitimGuncelle(egitim.id, { [alan]: gizliMi });
+    setGorunurlukIslem('');
+    if (!r?.success) setError('Görünürlük kaydedilemedi: ' + (r?.error || 'bilinmeyen hata'));
+  };
+
   const taslagiSil = async () => {
     if (!egitim || !taslakAlan) return;
     const r = await egitimGuncelle(egitim.id, { [taslakAlan]: deleteField() });
@@ -975,6 +988,38 @@ export default function GorselStudyo() {
                   {baglandi ? <><CheckCircle2 className="w-4 h-4" /> Bağlandı</> : baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" /> …</> : <><Link2 className="w-4 h-4" /> {hedefSlot==='2' ? '2. Görsel Olarak Bağla' : 'Eğitime Bağla'}</>}
                 </button>
               </div>
+              {/* Görünürlük — afiş ve eğitim ayrı ayrı yayınlanır/gizlenir */}
+              <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                {[
+                  { alan: 'gorselGizli', ad: 'Afiş', not: 'Gizliyken eğitim görünür, afiş yayınlanmaz.' },
+                  { alan: 'gizli', ad: 'Eğitim', not: 'Gizliyken takvim, arama, paylaşım ve bültende hiç görünmez.' },
+                ].map(sat => {
+                  const gizliMi = egitim[sat.alan] === true;
+                  const bekliyor = gorunurlukIslem === sat.alan;
+                  return (
+                    <div key={sat.alan}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-gray-600 w-12 flex-shrink-0">{sat.ad}</span>
+                        <div className="flex-1 grid grid-cols-2 gap-1.5">
+                          {[
+                            { deger: false, ad: '👁 Görünür', aktifCls: 'border-green-500 bg-green-50 text-green-700' },
+                            { deger: true, ad: '🙈 Gizli', aktifCls: 'border-amber-500 bg-amber-50 text-amber-700' },
+                          ].map(se => (
+                            <button key={String(se.deger)} onClick={() => gorunurlukYaz(sat.alan, se.deger)} disabled={bekliyor}
+                              className={`py-1.5 rounded-lg text-[11px] font-bold border transition disabled:opacity-50 ${
+                                gizliMi === se.deger ? se.aktifCls : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                              {bekliyor && gizliMi !== se.deger ? '…' : se.ad}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {gizliMi && <p className="text-[10px] text-amber-700 mt-1 ml-14">{sat.not}</p>}
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-gray-400 pt-0.5">Gizli eğitim admin panelinde görünmeye devam eder — yalnız dışarıya kapanır.</p>
+              </div>
+
               {/* Canlı modlarda otomatik üretildiği için "Yeniden üret" kaldırıldı.
                   Hata olursa elle tekrar denemek için göster. */}
               {canliModu && error && (

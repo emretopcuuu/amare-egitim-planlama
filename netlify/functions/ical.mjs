@@ -60,6 +60,7 @@ export default async (request) => {
     const now = new Date();
     const events = [];
     egitimler.forEach(e => {
+      if (e.gizli === true) return; // gizli eğitim takvim aboneliğine düşmez
       const d = parseTarih(e.tarih);
       if (!d) return;
       if (!e.saat || !e.saat.includes(':')) return;

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
 import { db, storage, auth, googleProvider } from '../utils/firebase';
 import {
   collection,
@@ -92,7 +92,7 @@ export const DataProvider = ({ children }) => {
 
   // ── LocalStorage cache helpers ──────────────────────────────────
   // Return visit'lerde anında açılış sağlar: cache → setState → fresh fetch arkaplanda
-  const CACHE_KEY = 'amare_data_cache_v2';
+  const CACHE_KEY = 'amare_data_cache_v3'; // v3: gizli/gorselGizli bayrakları eklendi
   const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 gün
 
   const loadFromCache = () => {
@@ -195,7 +195,7 @@ export const DataProvider = ({ children }) => {
 
   // HIZLI takvim fetch — base64 gorselUrl HARİÇ (her doc 1MB → 1KB!)
   // gorselUrl marker ile bilinir, lazy yüklenir
-  const TAKVIM_LIGHT_FIELDS = ['egitim','gun','tarih','saat','bitisSaati','sure','egitmen','yer','hafta','kategori','sehir','aciklama','katilimSayisi','tamamlandi','katilTiklamaSayisi','zoomGercekKatilim','zoomOrtDakika','zoomEgri','canliKisi','biletLink'];
+  const TAKVIM_LIGHT_FIELDS = ['egitim','gun','tarih','saat','bitisSaati','sure','egitmen','yer','hafta','kategori','sehir','aciklama','katilimSayisi','tamamlandi','katilTiklamaSayisi','zoomGercekKatilim','zoomOrtDakika','zoomEgri','canliKisi','biletLink','gizli','gorselGizli'];
   const KONUSMACI_LIGHT_FIELDS = ['ad','unvan','biyografi','linkedin','meslek','amareKariyer','doktorBrans']; // fotoURL hariç
 
   const fetchLightCollection = async (name, fields, deneme = 2) => {
@@ -1070,9 +1070,37 @@ export const DataProvider = ({ children }) => {
     return () => unsub();
   }, []);
 
+  // ── GÖRÜNÜRLÜK SÜZGECİ (saha isteği Eyl 2026) ──────────────────────────────
+  // İki ayrı bayrak, ikisi de takvim doc'unda:
+  //   gizli:true       → eğitim hiçbir public yüzeyde görünmez (hazırlık/taslak etkinlik)
+  //   gorselGizli:true → eğitim görünür ama afişi yayınlanmaz (afiş hazır, duyuru değil)
+  // Süzgeç TÜKETİM anında çalışır (state'te ham liste durur) → isAdmin auth'tan
+  // geç geldiğinde liste kendiliğinden yeniden türetilir, yeniden fetch gerekmez.
+  //
+  // KAPSAM NOTU: takvim koleksiyonu firestore.rules'ta herkese açık okunur
+  // (allow read: if true). Bu süzgeç + sunucu tarafı (veri-proxy, ical, event-og,
+  // bülten, katil-tikla) uygulamanın TÜM yüzeylerini kapatır; elle Firestore REST
+  // çağrısı yapan birini kapatmaz. Kuralı sıkılaştırmak liste sorgularını kırar
+  // (üç fetch yolu da filtresiz list) — bilinçli olarak yapılmadı.
+  const takvimGorunur = useMemo(() => {
+    if (isAdmin) return takvim; // admin her şeyi görür (panel/stüdyo bozulmasın)
+    const liste = [];
+    for (const e of takvim) {
+      if (e?.gizli === true) continue;
+      if (e?.gorselGizli === true) {
+        const { gorselUrl, gorselUrl2, ...kalan } = e;
+        liste.push(kalan);
+        continue;
+      }
+      liste.push(e);
+    }
+    return liste;
+  }, [takvim, isAdmin]);
+
   const value = {
     egitmenler,
-    takvim,
+    takvim: takvimGorunur,
+    takvimHam: takvim, // admin ekranları için ham liste (süzgeçsiz)
     takvimYayinlandi,
     loading,
     isAdmin,

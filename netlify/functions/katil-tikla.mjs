@@ -58,7 +58,8 @@ export default async (req) => {
 
     const sonuc = await db.runTransaction(async (tx) => {
       const egitimSnap = await tx.get(egitimRef);
-      if (!egitimSnap.exists) throw new Error('Eğitim bulunamadı');
+      // Gizli eğitim var-yok bilgisini bile sızdırmaz — yok muamelesi görür.
+      if (!egitimSnap.exists || egitimSnap.data()?.gizli === true) throw new Error('Eğitim bulunamadı');
       const katilimSnap = await tx.get(katilimRef);
       if (katilimSnap.exists) return { yeni: false, katilTiklamaSayisi: egitimSnap.data().katilTiklamaSayisi || 0 };
 
