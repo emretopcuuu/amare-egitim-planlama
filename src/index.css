@@ -539,6 +539,19 @@ html {
   }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+  /* iOS Safari, 16px altı bir form alanına odaklanınca sayfayı yakınlaştırır ve GERİ ALMAZ;
+     o yakınlaştırılmış durumda açılan tam ekran katmanlar (video oynatıcı) görünür alandan
+     büyük kalır → "ekran sağa sola kayıyor, sığmıyor" (saha şikâyeti, Eki 2026).
+     Dokunmatik cihazlarda tüm giriş alanları en az 16px → otomatik zoom hiç tetiklenmez. */
+  @media (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+    select,
+    textarea { font-size: max(16px, 1em) !important; }
+  }
+  /* Katman (modal/sheet) açıkken arka plan kaymasın. body{overflow:hidden} iOS'ta dokunma
+     kaydırmasını durdurmaz; position:fixed + kaydedilen scrollY (utils/bodyKilit.js) durdurur. */
+  body.modal-kilit { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+
   /* ── Sayfa içeriği için bottom nav payını veren utility ─────
      Mobile: 64px nav + iOS home-bar safe-area + 1rem nefes
      Desktop: sadece 3rem (nav yok) */

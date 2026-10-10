@@ -11,6 +11,7 @@ import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getDoc } from 'firebase/firestore';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
+import { bodyKilitle, bodyKilidiAc } from '../utils/bodyKilit';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import UyeGirisModal from '../components/UyeGirisModal';
 import AiOneriKart from '../components/AiOneriKart';
@@ -1273,10 +1274,13 @@ const FilterSheet = ({
     setKategoriSet(s => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
   };
 
+  // Panel açıkken arka plan kaymasın (iOS dahil); dvh → iOS adres çubuğu açılıp kapanınca panel sığar
+  useEffect(() => { bodyKilitle(); return bodyKilidiAc; }, []);
   return (
-    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm animate-fade-in"
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm animate-fade-in overscroll-contain"
       onClick={onClose}>
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-b from-purple-900 to-indigo-950 rounded-t-3xl shadow-2xl max-h-[88vh] flex flex-col animate-slide-up"
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-b from-purple-900 to-indigo-950 rounded-t-3xl shadow-2xl max-h-[88vh] flex flex-col animate-slide-up pb-safe"
+        style={{ maxHeight: '88dvh' }}
         onClick={e => e.stopPropagation()}>
         {/* Drag handle */}
         <div className="pt-3 pb-1 flex justify-center flex-shrink-0">
