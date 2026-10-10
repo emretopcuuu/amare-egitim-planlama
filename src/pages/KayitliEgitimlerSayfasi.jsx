@@ -154,7 +154,7 @@ function highlightSnippet(text, q) {
 }
 
 // v6 → v7: DIL_PATTERNS genişletildi (business presentation, geschäftspräsentation vb.)
-const CACHE_KEY = 'amare_kayitli_egitimler_all_v7';
+const CACHE_KEY = 'amare_kayitli_egitimler_all_v8'; // v8: ağır alanlar atıldı → artık localStorage'a sığar
 const TTL = 12 * 60 * 60 * 1000;
 const FAV_KEY = 'amare_video_favoriler';
 const HIST_KEY = 'amare_video_gecmis';
@@ -305,7 +305,7 @@ const KayitliEgitimlerSayfasi = () => {
   useEffect(() => {
     // Eski cache versiyonlarını temizle
     try {
-      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4', 'amare_kayitli_egitimler_all_v5', 'amare_kayitli_egitimler_all_v6']
+      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4', 'amare_kayitli_egitimler_all_v5', 'amare_kayitli_egitimler_all_v6', 'amare_kayitli_egitimler_all_v7']
         .forEach(k => localStorage.removeItem(k));
       // Eski per-category cache'leri de sil (v1 mantığından kalan)
       Object.keys(localStorage)
@@ -329,51 +329,59 @@ const KayitliEgitimlerSayfasi = () => {
 
     setLoading(true);
     (async () => {
+      // Hafifletme: liste için ağır alanlar (transcript ≈15 KB + transcriptChunks ≈20 KB / video)
+      // asla state/önbelleğe girmez. Eskiden yalnız transcript atılıyordu → 982 video ≈ 16 MB JSON
+      // → localStorage QuotaExceededError → 12 saatlik önbellek HİÇ çalışmıyor, her açılış tam
+      // indirme (~36 MB) oluyordu. Oynatıcı transcript'i kendi getDoc'uyla ayrıca çeker.
+      const AGIR_ALANLAR = ['transcript', 'transcriptChunks', 'olusturulmaTarihi', 'guncellemeTarihi'];
+      const hafiflet = (v) => { const h = { ...v }; for (const a of AGIR_ALANLAR) delete h[a]; return h; };
+      const kaydet = (data) => {
+        setTumVideolar(data);
+        setYuklemeHatasi(false);
+        // Boş sonucu CACHE'LEME — geçici glitch 12 saatlik "0 eğitim" ekranına dönüşür
+        if (data.length > 0) {
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); }
+          catch (e) { console.warn('[kayitli_egitimler] önbellek yazılamadı:', e?.name); }
+        }
+        setLoading(false);
+      };
+
+      // 1) BİRİNCİL: kendi domain proxy'miz — sunucu Firestore'dan yalnız liste alanlarını (select)
+      //    çeker, CDN 5 dk önbellekler → ~250 KB, soğukta ~1-2 sn, sıcakta ~100 ms.
+      //    (Eski birincil yol istemci SDK ile TAM belgeleri, ≈36 MB, indiriyordu.)
+      try {
+        const ctrl = new AbortController();
+        const zamanlayici = setTimeout(() => ctrl.abort(), 15000);
+        const res = await fetch('/.netlify/functions/veri-proxy?col=kayitli', { signal: ctrl.signal });
+        clearTimeout(zamanlayici);
+        if (!res.ok) throw new Error(`proxy ${res.status}`);
+        const { docs } = await res.json();
+        if (!Array.isArray(docs) || !docs.length) throw new Error('proxy boş');
+        kaydet(docs.map(v => { const h = hafiflet(v); h.dil = detectDil(h); return h; }));
+        return;
+      } catch (pe) {
+        console.warn('[kayitli_egitimler] proxy birincil yol başarısız, SDK yedeğine geçiliyor:', pe?.message);
+      }
+
+      // 2) YEDEK: Firestore SDK (tam belgeler iner; ağır alanlar yine de atılır) — 3 deneme
       const q = query(
         collection(db, 'kayitli_egitimler'),
         where('kayeneFiltrelendi', '==', false),
         orderBy('tarih', 'desc'),
         fbLimit(2500)
       );
-      // Geçici ağ/SDK hatasına karşı 3 deneme — tek blip "0 eğitim" yapmasın
       let sonHata;
       for (let i = 0; i < 3; i++) {
         try {
           const snap = await getDocs(q);
-          const data = snap.docs.map(d => {
-            const { transcript, ...rest } = d.data();
-            const v = { id: d.id, ...rest };
-            v.dil = detectDil(v);
-            return v;
-          });
-          setTumVideolar(data);
-          setYuklemeHatasi(false);
-          // Boş sonucu CACHE'LEME — geçici glitch 12 saatlik "0 eğitim" ekranına dönüşür
-          if (data.length > 0) {
-            try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
-          }
-          setLoading(false);
+          kaydet(snap.docs.map(d => { const v = hafiflet({ id: d.id, ...d.data() }); v.dil = detectDil(v); return v; }));
           return;
         } catch (err) {
           sonHata = err;
           if (i < 2) await new Promise(r => setTimeout(r, 600 * (i + 1)));
         }
       }
-      // SDK 3 denemede de başarısız → kendi domain proxy'miz (ISS googleapis'i kesse bile çalışır)
-      try {
-        const res = await fetch('/.netlify/functions/veri-proxy?col=kayitli');
-        if (!res.ok) throw new Error(`proxy ${res.status}`);
-        const { docs } = await res.json();
-        if (Array.isArray(docs) && docs.length) {
-          const data = docs.map(v => ({ ...v, dil: detectDil(v) }));
-          setTumVideolar(data);
-          setYuklemeHatasi(false);
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
-          setLoading(false);
-          return;
-        }
-      } catch (pe) { console.warn('[kayitli_egitimler] proxy fallback da başarısız:', pe?.message); }
-      console.error('[kayitli_egitimler] fetch 3 denemede de başarısız:', sonHata?.message);
+      console.error('[kayitli_egitimler] proxy + SDK (3 deneme) başarısız:', sonHata?.message);
       try { (await import('../utils/sentry')).Sentry?.captureException?.(sonHata, { tags: { yer: 'kayitli-egitimler-load' } }); } catch {}
       setYuklemeHatasi(true); // mevcut (cache) veriyi EZME, hatayı işaretle
       setLoading(false);
