@@ -3,7 +3,8 @@
 //     Mobile'da vertical stack (mevcut davranış)
 //     currentTime tracking → transcript chunks aktif highlight
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { X, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-react';
+import { X, ChevronDown, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-react';
+import { bodyKilitle, bodyKilidiAc } from '../utils/bodyKilit';
 import { useVimeoTimeTracker } from '../utils/useVimeoTimeTracker';
 import { updateProgress } from '../utils/watchProgress';
 import { confetti } from './Konfeti';
@@ -38,6 +39,7 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
   const [aciklamaAcik, setAciklamaAcik] = useState(false);
   const [currentTime, setCurrentTime] = useState(0); // canlı highlight için
   const iframeRef = useRef(null);
+  const kapsayiciRef = useRef(null); // kaydırılan katman (mobilde oynatıcı üstte sabit kalır)
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -91,12 +93,18 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
     if (!video) return;
     const onEsc = (e) => { if (e.key === 'Escape') onClose?.(); };
     document.addEventListener('keydown', onEsc);
-    document.body.style.overflow = 'hidden';
+    bodyKilitle(); // iOS'ta da arka plan kaymaz (eski overflow:hidden iOS'ta yetmiyordu)
     return () => {
       document.removeEventListener('keydown', onEsc);
-      document.body.style.overflow = '';
+      bodyKilidiAc();
     };
   }, [video, onClose]);
+
+  // "Aynı eğitmenden" bir videoya geçince katmanı başa al → yeni video hemen görünür
+  // (eskiden kullanıcı aşağıda kalıyor, video yukarıda görünmeden oynuyordu → "video karışıyor").
+  useEffect(() => {
+    try { kapsayiciRef.current?.scrollTo({ top: 0 }); } catch {}
+  }, [video?.id]);
 
   const ilgiliVideolar = useMemo(() => {
     if (!video || !tumVideolar?.length) return [];
@@ -126,11 +134,16 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
   const onSeek = (s) => vimeoSeekAndPlay(iframeRef.current, s);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 lg:p-6 animate-fade-in overflow-y-auto"
+    // MOBİL (lg altı): YouTube düzeni — oynatıcı kenardan kenara ve üstte SABİT (sticky),
+    // kapat düğmesi oynatıcının üstünde, başlık/metin altında kayar. Katman kendi içinde
+    // kaydırılır (overscroll-contain → arka plana sıçramaz). MASAÜSTÜ (lg+): eski kart düzeni.
+    <div ref={kapsayiciRef}
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-black lg:bg-black/90 lg:backdrop-blur-sm lg:p-6 animate-fade-in overflow-y-auto overscroll-contain"
+      style={{ WebkitOverflowScrolling: 'touch' }}
       onClick={onClose}>
-      <div className="w-full max-w-7xl flex flex-col my-2 sm:my-4" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2 px-1">
+      <div className="w-full lg:max-w-7xl flex flex-col lg:my-4 min-h-full" onClick={e => e.stopPropagation()}>
+        {/* Header — yalnız masaüstü (mobilde başlık oynatıcının altında) */}
+        <div className="hidden lg:flex items-center justify-between mb-2 px-1">
           <h3 className="text-white text-sm sm:text-base font-semibold line-clamp-1 flex-1 pr-3">
             {video.baslik}
           </h3>
@@ -143,19 +156,32 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
         {/* ─── DESKTOP SIDEBAR LAYOUT (lg+): video sol 60%, AI panel sağ 40% ─── */}
         <div className="lg:grid lg:grid-cols-[1fr_400px] lg:gap-4 xl:grid-cols-[1fr_460px]">
           {/* ─── SOL: Video + meta + reactions + diğer ─── */}
-          <div className="space-y-3">
-            {/* Iframe */}
-            <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ paddingTop: '56.25%' }}>
-              <iframe
-                ref={iframeRef}
-                src={iframeSrc}
-                className="absolute inset-0 w-full h-full"
-                frameBorder="0"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-                title={video.baslik}
-              />
+          <div className="space-y-3 [&>*:not(:first-child)]:mx-3 lg:[&>*:not(:first-child)]:mx-0"
+            style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
+            {/* Oynatıcı — mobilde üstte sabit (sticky) ve kenardan kenara; masaüstünde kart */}
+            <div className="sticky top-0 z-10 lg:static bg-black" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+              <div className="relative w-full bg-black lg:rounded-xl overflow-hidden lg:shadow-2xl" style={{ paddingTop: '56.25%' }}>
+                <iframe
+                  ref={iframeRef}
+                  src={iframeSrc}
+                  className="absolute inset-0 w-full h-full"
+                  frameBorder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  title={video.baslik}
+                />
+                {/* Mobil kapat (YouTube'daki aşağı ok) — oynatıcının sol üstünde */}
+                <button onClick={onClose} aria-label="Kapat"
+                  className="lg:hidden absolute top-2 left-2 z-20 w-9 h-9 rounded-full bg-black/60 backdrop-blur text-white flex items-center justify-center spring-tap">
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </div>
             </div>
+
+            {/* Mobil başlık — oynatıcının hemen altında */}
+            <h3 className="lg:hidden text-white text-[15px] font-semibold leading-snug line-clamp-2 pt-3">
+              {video.baslik}
+            </h3>
 
             {/* Üst satır: tarih, süre, plays */}
             <div className="text-white/80 text-xs sm:text-sm flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
