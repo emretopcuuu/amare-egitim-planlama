@@ -15,6 +15,9 @@
 //   Çağrı Kıvrakdal   → kayıt: Genesis E-Ticaret (şirket hesabı)
 //   Şule / Yavuz Bağcı → kayıt: Bağcı Akademi (şirket hesabı)
 //
+// LİSTEDE DEĞİL: Gamze Çakmak — WhatsApp grubunda var ama kurul üyesi değil,
+// One Team yönetim asistanı (Emre, 13 Eki). Tekrar eklenmesin.
+//
 // Sıralama: rütbe (Presidential → Diamond), sonra Türkçe ada göre.
 // Liste değişince bu dosyayı güncelle; admin sayfadan da düzenleyebilir
 // (Firestore site_icerik/yurutmekurulu override'ı bu dosyayı ezer).
@@ -112,7 +115,6 @@ export const YURUTME_KURULU = [
   { ad: 'Vildan Tunç' },
   { ad: 'Barış Diker' },
   { ad: 'Filiz Bayazıt' },
-  { ad: 'Gamze Çakmak' },
   { ad: 'Handan Çolak' },
   { ad: 'İlknur Yalçın Akkaş', coreId: 'ilknur_akkas' },
   { ad: 'Orhan Coşkun' },
