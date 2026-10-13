@@ -344,7 +344,8 @@ const KomisyonDetay = () => {
         ...yeniIcerik,
         adminEmails: deleteField(), // eski PII alanı kalmışsa temizle
         guncellemeTarihi: serverTimestamp(),
-        guncelleyenEmail: user?.email,
+        // 13 Eki 2026 güvenlik denetimi: koleksiyon herkese açık, güncelleyenin e-postası burada okunuyordu — yazılmaz, eskisi silinir.
+        guncelleyenEmail: deleteField(),
       }, { merge: true });
       setOrijinalIcerik(yeniIcerik);
       setIcerik(yeniIcerik);

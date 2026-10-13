@@ -157,7 +157,7 @@ async function main() {
     await ref.set({
       uyeler: yeniUyeler,
       guncellemeTarihi: admin.firestore.FieldValue.serverTimestamp(),
-      guncelleyenEmail: 's.emretopcu@gmail.com (cli)',
+      guncelleyenEmail: admin.firestore.FieldValue.delete(), // 13 Eki 2026: koleksiyon herkese açık, e-posta yazılmaz
     }, { merge: true });
     console.log(`   ✓ ${s.komisyonId}`);
   }
