@@ -17,6 +17,8 @@
 //
 // LİSTEDE DEĞİL: Gamze Çakmak — WhatsApp grubunda var ama kurul üyesi değil,
 // One Team yönetim asistanı (Emre, 13 Eki). Tekrar eklenmesin.
+// LİSTEDE DEĞİL: Müberra Çamurcu — ortak hesabın eşi ama kurulda değil
+// (Emre, 13 Eki). Ortak hesabı bölerken yanlışlıkla eklenmişti.
 //
 // Sıralama: rütbe (Presidential → Diamond), sonra Türkçe ada göre.
 // Liste değişince bu dosyayı güncelle; admin sayfadan da düzenleyebilir
@@ -100,7 +102,6 @@ export const YURUTME_KURULU = [
   { ad: 'Nesrin Ayrancı', coreId: 'nesrin_ayranci' },
   { ad: 'Saide Zöngür' },
   { ad: 'Selçuk Çamurcu', coreId: 'selcuk_camurcu' },
-  { ad: 'Müberra Çamurcu' },
   { ad: 'Selda Tuna İş' },
   { ad: 'Serdar Acar' },
   { ad: 'Serkan Gürzsoy' },
