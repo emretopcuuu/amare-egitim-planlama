@@ -31,7 +31,7 @@ const I18N = {
     geri: 'Geri',
     kicker: 'OneTeam Liderleri',
     baslik: 'One Team Yönetim Kurulu',
-    aciklama: 'OneTeam ekosistemini yönlendiren Diamond ve üstü liderler.',
+    aciklama: 'OneTeam ekosistemini yönlendiren, haftalık toplanan liderler kurulu.',
     altMetin: 'Bu liderler komisyonları kurar, eğitim politikalarını belirler ve OneTeam ailesini büyütür.',
     uye: 'üye',
   },
@@ -40,7 +40,7 @@ const I18N = {
     geri: 'Back',
     kicker: 'OneTeam Leaders',
     baslik: 'One Team Board',
-    aciklama: 'The Diamond and above leaders steering the OneTeam ecosystem.',
+    aciklama: 'The board of leaders steering the OneTeam ecosystem, meeting weekly.',
     altMetin: 'These leaders form the committees, set training policies, and grow the OneTeam family.',
     uye: 'members',
   },
@@ -49,7 +49,7 @@ const I18N = {
     geri: 'Zurück',
     kicker: 'OneTeam-Führung',
     baslik: 'One Team Vorstand',
-    aciklama: 'Die Diamond-Führungskräfte und höher, die das OneTeam-Ökosystem lenken.',
+    aciklama: 'Das wöchentlich tagende Gremium der Führungskräfte des OneTeam-Ökosystems.',
     altMetin: 'Diese Führungskräfte bilden die Ausschüsse, legen die Bildungsrichtlinien fest und vergrößern die OneTeam-Familie.',
     uye: 'Mitglieder',
   },
@@ -58,7 +58,7 @@ const I18N = {
     geri: 'Terug',
     kicker: 'OneTeam Leiders',
     baslik: 'One Team Bestuur',
-    aciklama: 'De Diamond-leiders en hoger die het OneTeam-ecosysteem sturen.',
+    aciklama: 'Het wekelijks vergaderende bestuur van leiders van het OneTeam-ecosysteem.',
     altMetin: 'Deze leiders vormen de commissies, bepalen het opleidingsbeleid en laten de OneTeam-familie groeien.',
     uye: 'leden',
   },
@@ -86,9 +86,9 @@ const YurutmekuruluSayfasi = () => {
   const [yeniUyeAd, setYeniUyeAd] = useState('');
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
-  // Üye listesi — öncelik: Firestore override > canlı fonksiyon > sabit yedek.
-  // Fonksiyon düşerse sayfa BOŞ KALMAZ, sabit yedekle çizilmeye devam eder
-  // (takvimdeki "boşu ezme" dersi: hata hiçbir zaman listeyi silmemeli).
+  // Üye listesi — kaynak src/utils/yurutmeKurulu.js (kurul, WhatsApp grubundaki
+  // adlardan oluşan sabit bir listedir; rütbeden türetilmez). Admin sayfadan
+  // düzenlerse Firestore override'ı bu listeyi ezer.
   useEffect(() => {
     let iptal = false;
     (async () => {
@@ -96,17 +96,6 @@ const YurutmekuruluSayfasi = () => {
       if (iptal) return;
       if (d?.uyeler && Array.isArray(d.uyeler) && d.uyeler.length > 0) {
         setUyeler(d.uyeler);   // admin elle düzenlemiş → o kazanır
-        return;
-      }
-      try {
-        const res = await fetch('/.netlify/functions/yonetim-kurulu');
-        if (!res.ok) throw new Error('durum ' + res.status);
-        const veri = await res.json();
-        if (!iptal && Array.isArray(veri?.uyeler) && veri.uyeler.length > 0) {
-          setUyeler(veri.uyeler);
-        }
-      } catch (e) {
-        console.warn('[yonetim-kurulu] canlı liste alınamadı, yedek kullanılıyor:', e.message);
       }
     })();
     return () => { iptal = true; };

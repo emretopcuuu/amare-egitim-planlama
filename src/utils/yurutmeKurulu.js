@@ -1,50 +1,111 @@
-// OneTeam Yürütme Kurulu
-// Tek liste, kariyerler/rütbeler görünmez — sadece üye adları.
-// Foto: konuşmacılar collection'ından coreId match ile otomatik gelir
-// (YurutmekuruluSayfasi.jsx → makeCoreId(ad) → konusmacilar[cid].fotoURL)
+// One Team Yönetim Kurulu — üye listesi
+// Tek liste, kariyerler/rütbeler GÖRÜNMEZ — sadece üye adları.
+// Foto: konuşmacılar collection'ından coreId match ile otomatik gelir.
 //
-// Sıralama: Mevcut hiyerarşi (Presidential → 3-Star → 2-Star → 1-Star)
-//           ama UI'da rütbe başlığı/etiketi gösterilmez.
+// 13 Eki 2026: Yürütme Kurulu 21 Eylül'de kapandı, yerini One Team Yönetim
+// Kurulu aldı. Liste "2026 ONE TEAM YÖNETİM KURULU" WhatsApp grubunun
+// üyelerinden oluşur (kurul TÜM Diamond'lar değildir) ve rehber adları
+// Amare kayıtlarıyla eşleştirilip Emre'nin teyidiyle düzeltilmiştir.
+//
+// Ortak hesaplar tek kartta birleşir ("Alp & Birgül Özekici" gibi).
+// Birkaç kayıt sistemde farklı adla duruyor; sayfada kişinin kendi adı yazılır:
+//   Cihan Öyke        → kayıt: Durmuş Öyke (kardeşi)
+//   Çağrı Kıvrakdal   → kayıt: Genesis E-Ticaret (şirket hesabı)
+//   Şule / Yavuz Bağcı → kayıt: Bağcı Akademi (şirket hesabı)
+//
+// Sıralama: rütbe (Presidential → Diamond), sonra Türkçe ada göre.
+// Liste değişince bu dosyayı güncelle; admin sayfadan da düzenleyebilir
+// (Firestore site_icerik/yurutmekurulu override'ı bu dosyayı ezer).
 
 export const YURUTME_KURULU = [
-  // Presidential Diamond (5)
   { ad: 'Emre Topçu' },
   { ad: 'Ferhat Gök' },
   { ad: 'Kenan Kozanhan' },
   { ad: 'Murat Karaman' },
   { ad: 'Ziya Şakir Yılmaz' },
-
-  // 3-Star Diamond (2)
   { ad: 'Aytuğ Gönül' },
   { ad: 'Fatih Mehmet Adıyaman' },
-
-  // 2-Star Diamond (3)
   { ad: 'Ali Koçoğlu' },
+  { ad: 'Çağrı Kıvrakdal' },
   { ad: 'Furkan Çite' },
   { ad: 'İbrahim Düzenli' },
-
-  // 1-Star Diamond + eklemeler (14)
+  { ad: 'Yunus Emre Yinanç' },
   { ad: 'Arda Çakır' },
-  { ad: 'Barış Diker' },           // EKLENDİ
-  { ad: 'Filiz Bayazıt' },
+  { ad: 'Dr. Fatih & Dr. Zeynep Demir' },
   { ad: 'Gülay Rençber' },
-  { ad: 'İlknur Akkaş' },           // EKLENDİ (Özgür Akkaş maili altında)
+  { ad: 'İhsan Çomak' },
   { ad: 'Kasım Mazılıgüney' },
   { ad: 'Mahmut İlker Yılmaz' },
+  { ad: 'Nuri Haksever' },
   { ad: 'Özgür Akkaş' },
   { ad: 'Özkan Davarcı' },
   { ad: 'Seçil Fida' },
   { ad: 'Sibel Özdemir' },
-  { ad: 'Şule Bağcı' },             // EKLENDİ (BAĞCI AKADEMİ maili altında)
-  { ad: 'Yavuz Bağcı' },            // EKLENDİ (BAĞCI AKADEMİ maili altında)
-  { ad: 'Zeynep Demir' },
-
-  // ÇIKARILDI:
-  // - İhsan Çomak
-  // - Nuri Haksever
-  // - Yakup Güngör
-  // - Yalçın Kavlak
-  // - Yunus Emre Yinanç
-  // - Alper Tunga Araman
-  // - ZEYNEP & EMRE ERKAN (çift hesap)
+  { ad: 'Şule Bağcı' },
+  { ad: 'Yakup Güngör' },
+  { ad: 'Yavuz Bağcı' },
+  { ad: 'Zeynep & Emre Erkan' },
+  { ad: 'Abdurrahman Kaya' },
+  { ad: 'Adnan Çolak' },
+  { ad: 'Adnan Gül' },
+  { ad: 'Ahmet Dursun' },
+  { ad: 'Ahmet Kılıç' },
+  { ad: 'Alp & Birgül Özekici' },
+  { ad: 'Alper Kırbıyık' },
+  { ad: 'Atakan Yaman' },
+  { ad: 'Aysun Demir Tosun' },
+  { ad: 'Ayşen Özgentaş' },
+  { ad: 'Baki Özgen' },
+  { ad: 'Bilal Özcan' },
+  { ad: 'Canan Polat' },
+  { ad: 'Cihan Öyke' },
+  { ad: 'Cumali Bağcı' },
+  { ad: 'Çiğdem Meral' },
+  { ad: 'Didem & Sertan Kaküllü' },
+  { ad: 'Ersel & Tuba Arıcan' },
+  { ad: 'Evrim Doğan' },
+  { ad: 'Fahri Cumhur Elmacı' },
+  { ad: 'Fecri Çiftlik' },
+  { ad: 'Fürüzan Demirel' },
+  { ad: 'Giray Ulusoy' },
+  { ad: 'Hüseyin Balcı' },
+  { ad: 'Hüseyin Beğenik' },
+  { ad: 'Kadir Demirbüken' },
+  { ad: 'Keramettin Yanık' },
+  { ad: 'Mehmet Akif Bilge' },
+  { ad: 'Mehmet Akif Topçu' },
+  { ad: 'Mehmet Güler' },
+  { ad: 'Melek Körce' },
+  { ad: 'Merve Çaloğlu' },
+  { ad: 'Murat Zorluoğlu' },
+  { ad: 'Mustafa Doğan' },
+  { ad: 'Mustafa Korkmaz' },
+  { ad: 'Namık Önür' },
+  { ad: 'Nilay Birdal' },
+  { ad: 'Nurullah Yılmaz' },
+  { ad: 'Ömer Koçak' },
+  { ad: 'Perihan Uslu' },
+  { ad: 'Ruhan Kosko' },
+  { ad: 'Sabri Şafak & Nesrin Ayrancı' },
+  { ad: 'Saide Zöngür' },
+  { ad: 'Selçuk & Müberra Çamurcu' },
+  { ad: 'Selda Tuna İş' },
+  { ad: 'Serdar Acar' },
+  { ad: 'Serkan Gürzsoy' },
+  { ad: 'Sevda Tohumoğlu' },
+  { ad: 'Sevim Kul' },
+  { ad: 'Sibel Gökmen' },
+  { ad: 'Toygar Şenelmiş' },
+  { ad: 'Tunç Tuncer' },
+  { ad: 'Tülay Filtekin' },
+  { ad: 'Ufuk Memiş' },
+  { ad: 'Ulaş Recep İnağ' },
+  { ad: 'Vildan Tunç' },
+  { ad: 'Barış Diker' },
+  { ad: 'Filiz Bayazıt' },
+  { ad: 'Gamze Çakmak' },
+  { ad: 'Handan Çolak' },
+  { ad: 'İlknur Yalçın Akkaş' },
+  { ad: 'Orhan Coşkun' },
+  { ad: 'Selçuk Adnan Meral' },
 ];
