@@ -31,8 +31,27 @@ const cizYol = (ctx, cx, cy, half, sekil) => {
   else if (sekil === 'altigen') { for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 90); const px = cx + half * Math.cos(a), py = cy + half * Math.sin(a); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); }
   else ctx.arc(cx, cy, half, 0, Math.PI * 2);
 };
+// Uzun TEK kelime (ör. "LİSTE-REKLAM-DAVET(UYGULAMALI)") sarmalanamayıp sütunu
+// taşırıyordu. Boşluk yoksa tireden, o da yetmezse harften böl.
+const kelimeBol = (ctx, kelime, maxW) => {
+  if (ctx.measureText(kelime).width <= maxW) return [kelime];
+  const parcalar = [];
+  let kalan = kelime;
+  while (kalan && ctx.measureText(kalan).width > maxW) {
+    let kes = kalan.length;
+    while (kes > 1 && ctx.measureText(kalan.slice(0, kes)).width > maxW) kes--;
+    // mümkünse tireden böl (okunurluk)
+    const tire = kalan.lastIndexOf('-', kes);
+    if (tire > Math.floor(kes * 0.5)) kes = tire + 1;
+    parcalar.push(kalan.slice(0, kes));
+    kalan = kalan.slice(kes);
+  }
+  if (kalan) parcalar.push(kalan);
+  return parcalar;
+};
 const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 3) => {
-  const words = String(text || '').split(/\s+/); let line = '', yy = y, n = 0;
+  const words = String(text || '').split(/\s+/).flatMap(w => kelimeBol(ctx, w, maxW));
+  let line = '', yy = y, n = 0;
   for (let i = 0; i < words.length; i++) {
     const test = line ? line + ' ' + words[i] : words[i];
     if (ctx.measureText(test).width > maxW && line) {
@@ -44,7 +63,7 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 3) => {
   return yy;
 };
 
-export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], ekPrompt = '', baslik = '' }) => {
+export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], ekPrompt = '', baslik = '', haftalik = false }) => {
   const W = 1080;
   await afisFontYukle(); // paket fontlar ölçümden önce hazır olsun (fail-open)
   const ayar = ayarCikar(ekPrompt);
@@ -54,13 +73,18 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   const ys = ayar.yazi || 1;
   const sekil = ayar.fotoSekil || 'yuvarlak';
 
-  const rows = (programSatirlari || []).filter(r => r && (r.baslik || r.saat || r.konusmaci));
+  const rows = (programSatirlari || []).filter(r => r && (r.tip === 'gun' ? r.metin : (r.baslik || r.saat || r.konusmaci)));
   const n = Math.max(rows.length, 1);
   const M = Math.round(W * 0.06);
-  const headerH = Math.round(W * 0.62);
-  const rowH = Math.round(W * 0.135);
+  // Haftalık afişte 11-17 satır olabiliyor → satırlar sıkışır, başlık bloğu kısalır,
+  // yoksa afiş 1:2.6 orana çıkıp WhatsApp'ta okunamaz hale geliyor.
+  const headerH = Math.round(W * (haftalik ? 0.34 : 0.62));
+  const rowH = Math.round(W * (haftalik ? 0.10 : 0.135));
+  const gunH = Math.round(W * 0.058);   // gün başlığı bandı (yalnız haftalık)
   const footerH = Math.round(W * 0.11);
-  const H = Math.max(1350, headerH + n * rowH + footerH);
+  const satirH = (r) => (r.tip === 'gun' ? gunH : rowH);
+  const satirlarH = rows.reduce((t, r) => t + satirH(r), 0) || rowH;
+  const H = Math.max(1350, headerH + satirlarH + footerH);
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -135,29 +159,56 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   // ── SATIRLAR ──
   const rowsTop = y;
   const kullanilabilir = H - footerH - rowsTop;
-  const gercekRowH = Math.min(rowH, Math.floor(kullanilabilir / n));
-  const solW = Math.round(W * 0.34);
-  const fotoCap = Math.round(gercekRowH * 0.5);
+  // Az satırda afiş 1350'ye yuvarlandığı için satırlar gerekirse kısalır (eski davranış).
+  const sikistir = !haftalik && satirlarH > kullanilabilir ? kullanilabilir / satirlarH : 1;
+  const solW = Math.round(W * (haftalik ? 0.40 : 0.34));
+  const fotoCap = Math.round(rowH * (haftalik ? 0.46 : 0.5) * sikistir);
   const zebra = palet.acik ? 'rgba(0,0,0,0.045)' : 'rgba(255,255,255,0.04)';
   const ayrac = `rgba(${palet.goldRGB},0.18)`;
 
   // dikey altın ayraç (sol kolon ile içerik arası)
   ctx.fillStyle = `rgba(${palet.goldRGB},0.25)`;
-  ctx.fillRect(M + solW - Math.round(W * 0.015), rowsTop, 1, n * gercekRowH);
+  ctx.fillRect(M + solW - Math.round(W * 0.015), rowsTop, 1, Math.round(satirlarH * sikistir));
 
+  let ry = rowsTop;
+  let zebraSira = 0;
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
-    const ry = rowsTop + i * gercekRowH;
-    if (i % 2 === 1) { ctx.fillStyle = zebra; ctx.fillRect(0, ry, W, gercekRowH); }
+    const gercekRowH = Math.round(satirH(r) * sikistir);
+
+    // ── GÜN BAŞLIĞI BANDI (haftalık) ──
+    if (r.tip === 'gun') {
+      ctx.fillStyle = `rgba(${palet.goldRGB},0.14)`;
+      ctx.fillRect(0, ry, W, gercekRowH);
+      ctx.fillStyle = gold;
+      ctx.fillRect(M, ry, Math.round(W * 0.012), gercekRowH);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = `800 ${Math.round(W * 0.027 * ys)}px ${FF.govde}`;
+      ctx.fillText(String(r.metin || '').toLocaleUpperCase('tr-TR'), M + Math.round(W * 0.032), ry + gercekRowH / 2);
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+      ry += gercekRowH;
+      zebraSira = 0;
+      continue;
+    }
+
+    if (zebraSira % 2 === 1) { ctx.fillStyle = zebra; ctx.fillRect(0, ry, W, gercekRowH); }
+    zebraSira++;
     ctx.fillStyle = ayrac; ctx.fillRect(M, ry, W - M * 2, 1);
     const cy = ry + gercekRowH / 2;
 
-    // SOL: saat + başlık
-    let sy = ry + gercekRowH * 0.36;
+    // SOL: saat + başlık — ritim satır yüksekliğine ORANTILI, yoksa iki satırlık
+    // başlık kompakt satırı aşıp alttaki gün bandının üstüne taşıyor.
+    const satirFont = Math.round((haftalik ? gercekRowH * 0.235 : W * 0.026) * ys);
+    let sy = ry + gercekRowH * (haftalik ? 0.33 : 0.36);
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    if (r.saat) { ctx.fillStyle = gold; ctx.font = `700 ${Math.round(W * 0.026 * ys)}px ${FF.govde}`; ctx.fillText(r.saat, M, sy); sy += Math.round(W * 0.034 * ys); }
-    ctx.fillStyle = metin; ctx.font = `700 ${Math.round(W * 0.026 * ys)}px ${FF.govde}`;
-    wrapText(ctx, r.baslik || '', M, r.saat ? sy : cy + Math.round(W * 0.01), solW - Math.round(W * 0.03), Math.round(W * 0.031 * ys), 2);
+    if (r.saat) {
+      ctx.fillStyle = gold; ctx.font = `700 ${satirFont}px ${FF.govde}`;
+      ctx.fillText(r.saat, M, sy);
+      sy += Math.round(haftalik ? gercekRowH * 0.30 : W * 0.034 * ys);
+    }
+    ctx.fillStyle = metin; ctx.font = `700 ${satirFont}px ${FF.govde}`;
+    wrapText(ctx, r.baslik || '', M, r.saat ? sy : cy + Math.round(W * 0.01),
+      solW - Math.round(W * 0.03), Math.round(haftalik ? gercekRowH * 0.28 : W * 0.031 * ys), 2);
 
     // SAĞ: konuşmacı veya (konuşmacısız) düz aktivite metni
     const k = r.konusmaci;
@@ -175,15 +226,20 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
       const tx = sagX + fotoCap + Math.round(W * 0.025);
       const notlar = (k.notlar || []).filter(Boolean).slice(0, 3);
       const adY = notlar.length ? cy - Math.round(W * 0.014) : cy - Math.round(W * 0.004);
-      ctx.fillStyle = metin; ctx.font = `700 ${Math.round(W * 0.026 * ys)}px ${FF.govde}`;
+      ctx.fillStyle = metin; ctx.font = `700 ${satirFont}px ${FF.govde}`;
       ctx.fillText((k.ad || '').toLocaleUpperCase('tr-TR'), tx, adY, W - tx - M);
-      if (k.unvan) { ctx.fillStyle = gold; ctx.font = `500 ${Math.round(W * 0.021 * ys)}px ${FF.govde}`; ctx.fillText(k.unvan, tx, adY + Math.round(W * 0.028 * ys), W - tx - M); }
+      if (k.unvan) {
+        ctx.fillStyle = gold;
+        ctx.font = `500 ${Math.round((haftalik ? gercekRowH * 0.185 : W * 0.021) * ys)}px ${FF.govde}`;
+        ctx.fillText(k.unvan, tx, adY + Math.round(haftalik ? gercekRowH * 0.26 : W * 0.028 * ys), W - tx - M);
+      }
       if (notlar.length) { ctx.fillStyle = alt; ctx.font = `500 ${Math.round(W * 0.02 * ys)}px ${FF.govde}`; notlar.forEach((nm, j) => ctx.fillText('• ' + nm, tx, adY + Math.round(W * 0.052 * ys) + j * Math.round(W * 0.026 * ys), W - tx - M)); }
     } else if (r.baslik) {
       // konuşmacısız satır → başlığı sağ alanda da göster (Sunum Arası, Soru/Cevap)
       ctx.fillStyle = alt; ctx.font = `500 ${Math.round(W * 0.024 * ys)}px ${FF.govde}`;
       wrapText(ctx, r.baslik, sagX, cy + Math.round(W * 0.008), W - sagX - M, Math.round(W * 0.03 * ys), 2);
     }
+    ry += gercekRowH;
   }
 
   // ── ALT: amare logosu ──

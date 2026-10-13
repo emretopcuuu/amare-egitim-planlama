@@ -11,6 +11,44 @@ import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
 
+// ── Haftalık Program yardımcıları ──
+const HP_AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+const HP_GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+const hpTarihCoz = (t) => {
+  const m = String(t || '').match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+  if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return isNaN(d) ? null : d;
+};
+const hpPazartesi = (d) => {
+  const g = new Date(d); g.setHours(0, 0, 0, 0);
+  g.setDate(g.getDate() - ((g.getDay() + 6) % 7));
+  return g;
+};
+const hpGunEkle = (d, n) => { const g = new Date(d); g.setDate(g.getDate() + n); return g; };
+const hpKisaTarih = (d) => `${d.getDate()} ${HP_AYLAR[d.getMonth()]}`;
+// "19 – 25 Ekim" / "29 Eylül – 5 Ekim"
+const hpAralikMetni = (bas) => {
+  const bit = hpGunEkle(bas, 6);
+  return bas.getMonth() === bit.getMonth()
+    ? `${bas.getDate()} – ${bit.getDate()} ${HP_AYLAR[bit.getMonth()]}`
+    : `${hpKisaTarih(bas)} – ${hpKisaTarih(bit)}`;
+};
+// Takvimde saat "." ya da boş olabiliyor (tam gün seminer / vizyon günü)
+const hpSaatMetni = (e) => {
+  const s = String(e.saat || '').trim().replace(/^\.$/, '');
+  if (!s) return 'GÜN BOYU';
+  const b = String(e.bitisSaati || '').trim().replace(/^\.$/, '');
+  return b ? `${s} - ${b}` : s;
+};
+
+// Afişte yan metin uzayınca canvas fillText onu SIKIŞTIRIYOR (okunmaz hale geliyor)
+// → kaynakta kısalt.
+const hpKisalt = (t, n = 38) => {
+  const x = String(t || '').trim();
+  return x.length > n ? x.slice(0, n - 1).trimEnd() + '…' : x;
+};
+
 // Program afişinde anlamlı varyasyon grupları (foto düzeni/içerik vb. hariç)
 const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu', 'Avrupa'];
 
@@ -55,6 +93,7 @@ const METOTLAR = [
   { id: 'marka-afis', ad: '🏆 Marka Afiş', not: 'Konuşmacı afişi · tema seç', stil: null, ai: false },
   { id: 'kamp-afis', ad: '⛺ Kamp Afişi', not: 'Çok günlü · tarih serbest · saat opsiyonel', stil: null, ai: false },
   { id: 'program-icerigi', ad: '📋 Program İçeriği', not: 'Zaman çizelgesi · siyah & altın', stil: null, ai: false },
+  { id: 'haftalik-program', ad: '🗓️ Haftalık Program', not: 'Haftanın tüm eğitimleri · takvimden otomatik', stil: null, ai: false },
   { id: 'ai-afis', ad: '🎨 AI Afiş', not: 'Gemini · ~$0.08 · yavaş', stil: null, ai: true },
   { id: 'dosya-yukle', ad: '📎 Dosya Yükle', not: 'Kendi afişini yükle · bağla', stil: null, ai: false },
 ];
@@ -129,6 +168,9 @@ export default function GorselStudyo() {
   const [vurguKelime, setVurguKelime] = useState(1); // iki renkli başlıkta vurgulu kelime sayısı
   const [vurguYon, setVurguYon] = useState('son');   // 'son' | 'bas'
   const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
+  // Haftalık Program: gösterilecek haftanın pazartesisi. Varsayılan GELECEK hafta —
+  // afiş pazar akşamı paylaşılıyor (Eğitim Komisyonu isteği, Eki 2026).
+  const [haftaBasi, setHaftaBasi] = useState(() => hpPazartesi(hpGunEkle(new Date(), 7)));
   // Kamp Afişi alanları (saha isteği Eyl 2026): tarih SERBEST metin ("2-3-4 EKİM"),
   // saat zorunlu değil. Boş bırakılırsa eğitimin kendi tarihi kullanılır.
   const [kampTarih, setKampTarih] = useState('');
@@ -290,9 +332,10 @@ export default function GorselStudyo() {
   // başlık, alt not, bölük) kampta da geçerli; farkı tarih/saat ve varsayılan tema.
   const markaModu = aiModel === 'marka-afis' || kampModu;
   const programModu = aiModel === 'program-icerigi';
+  const haftalikModu = aiModel === 'haftalik-program';
   const aiModu = aiModel === 'ai-afis';
   const dosyaModu = aiModel === 'dosya-yukle';
-  const canliModu = markaModu || programModu; // deterministik → otomatik canlı önizleme
+  const canliModu = markaModu || programModu || haftalikModu; // deterministik → otomatik canlı önizleme
   // Kampta afişe giden tarih/saat serbest alanlardan gelir (boşsa eğitimin kendisi).
   // Serbest tarih girildiyse gün adı anlamını yitirir → temizlenir.
   const afisEgitim = (!egitim || !kampModu) ? egitim : {
@@ -302,6 +345,44 @@ export default function GorselStudyo() {
     saat: kampSaat.trim(),
     bitisSaati: kampBitis.trim(),
   };
+
+  // ── HAFTALIK PROGRAM ──
+  // Haftanın eğitimleri takvimden OTOMATİK gelir; kimse elle satır yazmaz.
+  // Gün değişince araya gün başlığı bandı girer (motor tip:'gun' satırını çizer).
+  const haftaSatirlari = useMemo(() => {
+    if (!haftalikModu) return [];
+    const bas = haftaBasi, bit = hpGunEkle(bas, 7);
+    const liste = (takvim || [])
+      .map(e => ({ e, d: hpTarihCoz(e.tarih) }))
+      .filter(x => x.d && x.d >= bas && x.d < bit)
+      .sort((a, b) => a.d - b.d || String(a.e.saat || '').localeCompare(String(b.e.saat || '')));
+
+    const out = [];
+    let sonGun = '';
+    for (const { e, d } of liste) {
+      const gunAnahtar = d.toDateString();
+      if (gunAnahtar !== sonGun) {
+        out.push({ tip: 'gun', metin: `${HP_GUNLER[d.getDay()]} · ${hpKisaTarih(d)}` });
+        sonGun = gunAnahtar;
+      }
+      const adlar = splitEgitmen(e.egitmen).filter(a => a && a.trim() && a.trim() !== '.');
+      const ilk = adlar[0] ? konusmaciBul(adlar[0]) : null;
+      const digerleri = adlar.slice(1).join(' · ');
+      out.push({
+        saat: hpSaatMetni(e),
+        baslik: e.egitim || '',
+        konusmaci: adlar.length ? {
+          ad: ilk?.ad || adlar[0],
+          unvan: hpKisalt(digerleri || etiketSec(ilk, afisTuru(e)) || ''),
+          fotoURL: ilk?.fotoURL || null,
+          notlar: [],
+        } : null,
+      });
+    }
+    return out;
+  }, [haftalikModu, haftaBasi, takvim, konusmacilar]);
+
+  const haftaEgitimSayisi = haftaSatirlari.filter(r => r.tip !== 'gun').length;
 
   // ── Konuşmacı yönetimi (ekle/çıkar → hem görsele hem sisteme yazılır) ──
   const [kayit, setKayit] = useState(null); // null | 'saving' | 'saved' | 'err'
@@ -468,6 +549,17 @@ export default function GorselStudyo() {
           return { saat: r.saat, baslik: r.baslik, konusmaci: k };
         });
         res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim), baslik: baslikOzel });
+      } else if (haftalikModu) {
+        // Tek etkinlik yok — afişin başlığı haftanın kendisi. Şehir/saat alanları
+        // boş geçilir ki üst blokta tek etkinlik bilgisi görünmesin.
+        const haftaEgitim = { egitim: '', tarih: hpAralikMetni(haftaBasi), gun: '', saat: '', bitisSaati: '', sehir: '', etkinlikTuru: '' };
+        res = await gorselOlusturProgramAfis({
+          egitim: haftaEgitim,
+          programSatirlari: haftaSatirlari,
+          ekPrompt: markaEkIstek(markaSecim),
+          baslik: baslikOzel || 'HAFTALIK PROGRAM AKIŞI',
+          haftalik: true,
+        });
       } else {
         // Anahtar sunucuda (gemini-afis fonksiyonu, admin ID token ile) → admin ayrı anahtar girmeden çalışır.
         // Admin kendi anahtarını girdiyse o kullanılır (client-side).
@@ -521,7 +613,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftaSatirlari.length]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -601,6 +693,46 @@ export default function GorselStudyo() {
                 </div>
               )}
             </div>
+
+            {/* Haftalık Program — hafta seçici. Satırlar takvimden otomatik gelir. */}
+            {haftalikModu && (
+              <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <button onClick={() => setHaftaBasi(h => hpGunEkle(h, -7))}
+                    title="Önceki hafta"
+                    className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 text-sm font-bold">‹</button>
+                  <div className="text-center flex-1 min-w-0">
+                    <div className="text-xs font-bold text-gray-800 truncate">{hpAralikMetni(haftaBasi)}</div>
+                    <div className="text-[10px] text-gray-400">
+                      {haftaEgitimSayisi > 0 ? `${haftaEgitimSayisi} eğitim` : 'bu haftada eğitim yok'}
+                    </div>
+                  </div>
+                  <button onClick={() => setHaftaBasi(h => hpGunEkle(h, 7))}
+                    title="Sonraki hafta"
+                    className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 text-sm font-bold">›</button>
+                </div>
+                <div className="flex gap-1.5">
+                  {[
+                    { ad: 'Bu hafta', d: 0 },
+                    { ad: 'Gelecek hafta', d: 7 },
+                  ].map(h => {
+                    const hedef = hpPazartesi(hpGunEkle(new Date(), h.d));
+                    const secili = +hedef === +haftaBasi;
+                    return (
+                      <button key={h.ad} onClick={() => setHaftaBasi(hedef)}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold border transition ${
+                          secili ? 'border-amare-purple bg-purple-50 text-amare-purple' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {h.ad}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-gray-400">
+                  Satırlar takvimden otomatik gelir — elle yazmana gerek yok. Takvimi
+                  düzeltirsen afiş de düzelir. Saati girilmemiş eğitimler <b>GÜN BOYU</b> yazılır.
+                </p>
+              </div>
+            )}
 
             {/* Kamp Afişi alanları — serbest tarih + opsiyonel saat (saha isteği Eyl 2026) */}
             {kampModu && (
