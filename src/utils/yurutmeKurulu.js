@@ -7,7 +7,9 @@
 // üyelerinden oluşur (kurul TÜM Diamond'lar değildir) ve rehber adları
 // Amare kayıtlarıyla eşleştirilip Emre'nin teyidiyle düzeltilmiştir.
 //
-// Ortak hesaplar tek kartta birleşir ("Alp & Birgül Özekici" gibi).
+// Ortak hesaptaki eşler/ortaklar AYRI kartlarda durur, her biri kendi
+// fotoğrafıyla (Emre, 13 Eki). Fotoğrafı sistemde başka adla duranlara
+// coreId elle bağlandı — görünen ad doğru kalır, fotoğraf yine bulunur.
 // Birkaç kayıt sistemde farklı adla duruyor; sayfada kişinin kendi adı yazılır:
 //   Cihan Öyke        → kayıt: Durmuş Öyke (kardeşi)
 //   Çağrı Kıvrakdal   → kayıt: Genesis E-Ticaret (şirket hesabı)
@@ -31,7 +33,8 @@ export const YURUTME_KURULU = [
   { ad: 'İbrahim Düzenli' },
   { ad: 'Yunus Emre Yinanç' },
   { ad: 'Arda Çakır' },
-  { ad: 'Dr. Fatih & Dr. Zeynep Demir' },
+  { ad: 'Dr. Fatih Demir', coreId: 'fatih_demir' },
+  { ad: 'Dr. Zeynep Demir', coreId: 'zeynep_demir' },
   { ad: 'Gülay Rençber' },
   { ad: 'İhsan Çomak' },
   { ad: 'Kasım Mazılıgüney' },
@@ -44,16 +47,18 @@ export const YURUTME_KURULU = [
   { ad: 'Şule Bağcı' },
   { ad: 'Yakup Güngör' },
   { ad: 'Yavuz Bağcı' },
-  { ad: 'Zeynep & Emre Erkan' },
+  { ad: 'Emre Erkan', coreId: 'emre_erkan' },
+  { ad: 'Zeynep Erkan', coreId: 'zeynep_erkan' },
   { ad: 'Abdurrahman Kaya' },
   { ad: 'Adnan Çolak' },
   { ad: 'Adnan Gül' },
   { ad: 'Ahmet Dursun' },
   { ad: 'Ahmet Kılıç' },
-  { ad: 'Alp & Birgül Özekici' },
+  { ad: 'Alp Özekici', coreId: 'alp_ozekici' },
+  { ad: 'Birgül Özekici', coreId: 'birgul_ozekici' },
   { ad: 'Alper Kırbıyık' },
   { ad: 'Atakan Yaman' },
-  { ad: 'Aysun Demir Tosun' },
+  { ad: 'Aysun Demir Tosun', coreId: 'aysun_demir' },
   { ad: 'Ayşen Özgentaş' },
   { ad: 'Baki Özgen' },
   { ad: 'Bilal Özcan' },
@@ -61,10 +66,12 @@ export const YURUTME_KURULU = [
   { ad: 'Cihan Öyke' },
   { ad: 'Cumali Bağcı' },
   { ad: 'Çiğdem Meral' },
-  { ad: 'Didem & Sertan Kaküllü' },
-  { ad: 'Ersel & Tuba Arıcan' },
+  { ad: 'Didem Aksoy Kaküllü', coreId: 'didem_aksoy_kakullu' },
+  { ad: 'Sertan Kaküllü', coreId: 'sertan_kakullu' },
+  { ad: 'Ersel Arıcan', coreId: 'ersel_arican' },
+  { ad: 'Tuba Arıcan', coreId: 'tuba_arican' },
   { ad: 'Evrim Doğan' },
-  { ad: 'Fahri Cumhur Elmacı' },
+  { ad: 'Fahri Cumhur Elmacı', coreId: 'cumhur_elmaci' },
   { ad: 'Fecri Çiftlik' },
   { ad: 'Fürüzan Demirel' },
   { ad: 'Giray Ulusoy' },
@@ -72,7 +79,7 @@ export const YURUTME_KURULU = [
   { ad: 'Hüseyin Beğenik' },
   { ad: 'Kadir Demirbüken' },
   { ad: 'Keramettin Yanık' },
-  { ad: 'Mehmet Akif Bilge' },
+  { ad: 'Mehmet Akif Bilge', coreId: 'akif_bilge' },
   { ad: 'Mehmet Akif Topçu' },
   { ad: 'Mehmet Güler' },
   { ad: 'Melek Körce' },
@@ -86,9 +93,11 @@ export const YURUTME_KURULU = [
   { ad: 'Ömer Koçak' },
   { ad: 'Perihan Uslu' },
   { ad: 'Ruhan Kosko' },
-  { ad: 'Şafak Nesrin Ayrancı' },
+  { ad: 'Şafak Ayrancı', coreId: 'safak_ayranci' },
+  { ad: 'Nesrin Ayrancı', coreId: 'nesrin_ayranci' },
   { ad: 'Saide Zöngür' },
-  { ad: 'Selçuk & Müberra Çamurcu' },
+  { ad: 'Selçuk Çamurcu', coreId: 'selcuk_camurcu' },
+  { ad: 'Müberra Çamurcu' },
   { ad: 'Selda Tuna İş' },
   { ad: 'Serdar Acar' },
   { ad: 'Serkan Gürzsoy' },
@@ -105,7 +114,7 @@ export const YURUTME_KURULU = [
   { ad: 'Filiz Bayazıt' },
   { ad: 'Gamze Çakmak' },
   { ad: 'Handan Çolak' },
-  { ad: 'İlknur Yalçın Akkaş' },
+  { ad: 'İlknur Yalçın Akkaş', coreId: 'ilknur_akkas' },
   { ad: 'Orhan Coşkun' },
   { ad: 'Selçuk Adnan Meral' },
 ];
