@@ -82,13 +82,42 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   const rowH = Math.round(W * (haftalik ? 0.10 : 0.135));
   const gunH = Math.round(W * 0.058);   // gün başlığı bandı (yalnız haftalık)
   const footerH = Math.round(W * 0.11);
-  const satirH = (r) => (r.tip === 'gun' ? gunH : rowH);
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = 10;   // geçici — ölçüm için
+  const ctx = canvas.getContext('2d');
+
+  // Haftalık afişte bir satırda birden çok eğitmen olabiliyor ("Panellerde
+  // isimler tam çıkmamış" — saha geri bildirimi). İsimleri kesmek yerine
+  // SATIRI BÜYÜTÜYORUZ: kaç satır gerektiğini şimdi ölçüp yüksekliğe ekliyoruz.
+  const solW0 = Math.round(W * (haftalik ? 0.40 : 0.34));
+  const fotoCap0 = Math.round(rowH * (haftalik ? 0.46 : 0.5));
+  const sagGenislik = W - (M + solW0 + fotoCap0 + Math.round(W * 0.025)) - M;
+  const unvanFont0 = Math.round((haftalik ? rowH * 0.185 : W * 0.021) * ys);
+  const satirSay = (metin, font, maxW) => {
+    if (!metin) return 0;
+    ctx.font = font;
+    const kelimeler = String(metin).split(/\s+/);
+    let satir = '', adet = 1;
+    for (const k of kelimeler) {
+      const dene = satir ? satir + ' ' + k : k;
+      if (ctx.measureText(dene).width > maxW && satir) { adet++; satir = k; } else satir = dene;
+    }
+    return adet;
+  };
+  const UNVAN_CAP = 3;  // en çok 3 satır isim — daha fazlası afişi şişirir
+  for (const r of rows) {
+    if (r.tip === 'gun' || !haftalik) { r._unvanSatir = 1; continue; }
+    const n2 = satirSay(r.konusmaci?.unvan, `500 ${unvanFont0}px ${FF.govde}`, sagGenislik);
+    r._unvanSatir = Math.max(1, Math.min(UNVAN_CAP, n2));
+  }
+
+  const satirH = (r) => (r.tip === 'gun'
+    ? gunH
+    : rowH + (haftalik ? Math.round(((r._unvanSatir || 1) - 1) * unvanFont0 * 1.35) : 0));
   const satirlarH = rows.reduce((t, r) => t + satirH(r), 0) || rowH;
   const H = Math.max(1350, headerH + satirlarH + footerH);
 
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+  canvas.height = H;   // ctx durumu sıfırlanır; çizim bundan sonra
 
   // ── ZEMİN ──
   const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -230,8 +259,15 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
       ctx.fillText((k.ad || '').toLocaleUpperCase('tr-TR'), tx, adY, W - tx - M);
       if (k.unvan) {
         ctx.fillStyle = gold;
-        ctx.font = `500 ${Math.round((haftalik ? gercekRowH * 0.185 : W * 0.021) * ys)}px ${FF.govde}`;
-        ctx.fillText(k.unvan, tx, adY + Math.round(haftalik ? gercekRowH * 0.26 : W * 0.028 * ys), W - tx - M);
+        const uf = Math.round((haftalik ? rowH * 0.185 : W * 0.021) * ys);
+        ctx.font = `500 ${uf}px ${FF.govde}`;
+        const uy = adY + Math.round(haftalik ? rowH * 0.26 : W * 0.028 * ys);
+        if (haftalik) {
+          // İsimler KESİLMEZ — gerekirse alt satıra iner (satır zaten büyütüldü)
+          wrapText(ctx, k.unvan, tx, uy, W - tx - M, Math.round(uf * 1.35), r._unvanSatir || 1);
+        } else {
+          ctx.fillText(k.unvan, tx, uy, W - tx - M);
+        }
       }
       if (notlar.length) { ctx.fillStyle = alt; ctx.font = `500 ${Math.round(W * 0.02 * ys)}px ${FF.govde}`; notlar.forEach((nm, j) => ctx.fillText('• ' + nm, tx, adY + Math.round(W * 0.052 * ys) + j * Math.round(W * 0.026 * ys), W - tx - M)); }
     } else if (r.baslik) {

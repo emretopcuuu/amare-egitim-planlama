@@ -42,12 +42,6 @@ const hpSaatMetni = (e) => {
   return b ? `${s} - ${b}` : s;
 };
 
-// Afişte yan metin uzayınca canvas fillText onu SIKIŞTIRIYOR (okunmaz hale geliyor)
-// → kaynakta kısalt.
-const hpKisalt = (t, n = 38) => {
-  const x = String(t || '').trim();
-  return x.length > n ? x.slice(0, n - 1).trimEnd() + '…' : x;
-};
 
 // Program afişinde anlamlı varyasyon grupları (foto düzeni/içerik vb. hariç)
 const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu', 'Avrupa'];
@@ -171,6 +165,8 @@ export default function GorselStudyo() {
   // Haftalık Program: gösterilecek haftanın pazartesisi. Varsayılan GELECEK hafta —
   // afiş pazar akşamı paylaşılıyor (Eğitim Komisyonu isteği, Eki 2026).
   const [haftaBasi, setHaftaBasi] = useState(() => hpPazartesi(hpGunEkle(new Date(), 7)));
+  // Takvimden gelen satırlar üzerinde elle düzeltme. null = dokunulmamış (otomatik).
+  const [haftaDuzen, setHaftaDuzen] = useState(null);
   // Kamp Afişi alanları (saha isteği Eyl 2026): tarih SERBEST metin ("2-3-4 EKİM"),
   // saat zorunlu değil. Boş bırakılırsa eğitimin kendi tarihi kullanılır.
   const [kampTarih, setKampTarih] = useState('');
@@ -373,7 +369,7 @@ export default function GorselStudyo() {
         baslik: e.egitim || '',
         konusmaci: adlar.length ? {
           ad: ilk?.ad || adlar[0],
-          unvan: hpKisalt(digerleri || etiketSec(ilk, afisTuru(e)) || ''),
+          unvan: digerleri || etiketSec(ilk, afisTuru(e)) || '',
           fotoURL: ilk?.fotoURL || null,
           notlar: [],
         } : null,
@@ -382,7 +378,29 @@ export default function GorselStudyo() {
     return out;
   }, [haftalikModu, haftaBasi, takvim, konusmacilar]);
 
-  const haftaEgitimSayisi = haftaSatirlari.filter(r => r.tip !== 'gun').length;
+  // Elle düzeltme varsa O kullanılır; yoksa takvimden gelen hali.
+  const haftaSon = haftaDuzen || haftaSatirlari;
+  const haftaEgitimSayisi = haftaSon.filter(r => r.tip !== 'gun').length;
+  // Hafta değişince düzenleme sıfırlanır — başka haftanın düzeltmesi taşınmasın.
+  useEffect(() => { setHaftaDuzen(null); }, [haftaBasi, aiModel]);
+
+  const haftaSatirGuncelle = (i, alan, deger) => {
+    setHaftaDuzen(prev => (prev || haftaSatirlari).map((r, idx) => {
+      if (idx !== i) return r;
+      if (alan === 'ad' || alan === 'unvan') {
+        const k = { ad: '', unvan: '', fotoURL: null, notlar: [], ...(r.konusmaci || {}) };
+        const yeniK = { ...k, [alan]: deger };
+        // Eğitmen adı değişince fotoğrafı sistemden yeniden bul
+        if (alan === 'ad') {
+          const bulunan = konusmaciBul(deger);
+          yeniK.fotoURL = bulunan?.fotoURL || null;
+        }
+        return { ...r, konusmaci: (yeniK.ad || yeniK.unvan) ? yeniK : null };
+      }
+      return { ...r, [alan]: deger };
+    }));
+  };
+  const haftaSatirSil = (i) => setHaftaDuzen(prev => (prev || haftaSatirlari).filter((_, idx) => idx !== i));
 
   // ── Konuşmacı yönetimi (ekle/çıkar → hem görsele hem sisteme yazılır) ──
   const [kayit, setKayit] = useState(null); // null | 'saving' | 'saved' | 'err'
@@ -555,7 +573,7 @@ export default function GorselStudyo() {
         const haftaEgitim = { egitim: '', tarih: hpAralikMetni(haftaBasi), gun: '', saat: '', bitisSaati: '', sehir: '', etkinlikTuru: '' };
         res = await gorselOlusturProgramAfis({
           egitim: haftaEgitim,
-          programSatirlari: haftaSatirlari,
+          programSatirlari: haftaSon,
           ekPrompt: markaEkIstek(markaSecim),
           baslik: baslikOzel || 'HAFTALIK PROGRAM AKIŞI',
           haftalik: true,
@@ -613,7 +631,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftaSatirlari.length]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftalikModu ? JSON.stringify(haftaSon) : '']);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -728,9 +746,61 @@ export default function GorselStudyo() {
                   })}
                 </div>
                 <p className="text-[10px] text-gray-400">
-                  Satırlar takvimden otomatik gelir — elle yazmana gerek yok. Takvimi
-                  düzeltirsen afiş de düzelir. Saati girilmemiş eğitimler <b>GÜN BOYU</b> yazılır.
+                  Satırlar takvimden otomatik gelir. Aşağıdan düzeltebilirsin —
+                  düzeltmen yalnız bu afişi etkiler, takvime işlemez.
+                  Saati girilmemiş eğitimler <b>GÜN BOYU</b> yazılır.
                 </p>
+
+                {/* Satır düzenleyici — saha isteği: "düzeltebilmem için yetki" */}
+                {haftaSon.length > 0 && (
+                  <div className="pt-2 border-t border-gray-100 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-gray-700">
+                        Satırlar {haftaDuzen && <span className="text-amber-600 font-semibold">· düzenlendi</span>}
+                      </span>
+                      {haftaDuzen && (
+                        <button onClick={() => setHaftaDuzen(null)}
+                          title="Elle yaptığın düzeltmeleri at, takvimdeki haline dön"
+                          className="text-[11px] font-semibold text-amare-purple hover:underline flex items-center gap-0.5">
+                          <RotateCcw className="w-3 h-3" /> takvimden yenile
+                        </button>
+                      )}
+                    </div>
+                    {haftaSon.map((r, i) => r.tip === 'gun' ? (
+                      <div key={i} className="flex items-center gap-1.5 pt-1">
+                        <span className="flex-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                          {r.metin}
+                        </span>
+                        <button onClick={() => haftaSatirSil(i)} title="Bu gün başlığını sil"
+                          className="text-gray-300 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ) : (
+                      <div key={i} className="border border-gray-200 rounded-lg p-1.5 space-y-1 relative">
+                        <button onClick={() => haftaSatirSil(i)} title="Satırı sil"
+                          className="absolute top-1 right-1 text-gray-300 hover:text-red-500"><X className="w-3 h-3" /></button>
+                        <div className="flex gap-1.5 pr-4">
+                          <input value={r.saat || ''} onChange={(e) => haftaSatirGuncelle(i, 'saat', e.target.value)}
+                            placeholder="21:00 - 21:45"
+                            className="w-24 border border-gray-200 rounded px-1.5 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                          <input value={r.baslik || ''} onChange={(e) => haftaSatirGuncelle(i, 'baslik', e.target.value)}
+                            placeholder="Eğitim adı"
+                            className="flex-1 min-w-0 border border-gray-200 rounded px-1.5 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                        </div>
+                        <div className="flex gap-1.5">
+                          <input value={r.konusmaci?.ad || ''} onChange={(e) => haftaSatirGuncelle(i, 'ad', e.target.value)}
+                            placeholder="Eğitmen (fotoğraf bundan bulunur)"
+                            className="w-40 border border-gray-200 rounded px-1.5 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                          <input value={r.konusmaci?.unvan || ''} onChange={(e) => haftaSatirGuncelle(i, 'unvan', e.target.value)}
+                            placeholder="Diğer isimler / unvan"
+                            className="flex-1 min-w-0 border border-gray-200 rounded px-1.5 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-gray-400">
+                      İsim çoksa afişte satır kendiliğinden büyür, isim kesilmez (en çok 3 satır).
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
