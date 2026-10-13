@@ -86,7 +86,7 @@ export const YURUTME_KURULU = [
   { ad: 'Ömer Koçak' },
   { ad: 'Perihan Uslu' },
   { ad: 'Ruhan Kosko' },
-  { ad: 'Sabri Şafak & Nesrin Ayrancı' },
+  { ad: 'Şafak Nesrin Ayrancı' },
   { ad: 'Saide Zöngür' },
   { ad: 'Selçuk & Müberra Çamurcu' },
   { ad: 'Selda Tuna İş' },
