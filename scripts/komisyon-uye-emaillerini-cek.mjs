@@ -206,7 +206,7 @@ async function main() {
       uyeler: g.uyeler,
       adminEmails: g.adminEmails,
       guncellemeTarihi: admin.firestore.FieldValue.serverTimestamp(),
-      guncelleyenEmail: 's.emretopcu@gmail.com (cli email-cek)',
+      guncelleyenEmail: admin.firestore.FieldValue.delete(), // 13 Eki 2026: koleksiyon herkese açık, e-posta yazılmaz
     }, { merge: true });
     console.log(`   ✓ ${g.id} (${g.adminEmails.length} admin email)`);
   }
