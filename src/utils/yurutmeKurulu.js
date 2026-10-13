@@ -17,8 +17,11 @@
 //
 // LİSTEDE DEĞİL: Gamze Çakmak — WhatsApp grubunda var ama kurul üyesi değil,
 // One Team yönetim asistanı (Emre, 13 Eki). Tekrar eklenmesin.
-// LİSTEDE DEĞİL: Müberra Çamurcu — ortak hesabın eşi ama kurulda değil
-// (Emre, 13 Eki). Ortak hesabı bölerken yanlışlıkla eklenmişti.
+// LİSTEDE DEĞİL — ortak hesabın eşi/ortağı ama KURULDA DEĞİL; hesabı bölerken
+// yanlışlıkla eklenmişlerdi, Emre'nin kararıyla çıkarıldı (13 Eki):
+//   Müberra Çamurcu · Dr. Zeynep Demir · Zeynep Erkan · Nesrin Ayrancı
+// KURAL: ortak hesabın eşi ancak "2026 ONE TEAM YÖNETİM KURULU" grubunda da
+// varsa listeye girer (Birgül Özekici, Tuba Arıcan, Sertan Kaküllü böyle).
 //
 // Sıralama: rütbe (Presidential → Diamond), sonra Türkçe ada göre.
 // Liste değişince bu dosyayı güncelle; admin sayfadan da düzenleyebilir
@@ -39,7 +42,6 @@ export const YURUTME_KURULU = [
   { ad: 'Yunus Emre Yinanç' },
   { ad: 'Arda Çakır' },
   { ad: 'Dr. Fatih Demir', coreId: 'fatih_demir' },
-  { ad: 'Dr. Zeynep Demir', coreId: 'zeynep_demir' },
   { ad: 'Gülay Rençber' },
   { ad: 'İhsan Çomak' },
   { ad: 'Kasım Mazılıgüney' },
@@ -53,7 +55,6 @@ export const YURUTME_KURULU = [
   { ad: 'Yakup Güngör' },
   { ad: 'Yavuz Bağcı' },
   { ad: 'Emre Erkan', coreId: 'emre_erkan' },
-  { ad: 'Zeynep Erkan', coreId: 'zeynep_erkan' },
   { ad: 'Abdurrahman Kaya' },
   { ad: 'Adnan Çolak' },
   { ad: 'Adnan Gül' },
@@ -99,7 +100,6 @@ export const YURUTME_KURULU = [
   { ad: 'Perihan Uslu' },
   { ad: 'Ruhan Kosko' },
   { ad: 'Şafak Ayrancı', coreId: 'safak_ayranci' },
-  { ad: 'Nesrin Ayrancı', coreId: 'nesrin_ayranci' },
   { ad: 'Saide Zöngür' },
   { ad: 'Selçuk Çamurcu', coreId: 'selcuk_camurcu' },
   { ad: 'Selda Tuna İş' },
