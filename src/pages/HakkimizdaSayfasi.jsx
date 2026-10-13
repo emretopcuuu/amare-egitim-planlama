@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2, Sparkles, Vote } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
@@ -51,8 +51,12 @@ const I18N = {
     egitmenlerBaslik: 'Eğitmenler',
     egitmenlerAciklama: 'Aramıza katılıp bilgi ve deneyimlerini paylaşan uzmanlar',
     komisyonlarBaslik: 'Komisyonlar',
-    komisyonlarAciklama: 'Yürütme Kurulu’nun kurduğu 11 görev komisyonu',
-    yurutmeBaslik: 'Yürütme Kurulu',
+    komisyonlarAciklama: 'Yönetim Kurulu’nun kurduğu görev komisyonları',
+    yurutmeBaslik: 'One Team Yönetim Kurulu',
+    konseyBaslik: 'One Team Liderlik Konseyi',
+    konseyAciklama: 'Diamond ve üstü liderlerin seçtiği 15 kişilik kurul. Görev süresi 1 yıl.',
+    konseyRozet: 'Kasım’da göreve başlıyor',
+    konseyNot: 'Diamond ve üstü liderler için',
     yurutmeAciklama: 'OneTeam ekosistemini yönlendiren liderler',
     ke: 'Keşfet',
     copyright: '© 2026 Powered by OneTeam',
@@ -78,8 +82,12 @@ const I18N = {
     egitmenlerBaslik: 'Trainers',
     egitmenlerAciklama: 'Experts who join us to share their knowledge and experience',
     komisyonlarBaslik: 'Committees',
-    komisyonlarAciklama: '11 task committees established by the Executive Board',
-    yurutmeBaslik: 'Executive Board',
+    komisyonlarAciklama: 'Task committees established by the Board',
+    yurutmeBaslik: 'One Team Board',
+    konseyBaslik: 'One Team Leadership Council',
+    konseyAciklama: 'A 15-member council elected by Diamond and above leaders. One-year term.',
+    konseyRozet: 'Takes office in November',
+    konseyNot: 'For Diamond and above leaders',
     yurutmeAciklama: 'The leaders guiding the OneTeam ecosystem',
     ke: 'Explore',
     copyright: '© 2026 Powered by OneTeam',
@@ -105,8 +113,12 @@ const I18N = {
     egitmenlerBaslik: 'Trainer',
     egitmenlerAciklama: 'Experten, die ihr Wissen und ihre Erfahrung mit uns teilen',
     komisyonlarBaslik: 'Ausschüsse',
-    komisyonlarAciklama: '11 Arbeitsausschüsse, die vom Exekutivausschuss eingerichtet wurden',
-    yurutmeBaslik: 'Exekutivausschuss',
+    komisyonlarAciklama: 'Vom Vorstand eingerichtete Arbeitsausschüsse',
+    yurutmeBaslik: 'One Team Vorstand',
+    konseyBaslik: 'One Team Führungsrat',
+    konseyAciklama: 'Ein 15-köpfiger Rat, gewählt von Diamond-Führungskräften und höher. Amtszeit 1 Jahr.',
+    konseyRozet: 'Tritt im November an',
+    konseyNot: 'Für Diamond-Führungskräfte und höher',
     yurutmeAciklama: 'Die Führungskräfte des OneTeam-Ökosystems',
     ke: 'Erkunden',
     copyright: '© 2026 Powered by OneTeam',
@@ -132,8 +144,12 @@ const I18N = {
     egitmenlerBaslik: 'Trainers',
     egitmenlerAciklama: 'Experts die hun kennis en ervaring delen',
     komisyonlarBaslik: 'Commissies',
-    komisyonlarAciklama: '11 werkcommissies opgericht door het Uitvoerend Bestuur',
-    yurutmeBaslik: 'Uitvoerend Bestuur',
+    komisyonlarAciklama: 'Door het Bestuur opgerichte werkcommissies',
+    yurutmeBaslik: 'One Team Bestuur',
+    konseyBaslik: 'One Team Leiderschapsraad',
+    konseyAciklama: 'Een raad van 15 leden, gekozen door Diamond-leiders en hoger. Termijn 1 jaar.',
+    konseyRozet: 'Begint in november',
+    konseyNot: 'Voor Diamond-leiders en hoger',
     yurutmeAciklama: 'De leiders die het OneTeam-ecosysteem aansturen',
     ke: 'Verkennen',
     copyright: '© 2026 Powered by OneTeam',
@@ -458,7 +474,7 @@ const HakkimizdaSayfasi = () => {
           />
         </div>
 
-        {/* Ekosistem Sekmeleri — 3 EŞIT kart + avatar/ikon önizleme korunur */}
+        {/* Ekosistem Sekmeleri — 4 EŞIT kart + avatar/ikon önizleme korunur */}
         <section className="mb-10 sm:mb-14">
           {/* Kicker */}
           <div className="flex items-center justify-center gap-3 mb-6">
@@ -469,7 +485,7 @@ const HakkimizdaSayfasi = () => {
             <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {/* YÜRÜTME KURULU */}
             <button
               onClick={() => navigate('/yurutmekurulu')}
@@ -493,6 +509,36 @@ const HakkimizdaSayfasi = () => {
                 </div>
               </div>
             </button>
+
+            {/* ONE TEAM LİDERLİK KONSEYİ — seçim sürüyor, Kasım'da göreve başlıyor.
+                Üyeler 25 Ekim'deki oylamadan önce belli olmadığı için kart şimdilik
+                bilgilendirme; platform Diamond ve üstüne açık olduğu için alt not var. */}
+            <a
+              href="https://yonetimkurulu.oneteamglobal.ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative bg-gradient-to-br from-sky-400/[0.10] to-white/[0.03] hover:from-sky-400/[0.16] hover:to-white/[0.05] backdrop-blur-md border-2 border-sky-300/30 hover:border-sky-300/70 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-sky-500/25 overflow-hidden hover:-translate-y-1 flex flex-col"
+            >
+              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-sky-400/10 group-hover:bg-sky-400/25 blur-3xl transition-colors pointer-events-none" />
+              <div className="relative flex flex-col flex-1">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-sky-400/35 to-sky-600/15 border border-sky-300/50 shadow-lg mb-4 group-hover:scale-105 transition-transform">
+                  <Vote className="w-8 h-8 sm:w-9 sm:h-9 text-sky-200" />
+                </div>
+                <span className="self-start mb-2 text-[10px] uppercase tracking-wider font-bold text-sky-100 bg-sky-400/20 border border-sky-300/40 rounded-full px-2 py-0.5">
+                  {tr.konseyRozet}
+                </span>
+                <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
+                  {tr.konseyBaslik}
+                </h3>
+                <p className="text-purple-100/85 text-sm leading-relaxed mb-4 flex-1">
+                  {tr.konseyAciklama}
+                </p>
+                <div className="flex items-center justify-between pt-3 border-t border-sky-300/20">
+                  <span className="text-sky-200/70 text-[11px]">{tr.konseyNot}</span>
+                  <ArrowRight className="w-5 h-5 text-sky-200 transition-transform group-hover:translate-x-1.5" />
+                </div>
+              </div>
+            </a>
 
             {/* KOMISYONLAR */}
             <button

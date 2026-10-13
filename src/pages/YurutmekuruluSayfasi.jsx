@@ -1,5 +1,12 @@
-// Yürütme Kurulu sayfası — Tek liste (rütbe/kariyer görünmez)
-// İçerik: src/utils/yurutmeKurulu.js
+// One Team Yönetim Kurulu sayfası — Tek liste (rütbe/kariyer görünmez)
+//
+// 13 Eki 2026: Yürütme Kurulu 21 Eylül'de kapandı, yerini One Team Yönetim
+// Kurulu aldı (anket kararı). Kurulu Diamond ve üstü liderler oluşturur.
+// Liste artık ELLE TUTULMUYOR: /.netlify/functions/yonetim-kurulu Supabase
+// crm_members'tan canlı türetir + ortak hesaptaki eşleri ekler.
+// Öncelik: Firestore override (admin elle düzenlerse) > fonksiyon > sabit yedek.
+// URL /yurutmekurulu olarak KALDI — paylaşılmış linkler kırılmasın.
+//
 // Foto: konuşmacılar collection'ından coreId match
 
 import React, { useEffect, useState } from 'react';
@@ -23,8 +30,8 @@ const I18N = {
     anasayfa: 'Hakkımızda',
     geri: 'Geri',
     kicker: 'OneTeam Liderleri',
-    baslik: 'Yürütme Kurulu',
-    aciklama: 'OneTeam ekosistemini yönlendiren, vizyonu hayata geçiren liderler.',
+    baslik: 'One Team Yönetim Kurulu',
+    aciklama: 'OneTeam ekosistemini yönlendiren Diamond ve üstü liderler.',
     altMetin: 'Bu liderler komisyonları kurar, eğitim politikalarını belirler ve OneTeam ailesini büyütür.',
     uye: 'üye',
   },
@@ -32,8 +39,8 @@ const I18N = {
     anasayfa: 'About',
     geri: 'Back',
     kicker: 'OneTeam Leaders',
-    baslik: 'Executive Board',
-    aciklama: 'The leaders shaping the OneTeam ecosystem and bringing the vision to life.',
+    baslik: 'One Team Board',
+    aciklama: 'The Diamond and above leaders steering the OneTeam ecosystem.',
     altMetin: 'These leaders form the committees, set training policies, and grow the OneTeam family.',
     uye: 'members',
   },
@@ -41,8 +48,8 @@ const I18N = {
     anasayfa: 'Über uns',
     geri: 'Zurück',
     kicker: 'OneTeam-Führung',
-    baslik: 'Exekutivausschuss',
-    aciklama: 'Die Führungskräfte, die das OneTeam-Ökosystem gestalten und die Vision zum Leben erwecken.',
+    baslik: 'One Team Vorstand',
+    aciklama: 'Die Diamond-Führungskräfte und höher, die das OneTeam-Ökosystem lenken.',
     altMetin: 'Diese Führungskräfte bilden die Ausschüsse, legen die Bildungsrichtlinien fest und vergrößern die OneTeam-Familie.',
     uye: 'Mitglieder',
   },
@@ -50,8 +57,8 @@ const I18N = {
     anasayfa: 'Over ons',
     geri: 'Terug',
     kicker: 'OneTeam Leiders',
-    baslik: 'Uitvoerend Bestuur',
-    aciklama: 'De leiders die het OneTeam-ecosysteem vormgeven en de visie tot leven brengen.',
+    baslik: 'One Team Bestuur',
+    aciklama: 'De Diamond-leiders en hoger die het OneTeam-ecosysteem sturen.',
     altMetin: 'Deze leiders vormen de commissies, bepalen het opleidingsbeleid en laten de OneTeam-familie groeien.',
     uye: 'leden',
   },
@@ -79,14 +86,30 @@ const YurutmekuruluSayfasi = () => {
   const [yeniUyeAd, setYeniUyeAd] = useState('');
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
-  // Firestore'dan üye listesini çek (varsa)
+  // Üye listesi — öncelik: Firestore override > canlı fonksiyon > sabit yedek.
+  // Fonksiyon düşerse sayfa BOŞ KALMAZ, sabit yedekle çizilmeye devam eder
+  // (takvimdeki "boşu ezme" dersi: hata hiçbir zaman listeyi silmemeli).
   useEffect(() => {
+    let iptal = false;
     (async () => {
       const d = await getSiteIcerik('yurutmekurulu');
+      if (iptal) return;
       if (d?.uyeler && Array.isArray(d.uyeler) && d.uyeler.length > 0) {
-        setUyeler(d.uyeler);
+        setUyeler(d.uyeler);   // admin elle düzenlemiş → o kazanır
+        return;
+      }
+      try {
+        const res = await fetch('/.netlify/functions/yonetim-kurulu');
+        if (!res.ok) throw new Error('durum ' + res.status);
+        const veri = await res.json();
+        if (!iptal && Array.isArray(veri?.uyeler) && veri.uyeler.length > 0) {
+          setUyeler(veri.uyeler);
+        }
+      } catch (e) {
+        console.warn('[yonetim-kurulu] canlı liste alınamadı, yedek kullanılıyor:', e.message);
       }
     })();
+    return () => { iptal = true; };
   }, []);
 
   const aciliEditeBasla = () => {
@@ -148,30 +171,35 @@ const YurutmekuruluSayfasi = () => {
     (async () => {
       try {
         const snap = await guvenliGetDocs(collection(db, 'konusmacilar'));
-        const ykIds = new Set(YURUTME_KURULU.map(u => u.coreId || makeCoreId(u.ad)));
         const map = {};
         snap.forEach(d => {
           map[d.id] = { id: d.id, ...d.data() };
         });
         setKonusmacilar(map);
-        // Cache'e SADECE YK üyeleri (24 kişi) yaz — localStorage 5MB sınırı var
-        try {
-          const slim = {};
-          Object.entries(map).forEach(([cid, k]) => {
-            if (ykIds.has(cid)) slim[cid] = k;
-          });
-          const json = JSON.stringify({ data: slim, ts: Date.now() });
-          if (json.length < 4.5 * 1024 * 1024) {
-            localStorage.setItem(CACHE_KEY, json);
-          }
-        } catch (e) {
-          console.warn('[yurutme cache]', e.message);
-        }
       } catch (e) {
-        console.warn('[yurutme] konuşmacılar yüklenemedi:', e.message);
+        console.warn('[yonetim kurulu] konuşmacılar yüklenemedi:', e.message);
       }
     })();
   }, []);
+
+  // Önbellek yazımı AYRI etkide: üye listesi fonksiyondan sonra geldiği için
+  // kimlerin önbelleğe gireceği ancak ikisi de hazır olunca bilinir.
+  // (Eski kod burada scope'ta olmayan YURUTME_KURULU'na başvuruyor, hata
+  //  try/catch'e düşüyor ve fotoğraflar hiç yüklenmiyordu.)
+  useEffect(() => {
+    if (!uyeler.length || !Object.keys(konusmacilar).length) return;
+    try {
+      const ykIds = new Set(uyeler.map(u => u.coreId || makeCoreId(u.ad)));
+      const slim = {};
+      Object.entries(konusmacilar).forEach(([cid, k]) => {
+        if (ykIds.has(cid)) slim[cid] = k;
+      });
+      const json = JSON.stringify({ data: slim, ts: Date.now() });
+      if (json.length < 4.5 * 1024 * 1024) localStorage.setItem(CACHE_KEY, json);
+    } catch (e) {
+      console.warn('[yonetim kurulu cache]', e.message);
+    }
+  }, [uyeler, konusmacilar]);
 
   const getKayit = (uye) => {
     const cid = uye.coreId || makeCoreId(uye.ad);
@@ -351,7 +379,7 @@ const YurutmekuruluSayfasi = () => {
             icon={Crown}
             varyant="altın"
             baslik="Liderler az sonra burada"
-            mesaj="Yürütme Kurulu listesi az sonra burada parıldayacak. Birkaç saniye dur."
+            mesaj="Yönetim Kurulu listesi az sonra burada parıldayacak. Birkaç saniye dur."
           />
         )}
 
