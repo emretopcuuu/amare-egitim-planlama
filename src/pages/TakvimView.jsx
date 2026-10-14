@@ -113,6 +113,7 @@ import { benimEgitimlerim } from '../utils/benimTakvimim';
 import { yuzOdak } from '../utils/yuzOdak';
 import { kategoriAl, kategoriOtomatikMi } from '../utils/kategoriTuret';
 import { Vurgula, sadelestir } from '../components/Vurgula';
+import { yerelKarsilik, trDisindaMi } from '../utils/saatDilimi';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -1569,7 +1570,7 @@ const TakvimView = () => {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[15px] text-purple-300/80">
-                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-300" />{egitim.saat ? <>{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-purple-300/70">({egitim.sure})</span>}</> : <span className="text-amber-300 italic">{t('cal_time_tbd')}</span>}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-300" />{egitim.saat ? <>{egitim.saat}{trDisindaMi() && yerelKarsilik(egitim.tarih, egitim.saat) ? <span className="text-amber-200" title="Eğitim saatleri Türkiye saatiyle (TSİ) verilir"> TSİ · sende {yerelKarsilik(egitim.tarih, egitim.saat)}</span> : null}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-purple-300/70">({egitim.sure})</span>}</> : <span className="text-amber-300 italic">{t('cal_time_tbd')}</span>}</span>
                   {egitim.yer && <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5 text-purple-300" />:<MapPin className="w-3.5 h-3.5 text-red-400" />}<span className="truncate max-w-[220px]">{online?'Zoom':egitim.yer}</span></span>}
                   {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-white/[0.06] text-purple-200 border border-white/15" title={t('cal_zoom_real')}>📊 {egitim.zoomGercekKatilim} {t('cal_attended')}{egitim.zoomOrtDakika?` · ${t('cal_avg')} ${egitim.zoomOrtDakika} dk`:''}</span>}
                 </div>
