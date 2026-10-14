@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
@@ -626,17 +626,22 @@ const TakvimView = () => {
   const { t, locale, tDynamic, translateBatch, lang } = useTranslation();
   const contentRef = useRef(null); // sayfa scroll ref
   const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
-  const [filtre, setFiltre] = useState('tumu');
-  const [sehirFiltre, setSehirFiltre] = useState(null);
-  const [kategoriFiltre, setKategoriFiltre] = useState(null);
-  const [konusmaciFiltre, setKonusmaciFiltre] = useState(null);
-  const [zamanFiltre, setZamanFiltre] = useState(null); // 'bu-hafta' | 'gelecek-7' | 'gelecek-30' | null
-  const [arama, setArama] = useState('');
+  // ── Filtreler URL'de (Eki 2026) ──
+  // Seçim adres çubuğunda yaşıyor: link paylaşılabilir, geri tuşu çalışır,
+  // yenileme seçimi korur. Varsayılan değerler URL'ye YAZILMAZ ki link temiz
+  // kalsın ("/takvim?zaman=bu-hafta&tur=online").
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filtre, setFiltre] = useState(() => searchParams.get('tur') || 'tumu');
+  const [sehirFiltre, setSehirFiltre] = useState(() => searchParams.get('sehir'));
+  const [kategoriFiltre, setKategoriFiltre] = useState(() => searchParams.get('kategori'));
+  const [konusmaciFiltre, setKonusmaciFiltre] = useState(() => searchParams.get('egitmen'));
+  const [zamanFiltre, setZamanFiltre] = useState(() => searchParams.get('zaman')); // 'bu-hafta' | 'gelecek-7' | 'gelecek-30' | null
+  const [arama, setArama] = useState(() => searchParams.get('ara') || '');
   // Takvim doğası gereği bir listedir. Mobilde varsayılan kart düzeniydi:
   // tek sütunda kart = satır, ama çerçeve/gölge/yuvarlak her kayıtta tekrar
   // edip sayfayı "kart çorbası"na çeviriyordu. Varsayılan artık liste;
   // kart görünümü seçenek olarak duruyor.
-  const [gorunum, setGorunum] = useState('liste');
+  const [gorunum, setGorunum] = useState(() => searchParams.get('gorunum') || 'liste');
   // İkincil filtreler (kategori / eğitmen / abonelik) kapalı başlar —
   // araç çubuğu üç satırdan bire indi.
   const [filtrePaneli, setFiltrePaneli] = useState(false);
@@ -650,6 +655,46 @@ const TakvimView = () => {
   const [girisModalAcik, setGirisModalAcik] = useState(false);
   const aramaInputRef = useRef(null);
   const { isAuthenticated, email, displayName } = useAuth();
+
+  // ── State → URL ──
+  // Arama her tuşta yazılırsa geçmiş kirlenir: arama replace ile, kasıtlı
+  // filtre seçimleri push ile gider (geri tuşu onları geri alsın diye).
+  const sonYazilanUrl = useRef(null);
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (arama.trim()) p.set('ara', arama.trim());
+    if (filtre && filtre !== 'tumu') p.set('tur', filtre);
+    if (zamanFiltre) p.set('zaman', zamanFiltre);
+    if (kategoriFiltre) p.set('kategori', kategoriFiltre);
+    if (konusmaciFiltre) p.set('egitmen', konusmaciFiltre);
+    if (sehirFiltre) p.set('sehir', sehirFiltre);
+    if (gorunum && gorunum !== 'liste') p.set('gorunum', gorunum);
+    const yeni = p.toString();
+    if (yeni === searchParams.toString()) return;
+    sonYazilanUrl.current = yeni;
+    // Yalnız arama değiştiyse replace; filtre seçimi geri alınabilir olmalı.
+    const sadeceArama = (() => {
+      const a = new URLSearchParams(searchParams.toString()); a.delete('ara');
+      const b = new URLSearchParams(yeni); b.delete('ara');
+      return a.toString() === b.toString();
+    })();
+    setSearchParams(p, { replace: sadeceArama });
+  }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, gorunum]);
+
+  // ── URL → state (yalnız geri/ileri tuşu) ──
+  // Kendi yazdığımız URL geri okunmaz; yoksa döngü olur.
+  useEffect(() => {
+    const simdi = searchParams.toString();
+    if (simdi === sonYazilanUrl.current) return;
+    sonYazilanUrl.current = simdi;
+    setArama(searchParams.get('ara') || '');
+    setFiltre(searchParams.get('tur') || 'tumu');
+    setZamanFiltre(searchParams.get('zaman'));
+    setKategoriFiltre(searchParams.get('kategori'));
+    setKonusmaciFiltre(searchParams.get('egitmen'));
+    setSehirFiltre(searchParams.get('sehir'));
+    setGorunum(searchParams.get('gorunum') || 'liste');
+  }, [searchParams]);
 
   // Klavye kısayolları
   useKeyboardShortcuts({
