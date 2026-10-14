@@ -555,13 +555,15 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
 // Yapışkan gün bandı. Adı tarihsel olarak "Mobil"; Eki 2026'dan beri
 // masaüstünde de görünüyor (madde 6). sticky bu uygulamada kırık olduğu için
 // fixed kullanır; kendi scroll state'i ana listeyi her frame render etmesin diye.
-const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
+const MobilGunNav = ({ sonrakiEgitim, gunSeridi, arama, setArama, aktifFiltreSayisi, onFiltre, onSifirla }) => {
   const [gorunenGun, setGorunenGun] = useState(null);
   const [gorunur, setGorunur] = useState(false);
   useEffect(() => {
     let raf = 0;
     const onScroll = () => {
-      setGorunur(window.scrollY > 300); // göster/gizle: ucuz, anında (rAF bekleme)
+      const cubuk = document.getElementById('filtre-cubugu');
+      const cubukGecti = cubuk ? cubuk.getBoundingClientRect().bottom < 0 : window.scrollY > 300;
+      setGorunur(cubukGecti); // göster/gizle: ucuz, anında (rAF bekleme)
       if (raf) return;
       raf = requestAnimationFrame(() => { // pahalı kart taraması: throttle
         raf = 0;
@@ -578,7 +580,7 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
     return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
 
-  if (gunSeridi.length <= 1 && !sonrakiEgitim) return null;
+  // Bantta artık arama da var; gün şeridi boş olsa bile gösterilir.
   return (
     <div className={`fixed top-0 left-0 right-0 z-40 bg-zemin-yuzey/95 backdrop-blur-md border-b border-white/10 px-4 py-2 transition-transform duration-200 ${gorunur ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`} data-no-pdf>
       <div className="container mx-auto max-w-7xl">
@@ -599,8 +601,33 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
             })()}
           </div>
         )}
+        {/* Arama + filtre: liste boyunca elinin altında kalır. Önceden sayfanın
+            ortasındaydı ve aşağı inince kayboluyordu; filtre değiştirmek için
+            en yukarı dönmek gerekiyordu. */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80 pointer-events-none" />
+            <input type="text" value={arama} onChange={e => setArama(e.target.value)}
+              placeholder="Eğitim, eğitmen, şehir ara..." aria-label="Takvimde ara"
+              className="w-full min-h-[44px] bg-white/[0.07] border border-white/15 focus:border-amber-400/70 text-white placeholder-purple-300/70 rounded-xl pl-9 pr-9 py-2 text-[15px] focus:outline-none transition-colors" />
+            {arama && (
+              <button onClick={() => setArama('')} aria-label="Aramayı temizle"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] inline-flex items-center justify-center text-purple-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors"><X className="w-4 h-4" /></button>
+            )}
+          </div>
+          <button onClick={onFiltre} aria-label="Filtreler"
+            className={`flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-xl text-[13px] font-semibold border transition-colors ${aktifFiltreSayisi > 0 ? 'border-amber-400/60 text-amber-200 bg-amber-400/10' : 'border-white/15 text-white/80 hover:border-white/35'}`}>
+            <SlidersHorizontal className="w-4 h-4" />
+            <span className="hidden sm:inline">Filtreler</span>
+            {aktifFiltreSayisi > 0 && <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-amber-400 text-zemin-koyu text-[13px] font-bold">{aktifFiltreSayisi}</span>}
+          </button>
+          {aktifFiltreSayisi > 0 && (
+            <button onClick={onSifirla} aria-label="Filtreleri sıfırla" title="Filtreleri sıfırla"
+              className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors"><X className="w-4 h-4" /></button>
+          )}
+        </div>
         {gunSeridi.length > 1 && (
-          <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="hidden md:flex gap-1.5 overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
             {gunSeridi.map(g => (
               <button key={g.tarih}
                 onClick={() => { const el = document.querySelector(`[data-tarih="${g.tarih}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
@@ -1123,7 +1150,7 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-28 md:scroll-mt-28 bg-white/[0.04] border border-white/10 rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+        <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-28 md:scroll-mt-36 bg-white/[0.04] border border-white/10 rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
           {/* Yurtdışı rozeti — z-20 (poster üstünde) */}
           {yurtdisi && (
             <div className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg">
@@ -1257,7 +1284,7 @@ const TakvimView = () => {
       : 'bg-purple-800';
     const dateColumnText = (!yurtdisi && online) ? 'text-zemin-koyu' : 'text-white';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`group relative scroll-mt-28 md:scroll-mt-28 bg-white/[0.04] border border-white/10 rounded-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`group relative scroll-mt-28 md:scroll-mt-36 bg-white/[0.04] border border-white/10 rounded-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg gold-glow">
@@ -1533,14 +1560,16 @@ const TakvimView = () => {
 
         {/* MOBİL yapışkan gün-nav (#1,#6,#7) — ayrı bileşen (kendi scroll state'i;
             listeyi render etmez → titreme yok). Scroll'da üstte belirir. */}
-        <MobilGunNav sonrakiEgitim={sonrakiEgitim} gunSeridi={gunSeridi} />
+        <MobilGunNav sonrakiEgitim={sonrakiEgitim} gunSeridi={gunSeridi}
+          arama={arama} setArama={setArama} aktifFiltreSayisi={aktifFiltreSayisi}
+          onFiltre={() => { setFiltrePaneli(true); document.getElementById('filtre-paneli')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} onSifirla={filtreyiSifirla} />
 
         {/* Arama + filtreler — TEK araç çubuğu.
             Eskiden üç ayrı satırda üç ayrı filtre boyutu (zaman / tür / kategori)
             aynı "hap" diliyle çiziliyordu; iki hap aynı anda altın olunca hangisinin
             seçili olduğu okunmuyordu. Artık her boyut kendi segment kutusunda,
             ikincil filtreler kapalı panelde, ham <select> kabuğa uyduruldu. */}
-        <div className="md:sticky md:top-0 z-20 bg-zemin/92 backdrop-blur-md border-b border-white/10 px-4 py-3" data-no-pdf>
+        <div id="filtre-cubugu" className="md:top-0 z-20 bg-zemin/92 backdrop-blur-md border-b border-white/10 px-4 py-3" data-no-pdf>
           <div className="container mx-auto max-w-7xl space-y-2.5">
 
             {/* Arama */}
@@ -1636,7 +1665,7 @@ const TakvimView = () => {
 
             {/* İkincil filtreler — kapalı başlar, araç çubuğunu üç satırdan bire indirdi */}
             {filtrePaneli && (
-              <div className="pt-3 mt-0.5 border-t border-white/10 flex flex-col gap-3">
+              <div id="filtre-paneli" className="pt-3 mt-0.5 border-t border-white/10 flex flex-col gap-3 scroll-mt-36">
                 {tumKategoriler.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[13px] text-purple-300/70 mr-1">Kategori</span>
