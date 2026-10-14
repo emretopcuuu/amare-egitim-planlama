@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
@@ -548,6 +548,27 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
   );
 };
 
+// Artımlı render tetikleyicisi. Ayrı bileşen: gözlemci durum değişimi ana
+// listeyi her kaydırmada yeniden render etmesin.
+const DahaFazlaTetik = ({ onGorundu, kalan }) => {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const g = new IntersectionObserver((girisler) => {
+      if (girisler.some((x) => x.isIntersecting)) onGorundu();
+    }, { rootMargin: '600px' });   // ekrana girmeden önce hazırla
+    g.observe(el);
+    return () => g.disconnect();
+  }, [onGorundu]);
+  return (
+    <button ref={ref} onClick={onGorundu}
+      className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-purple-200 rounded-xl py-3 text-[15px] font-semibold transition-colors">
+      {kalan} hafta daha göster
+    </button>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOBİL yapışkan gün-nav (#1,#6,#7) — AYRI bileşen: kendi scroll state'i var, böylece
 // scroll sırasında dev eğitim listesini yeniden render ETMEZ (eskiden setGorunenGun
@@ -677,6 +698,9 @@ const TakvimView = () => {
   // araç çubuğu üç satırdan bire indi.
   const [filtrePaneli, setFiltrePaneli] = useState(false);
   const [gecmisAylariGoster, setGecmisAylariGoster] = useState(false); // tamamen geçmiş aylar default gizli
+  // Artımlı render: açılışta yalnız ilk haftalar basılır, kullanıcı aşağı
+  // indikçe artar. 73 eğitimin tamamı tek seferde 4283 DOM elemanı üretiyordu.
+  const [gorunenHafta, setGorunenHafta] = useState(3);
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
   const [katilBarAktif, setKatilBarAktif] = useState(false); // yapışkan bar görünürken içeriğe alt boşluk
@@ -968,6 +992,11 @@ const TakvimView = () => {
     () => [...yurtdisiYaklasan, ...yurticiFizikiYaklasan].sort((a, b) => a._d - b._d),
     [yurtdisiYaklasan, yurticiFizikiYaklasan]
   );
+  // Filtre/arama degisince listenin basina donuldugu icin pencere de sifirlanir.
+  useEffect(() => { setGorunenHafta(3); }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, gorunum]);
+
+  const dahaFazlaHafta = useCallback(() => setGorunenHafta(n => n + 3), []);
+
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
 
   // ── Boş sonuç için çıkış yolları (madde 3) ──
@@ -1768,7 +1797,7 @@ const TakvimView = () => {
               );
             })()}
 
-            {haftaKeys.map((haftaKey,idx) => {
+            {haftaKeys.slice(0, gorunenHafta).map((haftaKey,idx) => {
               const haftaEgitimleri = haftalikTakvim[haftaKey];
               if (!haftaEgitimleri?.length) return null;
               // Tamamen geçmiş hafta + toggle kapalı → gizle
@@ -1793,7 +1822,7 @@ const TakvimView = () => {
               };
 
               return (
-                <div key={haftaKey} className="relative">
+                <div key={haftaKey} className="relative hafta-blok">
                   {/* Timeline çubuğu — sol kenar mor → altın */}
                   <div className="absolute left-0 top-12 bottom-4 w-1 rounded-full bg-gradient-to-b from-amber-400/40 via-purple-400/30 to-transparent hidden lg:block" />
 
@@ -1823,6 +1852,14 @@ const TakvimView = () => {
                 </div>
               );
             })}
+
+            {/* Artımlı render tetikleyicisi: görünür alana girince sonraki
+                haftalar eklenir. JS kapalıysa/gözlemci düşerse düğme olarak
+                çalışır, yani içerik hiçbir koşulda erişilemez kalmaz. */}
+            {gorunenHafta < haftaKeys.length && (
+              <DahaFazlaTetik onGorundu={dahaFazlaHafta}
+                kalan={haftaKeys.length - gorunenHafta} />
+            )}
           </div>
         </div>
 
