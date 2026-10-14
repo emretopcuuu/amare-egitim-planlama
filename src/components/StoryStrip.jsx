@@ -9,6 +9,7 @@ import { adYaz } from '../utils/adYaz';
 import { gorselBoyut } from '../utils/gorselBoyut';
 import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { yuzOdak } from '../utils/yuzOdak';
 const parseTarih = (t) => {
   if (!t) return null;
   const parts = String(t).split('.').map(Number);
@@ -235,7 +236,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
                     {kayit?.fotoURL ? (
                       <img src={gorselBoyut(kayit.fotoURL, 96)} alt={kayit.ad || ad} loading="lazy" decoding="async"
                         className="w-full h-full object-cover"
-                        style={{ objectPosition: 'center 25%' }} />
+                        style={{ objectPosition: yuzOdak(kayit?.id, makeCoreId(kayit?.ad || ad)) }} />
                     ) : (
                       <div className="w-full h-full bg-purple-800 flex items-center justify-center" aria-hidden="true">
                         <User className="w-7 h-7 text-purple-300" />

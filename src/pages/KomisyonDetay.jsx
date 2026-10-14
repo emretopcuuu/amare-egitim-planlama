@@ -21,6 +21,7 @@ import { doc, getDoc, setDoc, serverTimestamp, deleteField } from 'firebase/fire
 import { getKomisyon, canEditKomisyon } from '../utils/komisyonlar';
 import { useSmartBack } from '../utils/navigation';
 
+import { yuzOdak } from '../utils/yuzOdak';
 const I18N = {
   tr: {
     komisyonlar: 'Komisyonlar',
@@ -632,7 +633,7 @@ const KomisyonDetay = () => {
                           <img src={getUyeFoto(u)} alt={u.ad}
                             loading="lazy" decoding="async"
                             className="w-14 h-14 rounded-full object-cover border-2 border-amber-300/40 shadow-md"
-                            style={{ objectPosition: 'center 25%' }} />
+                            style={{ objectPosition: yuzOdak(u?.id, makeCoreId(u?.ad)) }} />
                         ) : (
                           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/30 flex items-center justify-center">
                             <span className="text-amber-200 font-bold text-base">

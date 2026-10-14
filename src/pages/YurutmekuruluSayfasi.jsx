@@ -25,6 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import BosListe from '../components/BosListe';
 
+import { yuzOdak } from '../utils/yuzOdak';
 const I18N = {
   tr: {
     anasayfa: 'Hakkımızda',
@@ -346,7 +347,7 @@ const YurutmekuruluSayfasi = () => {
                       <img src={foto} alt={u.ad}
                         loading="lazy" decoding="async"
                         className="w-full h-full rounded-full object-cover border-2 border-amber-300/50 shadow-md group-hover:border-amber-300 transition-colors"
-                        style={{ objectPosition: 'center 25%' }} />
+                        style={{ objectPosition: yuzOdak(u?.coreId, makeCoreId(u?.ad)) }} />
                     ) : (
                       <div className="w-full h-full rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/15 border-2 border-amber-300/40 flex items-center justify-center">
                         <span className="text-amber-200 font-bold text-base">

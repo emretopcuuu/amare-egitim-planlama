@@ -21,6 +21,7 @@ import EgitmenProfilDuzenleyici from '../components/EgitmenProfilDuzenleyici';
 import { gorselOlusturBasariKarti } from '../utils/gorselOlusturBasariKarti';
 
 import { baslikYaz } from '../utils/baslikYaz';
+import { yuzOdak } from '../utils/yuzOdak';
 const parseTarih = (t) => {
   if (!t) return null;
   const p = String(t).split('.').map(Number);
@@ -265,7 +266,7 @@ export default function LiderProfil() {
           <div className="flex-1 flex items-center justify-center min-w-0">
             <div className={`flex items-center gap-2 min-w-0 transition-all duration-300 ${kucukBaslik ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}>
               {kayit?.fotoURL
-                ? <img src={kayit.fotoURL} alt="" className="w-7 h-7 rounded-full object-cover border border-amber-300/60" style={{ objectPosition: 'center 25%' }} />
+                ? <img src={kayit.fotoURL} alt="" className="w-7 h-7 rounded-full object-cover border border-amber-300/60" style={{ objectPosition: yuzOdak(kayit?.id, makeCoreId(kayit?.ad || ad)) }} />
                 : <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center"><User className="w-4 h-4 text-purple-500" /></div>}
               <div className="min-w-0 leading-tight text-left">
                 <div className="text-sm font-bold text-gray-900 truncate">{ad}</div>
@@ -297,7 +298,7 @@ export default function LiderProfil() {
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5">
             <div className="relative">
               {kayit?.fotoURL ? (
-                <img src={kayit.fotoURL} alt={ad} className="w-32 h-32 sm:w-36 sm:h-36 rounded-full object-cover border-4 shadow-2xl" style={{ borderColor: `rgba(216,177,90,${0.4 + isiltiSeviye * 0.6})`, objectPosition: 'center 25%' }} />
+                <img src={kayit.fotoURL} alt={ad} className="w-32 h-32 sm:w-36 sm:h-36 rounded-full object-cover border-4 shadow-2xl" style={{ borderColor: `rgba(216,177,90,${0.4 + isiltiSeviye * 0.6})`, objectPosition: yuzOdak(kayit?.id, makeCoreId(kayit?.ad || ad)) }} />
               ) : (
                 <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-white/15 flex items-center justify-center border-4 border-amber-300/40"><User className="w-16 h-16 text-white/70" /></div>
               )}

@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
 
 import { baslikYaz } from '../utils/baslikYaz';
+import { yuzOdak } from '../utils/yuzOdak';
 const parseTarih = (t) => {
   if (!t) return null;
   const parts = String(t).split('.').map(Number);
@@ -267,7 +268,7 @@ const EgitimDetay = () => {
                         {kayit?.fotoURL ? (
                           <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
                             className="w-14 h-14 rounded-full object-cover border-2 border-purple-200 shadow-sm"
-                            style={{ objectPosition: 'center 25%' }} />
+                            style={{ objectPosition: yuzOdak(kayit?.id, makeCoreId(kayit?.ad || ad)) }} />
                         ) : (
                           <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200" aria-hidden="true">
                             <User className="w-7 h-7 text-purple-400" />

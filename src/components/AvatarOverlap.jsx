@@ -5,6 +5,8 @@
 import React from 'react';
 import { User as UserIcon } from 'lucide-react';
 
+import { yuzOdak } from '../utils/yuzOdak';
+import { makeCoreId } from '../context/DataContext';
 const AvatarOverlap = ({ items = [], max = 6, size = 'w-9 h-9 sm:w-10 sm:h-10' }) => {
   const list = items.slice(0, max);
   const fazla = Math.max(0, items.length - max);
@@ -22,7 +24,7 @@ const AvatarOverlap = ({ items = [], max = 6, size = 'w-9 h-9 sm:w-10 sm:h-10' }
             <img src={it.fotoURL} alt={it.ad}
               loading="lazy" decoding="async"
               className="w-full h-full object-cover"
-              style={{ objectPosition: 'center 25%' }} />
+              style={{ objectPosition: yuzOdak(it?.id, makeCoreId(it?.ad)) }} />
           ) : (
             <span className="text-amber-200 font-bold text-[10px] sm:text-xs">
               {(it.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}

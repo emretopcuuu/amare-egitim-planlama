@@ -14,6 +14,7 @@ import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { makeCoreId } from '../context/DataContext';
 
+import { yuzOdak } from '../utils/yuzOdak';
 // Çok dilli statik metinler — translations.js'e taşımak yerine inline
 const I18N = {
   tr: {
@@ -300,7 +301,7 @@ const KomisyonlarSayfasi = () => {
                         <img src={getBaskanFoto(baskan)} alt={baskan.ad}
                           loading="lazy" decoding="async"
                           className="w-14 h-14 rounded-full object-cover border-2 border-amber-300/50 shadow-lg"
-                          style={{ objectPosition: 'center 25%' }} />
+                          style={{ objectPosition: yuzOdak(baskan?.id, makeCoreId(baskan?.ad)) }} />
                       ) : (
                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/40 flex items-center justify-center shadow-lg">
                           <span className="text-amber-200 font-bold text-sm">

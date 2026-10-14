@@ -109,6 +109,7 @@ import { baslikYaz } from '../utils/baslikYaz';
 import { yakinEslesmeler } from '../utils/yakinEslesme';
 import { gorselBoyut } from '../utils/gorselBoyut';
 import { benimEgitimlerim } from '../utils/benimTakvimim';
+import { yuzOdak } from '../utils/yuzOdak';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -189,7 +190,7 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false 
       {foto ? (
         <img src={foto} alt={k?.ad||ad} loading="lazy" decoding="async"
           className={`${sz} rounded-full object-cover border-2 border-purple-200 shadow-sm group-hover:scale-110 group-hover:ring-4 group-hover:ring-purple-300 transition-all duration-200`}
-          style={{ objectPosition: 'center 25%' }} />
+          style={{ objectPosition: yuzOdak(k?.id, makeCoreId(k?.ad || ad)) }} />
       ) : (
         <div className={`${sz} rounded-full bg-white/10 flex items-center justify-center border border-white/15 group-hover:scale-110 transition-all duration-200`} aria-hidden="true">
           <User className="w-1/2 h-1/2 text-purple-400" />
@@ -206,7 +207,7 @@ const KonusmaciModal = ({ ad, kayit, onClose }) => !ad ? null : (
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative animate-scaleIn" onClick={e=>e.stopPropagation()}>
       <button onClick={onClose} className="dokun-44 absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
       <div className="flex flex-col items-center text-center">
-        {kayit?.fotoURL ? <img src={gorselBoyut(kayit.fotoURL, 72)} alt={kayit.ad||ad} className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 shadow-lg mb-4" style={{ objectPosition: 'center 25%' }} />
+        {kayit?.fotoURL ? <img src={gorselBoyut(kayit.fotoURL, 72)} alt={kayit.ad||ad} className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 shadow-lg mb-4" style={{ objectPosition: yuzOdak(kayit?.id, makeCoreId(kayit?.ad || ad)) }} />
           : <div className="w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center border-4 border-purple-200 mb-4"><User className="w-16 h-16 text-purple-300" /></div>}
         <h3 className="text-2xl font-bold text-gray-800">{kayit?.ad||ad}</h3>
         {kayit?.unvan && <p className="text-purple-600 font-medium mt-1">{kayit.unvan}</p>}
