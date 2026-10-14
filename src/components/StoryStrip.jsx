@@ -6,6 +6,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { makeSafeId, makeCoreId } from '../context/DataContext';
 import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
 import { adYaz } from '../utils/adYaz';
+import { gorselBoyut } from '../utils/gorselBoyut';
 import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const parseTarih = (t) => {
@@ -232,7 +233,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
                 <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-300 to-amber-600' : 'bg-white/15'} group-hover:scale-105 transition-all`}>
                   <div className="w-full h-full rounded-full overflow-hidden bg-purple-900 border-2 border-purple-900">
                     {kayit?.fotoURL ? (
-                      <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
+                      <img src={gorselBoyut(kayit.fotoURL, 96)} alt={kayit.ad || ad} loading="lazy" decoding="async"
                         className="w-full h-full object-cover"
                         style={{ objectPosition: 'center 25%' }} />
                     ) : (

@@ -107,6 +107,7 @@ import { getYurtdisi } from '../utils/yurtdisi';
 import { adYaz } from '../utils/adYaz';
 import { baslikYaz } from '../utils/baslikYaz';
 import { yakinEslesmeler } from '../utils/yakinEslesme';
+import { gorselBoyut } from '../utils/gorselBoyut';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -204,7 +205,7 @@ const KonusmaciModal = ({ ad, kayit, onClose }) => !ad ? null : (
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative animate-scaleIn" onClick={e=>e.stopPropagation()}>
       <button onClick={onClose} className="dokun-44 absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
       <div className="flex flex-col items-center text-center">
-        {kayit?.fotoURL ? <img src={kayit.fotoURL} alt={kayit.ad||ad} className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 shadow-lg mb-4" style={{ objectPosition: 'center 25%' }} />
+        {kayit?.fotoURL ? <img src={gorselBoyut(kayit.fotoURL, 72)} alt={kayit.ad||ad} className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 shadow-lg mb-4" style={{ objectPosition: 'center 25%' }} />
           : <div className="w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center border-4 border-purple-200 mb-4"><User className="w-16 h-16 text-purple-300" /></div>}
         <h3 className="text-2xl font-bold text-gray-800">{kayit?.ad||ad}</h3>
         {kayit?.unvan && <p className="text-purple-600 font-medium mt-1">{kayit.unvan}</p>}
@@ -307,7 +308,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
           <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
             className="relative block w-full overflow-hidden bg-black/20">
-            <img src={egitim.gorselUrl} alt="" aria-hidden="true" loading="lazy"
+            <img src={gorselBoyut(egitim.gorselUrl, 80)} alt="" aria-hidden="true" loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-90" />
             {/* Afişler tek oranda üretilmiyor: Marka 1080x1350, Program afişi
@@ -315,7 +316,8 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                 kutu + object-cover uzun afişlerin ALTINI, yani konuşmacıları kesiyordu.
                 object-contain: afiş kendi oranında, tamamı görünür; sadece yükseklik
                 tavanı var ki mobilde ilk ekranı tek başına yutmasın. */}
-            <img src={egitim.gorselUrl} alt={baslikYaz(egitim.egitim)} loading="lazy"
+            <img src={egitim.gorselUrl} alt={baslikYaz(egitim.egitim)}
+              loading={isFirst ? 'eager' : 'lazy'} fetchpriority={isFirst ? 'high' : 'auto'}
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className={`relative mx-auto w-auto h-auto max-w-full ${isFirst ? 'max-h-[72vh]' : 'max-h-[44vh]'} object-contain`} />
             {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
@@ -436,7 +438,8 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           {/* DESKTOP poster — sağda (mobilde üstte gösterildi) */}
           {egitim.gorselUrl && (
             <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform relative">
-              <img src={egitim.gorselUrl} alt="Poster" loading="lazy"
+              <img src={egitim.gorselUrl} alt="Poster"
+                loading={isFirst ? 'eager' : 'lazy'} fetchpriority={isFirst ? 'high' : 'auto'}
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className={`${posterSize} max-h-[72vh] object-contain rounded-xl shadow-2xl border-2 border-white/20`} />
               {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
@@ -1167,10 +1170,10 @@ const TakvimView = () => {
               className="relative w-full aspect-[4/5] overflow-hidden group bg-zemin-koyu">
               {/* Şerit afişin kendi renginden: aynı görsel bulanık + büyütülmüş
                   halde zeminde. Ek network isteği yok, aynı URL. */}
-              <img src={egitim.gorselUrl} alt="" aria-hidden="true" loading="lazy"
+              <img src={gorselBoyut(egitim.gorselUrl, 80)} alt="" aria-hidden="true" loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-90" />
-              <img src={egitim.gorselUrl} alt={baslikYaz(egitim.egitim)} loading="lazy"
+              <img src={gorselBoyut(egitim.gorselUrl, 480)} alt={baslikYaz(egitim.egitim)} loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
               {/* Üst sağ: countdown overlay */}
@@ -1364,7 +1367,7 @@ const TakvimView = () => {
           </div>
           {egitim.gorselUrl && (
             <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="relative hidden sm:flex w-14 flex-shrink-0 border-l border-white/10 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
-              <img src={egitim.gorselUrl} alt="Afiş" loading="lazy"
+              <img src={gorselBoyut(egitim.gorselUrl, 56)} alt="Afiş" loading="lazy" width="56"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className="w-full max-h-[76px] object-contain rounded shadow-sm" />
               {egitim.gorselUrl2 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-amare-purple text-white text-[13px] font-bold flex items-center justify-center" title="2 görsel">2</span>}
