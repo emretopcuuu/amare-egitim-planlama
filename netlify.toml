@@ -1,7 +1,7 @@
 [images]
   remote_images = [
-    "https://storage\.googleapis\.com/.*",
-    "https://firebasestorage\.googleapis\.com/.*"
+    'https://storage\.googleapis\.com/.*',
+    'https://firebasestorage\.googleapis\.com/.*'
   ]
 
 [build]
