@@ -245,7 +245,7 @@ const EgitimDetay = () => {
                     <div className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-purple-600" />
                       <span className="font-semibold">{egitim.saat}{egitim.bitisSaati ? ` - ${egitim.bitisSaati}` : ''}</span>
-                      {egitim.sure && <span className="text-gray-500 text-sm">({egitim.sure})</span>}
+                      {egitim.sure && <span className="text-purple-600 text-sm">({egitim.sure})</span>}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ const EgitimDetay = () => {
                 {/* Bilet/satın alma linki (Eventbrite vb.) — biletli etkinliklerde en önde */}
                 {egitim.biletLink && (
                   <a href={egitim.biletLink} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
+                    className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-zemin-koyu font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
                     🎟 {t('bilet_al')}
                   </a>
                 )}
