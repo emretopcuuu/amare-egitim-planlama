@@ -820,6 +820,10 @@ const TakvimView = () => {
   const [konusmaciFiltre, setKonusmaciFiltre] = useState(() => searchParams.get('egitmen'));
   const [zamanFiltre, setZamanFiltre] = useState(() => searchParams.get('zaman')); // 'bu-hafta' | 'gelecek-7' | 'gelecek-30' | null
   const [arama, setArama] = useState(() => searchParams.get('ara') || '');
+  // "Benim takvimim": hatırlatma kurduğu / konuşmacısı olduğu eğitimler.
+  // Rozet vardı ama yalnız onları gösteren filtre yoktu; kişi 73 eğitim
+  // arasında kendi kurduklarını tek tek arıyordu.
+  const [benimFiltre, setBenimFiltre] = useState(() => searchParams.get('benim') === '1');
   // Takvim doğası gereği bir listedir. Mobilde varsayılan kart düzeniydi:
   // tek sütunda kart = satır, ama çerçeve/gölge/yuvarlak her kayıtta tekrar
   // edip sayfayı "kart çorbası"na çeviriyordu. Varsayılan artık liste;
@@ -854,6 +858,7 @@ const TakvimView = () => {
     if (kategoriFiltre) p.set('kategori', kategoriFiltre);
     if (konusmaciFiltre) p.set('egitmen', konusmaciFiltre);
     if (sehirFiltre) p.set('sehir', sehirFiltre);
+    if (benimFiltre) p.set('benim', '1');
     if (gorunum && gorunum !== 'liste') p.set('gorunum', gorunum);
     const yeni = p.toString();
     if (yeni === searchParams.toString()) return;
@@ -865,7 +870,7 @@ const TakvimView = () => {
       return a.toString() === b.toString();
     })();
     setSearchParams(p, { replace: sadeceArama });
-  }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, gorunum]);
+  }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, gorunum, benimFiltre]);
 
   // ── URL → state (yalnız geri/ileri tuşu) ──
   // Kendi yazdığımız URL geri okunmaz; yoksa döngü olur.
@@ -880,6 +885,7 @@ const TakvimView = () => {
     setKonusmaciFiltre(searchParams.get('egitmen'));
     setSehirFiltre(searchParams.get('sehir'));
     setGorunum(searchParams.get('gorunum') || 'liste');
+    setBenimFiltre(searchParams.get('benim') === '1');
   }, [searchParams]);
 
 
@@ -1018,6 +1024,28 @@ const TakvimView = () => {
     return [...s].sort((a, b) => a.localeCompare(b, 'tr-TR'));
   }, [takvim]);
 
+  // ── "Benim takvimim" (madde 9) ──
+  // Hatırlatma kurduğu eğitimler + (giriş yaptıysa) konuşmacısı olduğu
+  // eğitimler işaretlenir. Liste kısalmaz; kişinin kendi işi görünür olur.
+  const [benimSet, setBenimSet] = useState(() => benimEgitimlerim());
+  useEffect(() => {
+    const yenile = () => setBenimSet(benimEgitimlerim());
+    window.addEventListener('benim-takvimim-degisti', yenile);
+    window.addEventListener('storage', yenile);
+    return () => {
+      window.removeEventListener('benim-takvimim-degisti', yenile);
+      window.removeEventListener('storage', yenile);
+    };
+  }, []);
+
+  // Giriş yapan kişi bu eğitimin konuşmacısı mı?
+  const benimAdim = (displayName || '').trim();
+  const konusmacisiMiyim = useCallback((egitim) => {
+    if (!benimAdim || !isAuthenticated) return false;
+    const hedef = makeCoreId(benimAdim);
+    return splitEgitmen(egitim?.egitmen).some(a => makeCoreId(a) === hedef);
+  }, [benimAdim, isAuthenticated]);
+
   // Tüm kategoriler
   const tumKategoriler = useMemo(() => {
     // Girilmiş kategoriler + başlıktan türetilenler. 74 kaydın 50'sinde
@@ -1045,6 +1073,8 @@ const TakvimView = () => {
     if (filtre === 'offline') { if (isOnline(e)) return false; if (sehirFiltre && getSehir(e) !== sehirFiltre) return false; }
     if (filtre === 'yurtdisi' && !getYurtdisi(e)) return false;
     if (kategoriFiltre && kategoriAl(e) !== kategoriFiltre) return false;
+    // "Benim takvimim": hatırlatma kurduğu ya da konuşmacısı olduğu eğitimler
+    if (benimFiltre && !(benimSet.has(e.id) || konusmacisiMiyim(e))) return false;
     if (konusmaciFiltre) {
       const konusmacilar = splitEgitmen(e.egitmen).map(k => k.trim());
       if (!konusmacilar.includes(konusmaciFiltre)) return false;
@@ -1079,13 +1109,17 @@ const TakvimView = () => {
       if (!fields.some(f => f.includes(q))) return false;
     }
     return true;
-  }), [takvim, filtre, sehirFiltre, kategoriFiltre, konusmaciFiltre, zamanFiltre, arama]);
+  }), [takvim, filtre, sehirFiltre, kategoriFiltre, konusmaciFiltre, zamanFiltre, arama, benimFiltre, benimSet, konusmacisiMiyim]);
 
   // Filtre/arama aktifken sayfanın üst yarısı (hero, bugün bandı, yaklaşan
   // etkinlikler) gizlenir: o bölümler filtreye tabi değil ve "0 eğitim"
   // yazarken dolu durmaları kullanıcıyı yanıltıyordu. Eğitmen şeridi bilinçli
   // kalır (kalıcı karar: her zaman en üstte).
-  const aktifFiltreSayisi = (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
+  const benimSayim = useMemo(
+    () => (takvim || []).filter(e => benimSet.has(e.id) || konusmacisiMiyim(e)).length,
+    [takvim, benimSet, konusmacisiMiyim]
+  );
+  const aktifFiltreSayisi = (benimFiltre ? 1 : 0) + (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
   const filtreAktif = aktifFiltreSayisi > 0;
   // Kategori filtresi açıkken kaç kayıt "kategorisi yok" diye dışarıda kaldı?
   // Sessizce gizlemek kullanıcıya filtre bozuk gibi geliyordu.
@@ -1127,31 +1161,11 @@ const TakvimView = () => {
     [yurtdisiYaklasan, yurticiFizikiYaklasan]
   );
   // Filtre/arama degisince listenin basina donuldugu icin pencere de sifirlanir.
-  useEffect(() => { setGorunenHafta(3); }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, gorunum]);
+  useEffect(() => { setGorunenHafta(3); }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, gorunum, benimFiltre]);
 
   const dahaFazlaHafta = useCallback(() => setGorunenHafta(n => n + 3), []);
 
-  // ── "Benim takvimim" (madde 9) ──
-  // Hatırlatma kurduğu eğitimler + (giriş yaptıysa) konuşmacısı olduğu
-  // eğitimler işaretlenir. Liste kısalmaz; kişinin kendi işi görünür olur.
-  const [benimSet, setBenimSet] = useState(() => benimEgitimlerim());
-  useEffect(() => {
-    const yenile = () => setBenimSet(benimEgitimlerim());
-    window.addEventListener('benim-takvimim-degisti', yenile);
-    window.addEventListener('storage', yenile);
-    return () => {
-      window.removeEventListener('benim-takvimim-degisti', yenile);
-      window.removeEventListener('storage', yenile);
-    };
-  }, []);
 
-  // Giriş yapan kişi bu eğitimin konuşmacısı mı?
-  const benimAdim = (displayName || '').trim();
-  const konusmacisiMiyim = useCallback((egitim) => {
-    if (!benimAdim || !isAuthenticated) return false;
-    const hedef = makeCoreId(benimAdim);
-    return splitEgitmen(egitim?.egitmen).some(a => makeCoreId(a) === hedef);
-  }, [benimAdim, isAuthenticated]);
 
   // ── Klavye ile liste gezinme (madde 10) ──
   // j/k ve ok tuşlarıyla kartlar arasında atlar. Ekranın üst kısmına en yakın
@@ -1181,7 +1195,7 @@ const TakvimView = () => {
       : `${n} eğitim listeleniyor.${aktifFiltreSayisi > 0 ? ` ${aktifFiltreSayisi} filtre açık.` : ''}`);
   }, [filtrelenmis.length, aktifFiltreSayisi, loading]);
 
-  const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
+  const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); setBenimFiltre(false); };
 
   // Klavye kısayolları
   useKeyboardShortcuts({
@@ -1845,6 +1859,19 @@ const TakvimView = () => {
                 <CalendarIcon className="w-3.5 h-3.5" />{t('cal_today_badge')}
               </button>
 
+              {/* Madde 4: "Benim takvimim" — rozet vardı, filtre yoktu */}
+              {benimSayim > 0 && (
+                <button onClick={() => setBenimFiltre(v => !v)} aria-pressed={benimFiltre}
+                  title="Hatırlatma kurduğun ve konuşmacısı olduğun eğitimler"
+                  className={`dokun-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-colors ${
+                    benimFiltre ? 'bg-amber-400 text-zemin-koyu border-amber-400'
+                    : 'text-white/80 hover:text-white border-white/15 hover:border-white/35'}`}>
+                  <Bell className="w-3.5 h-3.5" />Benim takvimim
+                  <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-[13px] font-bold ${
+                    benimFiltre ? 'bg-zemin-koyu/15' : 'bg-white/10'}`}>{benimSayim}</span>
+                </button>
+              )}
+
               {/* ZAMAN — tek segment kutusu */}
               <div className="inline-flex items-center rounded-xl border border-white/15 bg-white/[0.04] p-0.5 max-md:overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {[{key:'bu-hafta',label:'Bu Hafta'},{key:'gelecek-7',label:'7 Gün'},{key:'gelecek-30',label:'30 Gün'}].map(z=>(
@@ -1891,6 +1918,15 @@ const TakvimView = () => {
                     <X className="w-3 h-3" />Sıfırla ({aktifFiltreSayisi})
                   </button>
                 )}
+                {/* Madde 6: takvim aboneliği "Filtreler" panelinin içinde gizliydi.
+                    Bir kez kuran kişi eğitimleri kendi telefon takviminde görür;
+                    en kalıcı özellik en derinde duruyordu. */}
+                <a href="/api/ical" target="_blank" rel="noopener noreferrer"
+                  title="Google / Apple / Outlook takvimine abone ol — yeni eğitimler otomatik düşer"
+                  className="dokun-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold border border-white/15 text-white/80 hover:text-white hover:border-white/35 transition-colors">
+                  <Rss className="w-3.5 h-3.5" /><span className="hidden sm:inline">Takvimime ekle</span>
+                </a>
+
                 {(tumKategoriler.length > 0 || tumKonusmacilar.length > 0) && (
                   <button onClick={()=>setFiltrePaneli(v=>!v)} aria-expanded={filtrePaneli}
                     className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-colors ${filtrePaneli?'border-amber-400/60 text-amber-300':'border-white/15 text-white/80 hover:text-white hover:border-white/35'}`}>
@@ -1939,11 +1975,7 @@ const TakvimView = () => {
                       </select>
                       <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-300/80 pointer-events-none" />
                     </div>
-                    <a href="/api/ical" target="_blank" rel="noopener noreferrer"
-                      title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"
-                      className="dokun-44 ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
-                      <Rss className="w-3 h-3" />Takvim aboneliği
-                    </a>
+
                   </div>
                 )}
               </div>
