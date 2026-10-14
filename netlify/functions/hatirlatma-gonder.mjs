@@ -19,6 +19,54 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ── Telefon/tarayıcı bildirimi (ikinci kanal) ──
+// E-posta tek kanaldı; kişi e-postaya bakmıyorsa eğitimi kaçırıyordu.
+// Abonelik `web_push_aboneleri` koleksiyonunda, egitimId ile tutuluyor.
+// web-push veya VAPID yoksa bu blok sessizce devre dışı kalır, e-posta akışı
+// hiçbir şekilde etkilenmez.
+let webpush = null;
+try {
+  const m = await import('web-push');
+  webpush = m.default || m;
+} catch { /* paket yok: yalnız e-posta */ }
+
+const VAPID_PUBLIC = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const PUSH_HAZIR = !!(webpush && VAPID_PUBLIC && VAPID_PRIVATE);
+if (PUSH_HAZIR) {
+  try {
+    webpush.setVapidDetails('mailto:noreply@oneteamglobal.ai', VAPID_PUBLIC, VAPID_PRIVATE);
+  } catch { /* yoksay */ }
+}
+
+// Bir eğitimin push abonelerine bildirim gönderir. Hata fırlatmaz.
+const pushGonder = async (egitimId, baslik, govde, link) => {
+  if (!PUSH_HAZIR || !egitimId) return 0;
+  let n = 0;
+  try {
+    const snap = await db.collection('web_push_aboneleri')
+      .where('egitimId', '==', egitimId)
+      .where('aktif', '==', true)
+      .get();
+    const yuk = JSON.stringify({ title: baslik, body: govde, url: link });
+    for (const d of snap.docs) {
+      const a = d.data();
+      try {
+        await webpush.sendNotification({ endpoint: a.endpoint, keys: a.keys }, yuk);
+        n++;
+      } catch (e) {
+        // 404/410 = abonelik ölmüş; bir daha denememek için pasifle.
+        if (e?.statusCode === 404 || e?.statusCode === 410) {
+          await d.ref.update({ aktif: false }).catch(() => {});
+        }
+      }
+    }
+  } catch (e) {
+    console.error('push gönderilemedi:', e.message);
+  }
+  return n;
+};
+
 const LANG_TEXTS = {
   tr: {
     reminder: 'One Team Eğitim Hatırlatması',
@@ -126,9 +174,19 @@ export default async () => {
           html: metinTemizle(html),
         });
 
+        // İkinci kanal: telefon bildirimi. E-posta zaten gitti; buradaki hata
+        // kaydı "gönderildi" işaretlemesini engellemez.
+        const pushAdedi = await pushGonder(
+          data.egitimId,
+          metinTemizle(data.egitimAdi || 'One Team Eğitimi'),
+          metinTemizle(`${data.tarih || ''} ${data.saat || ''} başlıyor`.trim()),
+          data.egitimId ? `https://egitimtakvimi.oneteamglobal.ai/e/${data.egitimId}` : 'https://egitimtakvimi.oneteamglobal.ai/takvim',
+        );
+
         await doc.ref.update({
           gonderildi: true,
           gonderildiZaman: admin.firestore.Timestamp.now(),
+          pushGonderilen: pushAdedi,
         });
 
         gonderilen++;

@@ -7,6 +7,8 @@ import confetti from 'canvas-confetti';
 
 import { baslikYaz } from '../utils/baslikYaz';
 import { benimIsaretle } from '../utils/benimTakvimim';
+import { webPushDestekli, webPushIzinDurumu, webPushKaydolu } from '../utils/webPush';
+import AddToCalendarButton from './AddToCalendarButton';
 const ZAMAN_KEYS = [
   { id: '5dk', key: 'reminder_5min', dk: 5 },
   { id: '10dk', key: 'reminder_10min', dk: 10 },
@@ -22,6 +24,10 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
   const { t, lang } = useTranslation();
   const [email, setEmail] = useState('');
   const [seciliZamanlar, setSeciliZamanlar] = useState(new Set(['24saat']));
+  // Telefon/tarayıcı bildirimi: e-postaya ek ikinci kanal. Altyapı (VAPID +
+  // web_push_aboneleri) zaten kurulu, burada tek etkinliğe bağlanıyor.
+  const [bildirimIstendi, setBildirimIstendi] = useState(false);
+  const [bildirimDurum, setBildirimDurum] = useState('');   // '', 'bekliyor', 'tamam', 'hata'
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [basarili, setBasarili] = useState(false);
   const [hata, setHata] = useState(null);
@@ -99,6 +105,18 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
         });
       }
 
+      // Telefon bildirimi istendiyse bu etkinliğe abone ol. Başarısız olursa
+      // e-posta hatırlatması yine kurulmuş sayılır: kanal düşse de kayıt kalır.
+      if (bildirimIstendi && webPushDestekli()) {
+        setBildirimDurum('bekliyor');
+        try {
+          await webPushKaydolu({ egitimId: egitim.id });
+          setBildirimDurum('tamam');
+        } catch {
+          setBildirimDurum('hata');
+        }
+      }
+
       setBasarili(true);
       // Confetti burst — başarılı kayıt feedback'i
       try {
@@ -125,6 +143,14 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
           <h3 className="text-xl font-bold text-gray-800 mb-2">{t('reminder_success_title')}</h3>
           <p className="text-gray-500 text-sm mb-1">{t('reminder_success_desc').replace('{email}', email)}</p>
           <p className="text-gray-400 text-xs mb-6">{t('reminder_success_sub')}</p>
+          {bildirimDurum === 'tamam' && (
+            <p className="text-green-600 text-sm font-semibold mb-3">Telefon bildirimi de açıldı.</p>
+          )}
+          {bildirimDurum === 'hata' && (
+            <p className="text-amber-600 text-sm mb-3">Telefon bildirimi açılamadı, e-posta hatırlatman kuruldu.</p>
+          )}
+          {/* Üçüncü kanal: kendi takvimine ekle. Ayrı menüde aramasın. */}
+          <div className="flex justify-center mb-4"><AddToCalendarButton egitim={egitim} /></div>
           <button onClick={onClose} className="px-6 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition">{t('ok')}</button>
         </div>
       </div>
@@ -189,6 +215,28 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
               })}
             </div>
           </div>
+
+          {/* İkinci kanal: telefon/tarayıcı bildirimi */}
+          {webPushDestekli() && (
+            <button type="button" onClick={() => webPushIzinDurumu() !== 'denied' && setBildirimIstendi(v => !v)}
+              aria-pressed={bildirimIstendi} disabled={webPushIzinDurumu() === 'denied'}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border-2 text-left transition-all ${
+                webPushIzinDurumu() === 'denied' ? 'border-gray-200 opacity-60 cursor-not-allowed'
+                : bildirimIstendi ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'}`}>
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                bildirimIstendi ? 'border-purple-500 bg-purple-500' : 'border-gray-300'}`}>
+                {bildirimIstendi && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+              </div>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-gray-800">Telefonuma da bildirim gönder</span>
+                <span className="block text-xs text-gray-500">
+                  {webPushIzinDurumu() === 'denied'
+                    ? 'Bu tarayıcıda bildirimler engellenmiş. Site ayarlarından açabilirsin.'
+                    : 'E-postaya ek olarak, tarayıcı bildirimi'}
+                </span>
+              </span>
+            </button>
+          )}
 
           {hata && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
