@@ -84,6 +84,7 @@ const KATEGORI_RENK = {
   'Kişisel Gelişim':    { ...NOTR, dot: 'bg-violet-300' },
   'Vizyon Günü':        { ...NOTR, dot: 'bg-pink-400' },
   'Panel':              { ...NOTR, dot: 'bg-cyan-400' },
+  'Ürün Eğitimi':       { ...NOTR, dot: 'bg-teal-400' },
   'Diğer':              { ...NOTR, dot: 'bg-slate-400' },
 };
 // Türkiye 81 il + Çorlu — yer string'inden şehir tespit etmek için
@@ -110,6 +111,7 @@ import { yakinEslesmeler } from '../utils/yakinEslesme';
 import { gorselBoyut } from '../utils/gorselBoyut';
 import { benimEgitimlerim } from '../utils/benimTakvimim';
 import { yuzOdak } from '../utils/yuzOdak';
+import { kategoriAl, kategoriOtomatikMi } from '../utils/kategoriTuret';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -1016,9 +1018,11 @@ const TakvimView = () => {
 
   // Tüm kategoriler
   const tumKategoriler = useMemo(() => {
+    // Girilmiş kategoriler + başlıktan türetilenler. 74 kaydın 50'sinde
+    // kategori boş olduğu için yalnız girilmişlerle filtre işe yaramıyordu.
     const s = new Set();
-    takvim.forEach(e => e.kategori && s.add(e.kategori));
-    return [...s].sort();
+    takvim.forEach(e => { const k = kategoriAl(e); if (k) s.add(k); });
+    return [...s].sort((a, b) => a.localeCompare(b, 'tr-TR'));
   }, [takvim]);
 
   // Dil değiştiğinde tüm eğitim başlıklarını ve kategorilerini önceden çevir
@@ -1038,7 +1042,7 @@ const TakvimView = () => {
     if (filtre === 'online' && !isOnline(e)) return false;
     if (filtre === 'offline') { if (isOnline(e)) return false; if (sehirFiltre && getSehir(e) !== sehirFiltre) return false; }
     if (filtre === 'yurtdisi' && !getYurtdisi(e)) return false;
-    if (kategoriFiltre && e.kategori !== kategoriFiltre) return false;
+    if (kategoriFiltre && kategoriAl(e) !== kategoriFiltre) return false;
     if (konusmaciFiltre) {
       const konusmacilar = splitEgitmen(e.egitmen).map(k => k.trim());
       if (!konusmacilar.includes(konusmaciFiltre)) return false;
@@ -1076,6 +1080,12 @@ const TakvimView = () => {
   // kalır (kalıcı karar: her zaman en üstte).
   const aktifFiltreSayisi = (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
   const filtreAktif = aktifFiltreSayisi > 0;
+  // Kategori filtresi açıkken kaç kayıt "kategorisi yok" diye dışarıda kaldı?
+  // Sessizce gizlemek kullanıcıya filtre bozuk gibi geliyordu.
+  const kategorisizGizlenen = useMemo(() => {
+    if (!kategoriFiltre) return 0;
+    return (takvim || []).filter(e => !kategoriAl(e)).length;
+  }, [takvim, kategoriFiltre]);
 
   // Yurtdışı yaklaşan eğitimler (gelecek 12 ay — büyük convention'lar erken planlanır)
   const yurtdisiYaklasan = useMemo(() => {
@@ -1342,12 +1352,15 @@ const TakvimView = () => {
     const gunNo = tarih ? tarih.getDate() : '';
     const ayAd = tarih ? tarih.toLocaleDateString(locale, { month: 'short' }) : '';
     const konusmacilar2 = splitEgitmen(egitim.egitmen);
-    const katRenk = KATEGORI_RENK[egitim.kategori] || KATEGORI_RENK['Diğer'];
+    // Kategori girilmemişse başlıktan türetilir (veriye dokunulmaz).
+    const kategori = kategoriAl(egitim);
+    const kategoriOtomatik = kategoriOtomatikMi(egitim);
+    const katRenk = KATEGORI_RENK[kategori] || KATEGORI_RENK['Diğer'];
     const online = isOnline(egitim);
     const cdKart = getCountdown(egitim);
     const gecmis = cdKart?.durum === 'gecmis';
     const egitimAdi = baslikYaz(tDynamic(egitim.egitim));
-    const kategoriAdi = tDynamic(egitim.kategori);
+    const kategoriAdi = tDynamic(kategori);
     const hatirlatmaCount = hatirlatmaSayilari?.[egitim.id] || 0;
     const yurtdisi = getYurtdisi(egitim);
     const zoomId = zoomIdBul(egitim); // kart görünümünde Katıl butonu için
@@ -1359,7 +1372,7 @@ const TakvimView = () => {
           <td className="px-3 py-2 text-[15px] text-purple-200 whitespace-nowrap">{egitim.saat ? `${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : '—'}</td>
           <td className="px-3 py-2 text-[15px] font-bold text-white/90">{egitimAdi}</td>
           <td className="px-3 py-2 text-[15px] text-purple-200">{egitim.egitmen||'—'}</td>
-          <td className="px-3 py-2">{egitim.kategori?<span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>:'—'}</td>
+          <td className="px-3 py-2">{kategori?<span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>:'—'}</td>
           <td className="px-3 py-2 flex items-center gap-1.5"><CountdownBadge egitim={egitim} /><EventActions egitim={egitim} compact /></td>
         </tr>
       );
@@ -1376,7 +1389,7 @@ const TakvimView = () => {
             </div>
           )}
           {/* Kategori accent — üst kenar 3px (poster yoksa görünür) */}
-          {egitim.kategori && !egitim.gorselUrl && <div className={`absolute left-0 right-0 top-0 h-1 z-10 ${katRenk.dot}`} aria-hidden="true" />}
+          {kategori && !egitim.gorselUrl && <div className={`absolute left-0 right-0 top-0 h-1 z-10 ${katRenk.dot}`} aria-hidden="true" />}
 
           {/* SİNEMA POSTERİ TASARIMI — poster aspect-square + gradient overlay altta */}
           {egitim.gorselUrl ? (
@@ -1427,7 +1440,7 @@ const TakvimView = () => {
             {(() => {
               const detayIcerik = (
                 <>
-                  {egitim.kategori && (
+                  {kategori && (
                     <div>
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}
@@ -1444,7 +1457,7 @@ const TakvimView = () => {
                   )}
                 </>
               );
-              if (!egitim.kategori && konusmacilar2.length === 0) return null;
+              if (!kategori && konusmacilar2.length === 0) return null;
               return (
                 <>
                   {/* Masaüstü: hep açık */}
@@ -1453,7 +1466,7 @@ const TakvimView = () => {
                   <details className="md:hidden group">
                     <summary className="list-none cursor-pointer text-[13px] font-bold text-purple-500 flex items-center gap-1 select-none">
                       <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
-                      {konusmacilar2.length > 0 ? `${konusmacilar2.length} konuşmacı` : 'Detay'}{egitim.kategori ? ` · ${kategoriAdi}` : ''}
+                      {konusmacilar2.length > 0 ? `${konusmacilar2.length} konuşmacı` : 'Detay'}{kategori ? ` · ${kategoriAdi}` : ''}
                     </summary>
                     <div className="flex flex-col gap-3 mt-2">{detayIcerik}</div>
                   </details>
@@ -1512,7 +1525,7 @@ const TakvimView = () => {
           </div>
         )}
         {/* Kategori accent — üst yatay bar */}
-        {egitim.kategori && <div className={`absolute left-0 right-0 top-0 h-1 ${katRenk.dot}`} aria-hidden="true" />}
+        {kategori && <div className={`absolute left-0 right-0 top-0 h-1 ${katRenk.dot}`} aria-hidden="true" />}
         <div className="flex items-start gap-3 p-3">
           {/* Date badge — FIXED size, her kartta aynı boyut */}
           <div className={`flex-shrink-0 flex flex-col items-center justify-center px-2 py-3 w-[64px] h-[88px] ${dateColumnGradient} ${dateColumnText} rounded-xl shadow-lg`}>
@@ -1555,7 +1568,7 @@ const TakvimView = () => {
                   {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-white/[0.06] text-purple-200 border border-white/15" title={t('cal_zoom_real')}>📊 {egitim.zoomGercekKatilim} {t('cal_attended')}{egitim.zoomOrtDakika?` · ${t('cal_avg')} ${egitim.zoomOrtDakika} dk`:''}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
+                  {kategori && <span title={kategoriOtomatik ? 'Kategori girilmemiş, başlıktan tahmin edildi' : undefined} className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border} ${kategoriOtomatik ? 'border-dashed' : ''}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-purple-200 border border-white/15"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
                 {/* Eğitmen adı sağdaki avatarın altında zaten yazıyor; mobilde avatar
@@ -1929,6 +1942,23 @@ const TakvimView = () => {
             )}
           </div>
         </div>
+
+        {/* Kategori filtresi dürüstlüğü: veri eksikliğinden gizlenenleri söyle */}
+        {kategorisizGizlenen > 0 && (
+          <div className="px-4 pt-3">
+            <div className="container mx-auto max-w-7xl">
+              <div className="flex flex-wrap items-center gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-[13px] text-purple-200">
+                <span>
+                  Kategorisi girilmemiş <strong className="text-white">{kategorisizGizlenen}</strong> eğitim bu filtrede görünmüyor.
+                </span>
+                <button onClick={() => setKategoriFiltre(null)}
+                  className="ml-auto inline-flex items-center min-h-[36px] px-2.5 rounded-lg font-semibold text-amber-200 hover:text-white hover:bg-white/10 transition-colors">
+                  Kategori filtresini kaldır
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Swipe ipucu (#5) — mobilde bir kez gösterilir */}
         {swipeIpucu && (
