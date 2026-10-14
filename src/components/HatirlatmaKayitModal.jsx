@@ -6,6 +6,7 @@ import { useTranslation } from '../context/LanguageContext';
 import confetti from 'canvas-confetti';
 
 import { baslikYaz } from '../utils/baslikYaz';
+import { benimIsaretle } from '../utils/benimTakvimim';
 const ZAMAN_KEYS = [
   { id: '5dk', key: 'reminder_5min', dk: 5 },
   { id: '10dk', key: 'reminder_10min', dk: 10 },
@@ -78,6 +79,8 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
         // email+zaman tekrar kaydedilirse zaten öncesinde de (query hep exception
         // yediği için) 2. doküman oluşuyordu. hatirlatma-gonder.mjs de email/zaman
         // bazlı dedup yapmıyor — ayrı, önceden var olan bir konu, kapsam dışı.
+        // "Benim takvimim" izi: bu eğitim listede öne çıksın.
+        benimIsaretle(egitim.id);
         await addDoc(collection(db, 'hatirlatmalar'), {
           egitimId: egitim.id,
           egitimAdi: egitim.egitim,

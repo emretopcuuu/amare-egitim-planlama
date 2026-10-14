@@ -108,6 +108,7 @@ import { adYaz } from '../utils/adYaz';
 import { baslikYaz } from '../utils/baslikYaz';
 import { yakinEslesmeler } from '../utils/yakinEslesme';
 import { gorselBoyut } from '../utils/gorselBoyut';
+import { benimEgitimlerim } from '../utils/benimTakvimim';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -987,6 +988,28 @@ const TakvimView = () => {
 
   const dahaFazlaHafta = useCallback(() => setGorunenHafta(n => n + 3), []);
 
+  // ── "Benim takvimim" (madde 9) ──
+  // Hatırlatma kurduğu eğitimler + (giriş yaptıysa) konuşmacısı olduğu
+  // eğitimler işaretlenir. Liste kısalmaz; kişinin kendi işi görünür olur.
+  const [benimSet, setBenimSet] = useState(() => benimEgitimlerim());
+  useEffect(() => {
+    const yenile = () => setBenimSet(benimEgitimlerim());
+    window.addEventListener('benim-takvimim-degisti', yenile);
+    window.addEventListener('storage', yenile);
+    return () => {
+      window.removeEventListener('benim-takvimim-degisti', yenile);
+      window.removeEventListener('storage', yenile);
+    };
+  }, []);
+
+  // Giriş yapan kişi bu eğitimin konuşmacısı mı?
+  const benimAdim = (displayName || '').trim();
+  const konusmacisiMiyim = useCallback((egitim) => {
+    if (!benimAdim || !isAuthenticated) return false;
+    const hedef = makeCoreId(benimAdim);
+    return splitEgitmen(egitim?.egitmen).some(a => makeCoreId(a) === hedef);
+  }, [benimAdim, isAuthenticated]);
+
   // ── Klavye ile liste gezinme (madde 10) ──
   // j/k ve ok tuşlarıyla kartlar arasında atlar. Ekranın üst kısmına en yakın
   // kartı "şu anki" sayar; böylece kullanıcı nereden devam edeceğini bilir.
@@ -1343,6 +1366,8 @@ const TakvimView = () => {
     }
 
     // Liste (default)
+    // "Benim takvimim": hatırlatma kurduğu ya da konuşmacısı olduğu eğitim.
+    const benimMi = benimSet.has(egitim.id) || konusmacisiMiyim(egitim);
     // Tarih kutusu: online = altın (açık zemin, koyu metin), diğerleri koyu yüzey
     // (açık metin). Metin rengi zemine göre seçilir, yoksa biri okunmaz çıkar.
     const dateColumnGradient = yurtdisi
@@ -1352,7 +1377,7 @@ const TakvimView = () => {
       : 'bg-purple-800';
     const dateColumnText = (!yurtdisi && online) ? 'text-zemin-koyu' : 'text-white';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`group relative scroll-mt-28 md:scroll-mt-36 bg-white/[0.04] border border-white/10 rounded-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`group relative scroll-mt-28 md:scroll-mt-36 border rounded-xl ${benimMi ? 'bg-amber-400/[0.07] border-amber-400/30' : 'bg-white/[0.04] border-white/10'} hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg gold-glow">
@@ -1375,6 +1400,12 @@ const TakvimView = () => {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-bold text-white text-[18px] leading-tight">{egitimAdi}</h3>
+                  {benimMi && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-400 text-zemin-koyu"
+                      title={konusmacisiMiyim(egitim) ? 'Bu eğitimin konuşmacısısın' : 'Bu eğitim için hatırlatma kurdun'}>
+                      {konusmacisiMiyim(egitim) ? 'Sen konuşmacısın' : 'Senin takviminde'}
+                    </span>
+                  )}
                   <CountdownBadge egitim={egitim} />
                   {/* İkincil eylemler (kademe 3): masaüstünde satırın üstüne
                       gelince veya klavyeyle odaklanınca açılır, mobilde hep
