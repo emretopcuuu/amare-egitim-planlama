@@ -358,6 +358,29 @@ html {
     to { opacity: 1; transform: translateY(0); }
   }
 
+
+  /* ── Kademeli giriş (takvim listesi / şerit) ──────────────
+     Taban durum GÖRÜNÜR: animasyon yalnız "hareket sakıncası yok"
+     diyen kullanıcıda çalışır. Böylece animasyon hiç çalışmazsa
+     (reduced-motion, arka plan sekme, başsız tarayıcı) içerik
+     yine de ekranda olur. */
+  @media (prefers-reduced-motion: no-preference) {
+    .giris-kademeli > * {
+      animation: girisYukari 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .giris-kademeli > *:nth-child(1) { animation-delay: 0ms; }
+    .giris-kademeli > *:nth-child(2) { animation-delay: 40ms; }
+    .giris-kademeli > *:nth-child(3) { animation-delay: 80ms; }
+    .giris-kademeli > *:nth-child(4) { animation-delay: 120ms; }
+    .giris-kademeli > *:nth-child(5) { animation-delay: 160ms; }
+    .giris-kademeli > *:nth-child(6) { animation-delay: 200ms; }
+    .giris-kademeli > *:nth-child(n+7) { animation-delay: 240ms; }
+  }
+  @keyframes girisYukari {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+
   /* ── Skip-to-content link (a11y) ────────────────────────── */
   .skip-link {
     position: fixed;

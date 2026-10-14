@@ -604,7 +604,11 @@ const TakvimView = () => {
   const [konusmaciFiltre, setKonusmaciFiltre] = useState(null);
   const [zamanFiltre, setZamanFiltre] = useState(null); // 'bu-hafta' | 'gelecek-7' | 'gelecek-30' | null
   const [arama, setArama] = useState('');
-  const [gorunum, setGorunum] = useState(() => window.innerWidth < 768 ? 'kart' : 'liste'); // mobilde kart, masaüstünde liste
+  // Takvim doğası gereği bir listedir. Mobilde varsayılan kart düzeniydi:
+  // tek sütunda kart = satır, ama çerçeve/gölge/yuvarlak her kayıtta tekrar
+  // edip sayfayı "kart çorbası"na çeviriyordu. Varsayılan artık liste;
+  // kart görünümü seçenek olarak duruyor.
+  const [gorunum, setGorunum] = useState('liste');
   const [gecmisAylariGoster, setGecmisAylariGoster] = useState(false); // tamamen geçmiş aylar default gizli
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
@@ -1176,7 +1180,9 @@ const TakvimView = () => {
                   {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
-                {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-[15px] text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0">{konusmacilar2.join(', ')}</span></div>}
+                {/* Eğitmen adı sağdaki avatarın altında zaten yazıyor; mobilde avatar
+                    gizlendiği için metin YALNIZ orada tutuluyor (md altı). */}
+                {konusmacilar2.length>0 && <div className="md:hidden flex items-center gap-1 mt-2 text-[15px] text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0">{konusmacilar2.map(adYaz).join(', ')}</span></div>}
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? (
                   <span className="inline-flex items-center gap-2 flex-wrap">
                     <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a>
@@ -1450,14 +1456,14 @@ const TakvimView = () => {
                 ].map(f=>(
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[15px] font-semibold transition-all spring-tap ${filtre===f.key
-                      ? (f.special ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg ring-2 ring-amber-300' : 'bg-white text-purple-800 shadow-lg')
-                      : (f.special ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-400/30' : 'bg-white/10 text-white/80 hover:bg-white/20')}`}>
+                      ? 'bg-amber-400 text-gray-900 border border-amber-400'
+                      : 'bg-transparent text-white/80 border border-white/25 hover:border-white/50 hover:text-white'}`}>
                     {f.icon}{f.label}
                   </button>
                 ))}
                 {filtre==='offline'&&sehirler.length>0&&<>
                   <div className="w-px h-8 bg-white/20 self-center mx-1" />
-                  {sehirler.map(s=><button key={s} onClick={()=>setSehirFiltre(sehirFiltre===s?null:s)} className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${sehirFiltre===s?'bg-amber-400 text-gray-900':'bg-white/10 text-white/70 hover:bg-white/20'}`}>{s}</button>)}
+                  {sehirler.map(s=><button key={s} onClick={()=>setSehirFiltre(sehirFiltre===s?null:s)} className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${sehirFiltre===s?'bg-amber-400 text-gray-900 border-amber-400':'bg-transparent text-white/70 border-white/25 hover:border-white/50'}`}>{s}</button>)}
                 </>}
               </div>
 
@@ -1576,8 +1582,8 @@ const TakvimView = () => {
                     </table>
                   </div>
                 );
-                if (gorunum === 'kart') return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{egitimler.map(renderEgitimKart)}</div>;
-                return <div className="space-y-3">{egitimler.map(renderEgitimKart)}</div>;
+                if (gorunum === 'kart') return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 giris-kademeli">{egitimler.map(renderEgitimKart)}</div>;
+                return <div className="space-y-3 giris-kademeli">{egitimler.map(renderEgitimKart)}</div>;
               };
 
               return (
