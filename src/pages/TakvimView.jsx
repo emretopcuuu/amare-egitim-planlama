@@ -549,6 +549,131 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
   );
 };
 
+// Aylık ızgara görünümü (madde 8).
+// Liste/Kart/Kompakt üçü de dikey listeydi; "bu ay ne var" sorusu 10+ ekran
+// kaydırmak demekti. Burada ay tek ekranda: masaüstünde hücrede başlıklar,
+// mobilde gün + nokta, seçilen günün eşitimleri altta.
+const AyIzgarasi = ({ egitimler, ilkAy, onEgitim, renderEgitim }) => {
+  const [ay, setAy] = useState(() => {
+    const t = ilkAy || new Date();
+    return new Date(t.getFullYear(), t.getMonth(), 1);
+  });
+  const [secilenGun, setSecilenGun] = useState(null);
+
+  // Tarihe göre grupla: "YYYY-M-D" -> eğitimler
+  const gunlereGore = useMemo(() => {
+    const h = new Map();
+    for (const e of egitimler) {
+      const d = parseTarih(e.tarih);
+      if (!d) continue;
+      const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!h.has(k)) h.set(k, []);
+      h.get(k).push(e);
+    }
+    return h;
+  }, [egitimler]);
+
+  const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+  const ilkGun = new Date(ay.getFullYear(), ay.getMonth(), 1);
+  const gunSayisi = new Date(ay.getFullYear(), ay.getMonth() + 1, 0).getDate();
+  // Pazartesi haftanın ilk günü (TR): getDay() 0=Pazar
+  const basBosluk = (ilkGun.getDay() + 6) % 7;
+  const hucreler = [
+    ...Array(basBosluk).fill(null),
+    ...Array.from({ length: gunSayisi }, (_, i) => new Date(ay.getFullYear(), ay.getMonth(), i + 1)),
+  ];
+
+  const anahtar = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  const ayAdi = ay.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+  const secilenler = secilenGun ? (gunlereGore.get(anahtar(secilenGun)) || []) : [];
+
+  // Bu ayda hiç eğitim yoksa kullanıcıyı boş ekranda bırakma: ilk dolu aya atla.
+  const ayDegistir = (yon) => {
+    setSecilenGun(null);
+    setAy(a => new Date(a.getFullYear(), a.getMonth() + yon, 1));
+  };
+
+  return (
+    <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <button onClick={() => ayDegistir(-1)} aria-label="Önceki ay"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <h3 className="text-white font-bold text-[18px] font-display capitalize">{ayAdi}</h3>
+        <button onClick={() => ayDegistir(1)} aria-label="Sonraki ay"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors">
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1">
+        {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(g => (
+          <div key={g} className="text-center text-[13px] font-semibold text-purple-300/80 py-1">{g}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        {hucreler.map((d, i) => {
+          if (!d) return <div key={`bos-${i}`} className="min-h-[52px] sm:min-h-[104px]" />;
+          const liste = gunlereGore.get(anahtar(d)) || [];
+          const bugunMu = d.getTime() === bugun.getTime();
+          const secili = secilenGun && anahtar(secilenGun) === anahtar(d);
+          return (
+            <button key={anahtar(d)} onClick={() => setSecilenGun(secili ? null : d)}
+              aria-label={`${d.getDate()} ${ayAdi}, ${liste.length} eğitim`}
+              aria-pressed={!!secili}
+              className={`min-h-[52px] sm:min-h-[104px] p-1 sm:p-1.5 rounded-lg border text-left align-top transition-colors ${
+                secili ? 'border-amber-400 bg-amber-400/10'
+                : bugunMu ? 'border-amber-400/50 bg-white/[0.06]'
+                : liste.length ? 'border-white/10 bg-white/[0.04] hover:border-white/25'
+                : 'border-transparent'}`}>
+              <div className={`text-[13px] font-bold ${bugunMu ? 'text-amber-300' : liste.length ? 'text-white' : 'text-purple-300/50'}`}>
+                {d.getDate()}
+              </div>
+              {/* Mobil: nokta; masaüstü: başlıklar */}
+              {liste.length > 0 && (
+                <>
+                  <div className="sm:hidden flex flex-wrap gap-0.5 mt-1">
+                    {liste.slice(0, 3).map(e => <span key={e.id} className="w-1.5 h-1.5 rounded-full bg-amber-400" />)}
+                    {liste.length > 3 && <span className="text-[13px] leading-none text-amber-300">+</span>}
+                  </div>
+                  <div className="hidden sm:block mt-1 space-y-0.5">
+                    {liste.slice(0, 2).map(e => (
+                      <div key={e.id} className="text-[13px] leading-tight text-purple-200 line-clamp-1" title={baslikYaz(e.egitim)}>
+                        {e.saat ? `${e.saat.slice(0, 5)} ` : ''}{baslikYaz(e.egitim)}
+                      </div>
+                    ))}
+                    {liste.length > 2 && <div className="text-[13px] text-amber-300 font-semibold">+{liste.length - 2} daha</div>}
+                  </div>
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Seçilen günün eğitimleri — ızgaranın altında, tam kart olarak */}
+      {secilenGun && (
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h4 className="text-white font-bold text-[15px]">
+              {secilenGun.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })}
+            </h4>
+            <button onClick={() => setSecilenGun(null)} aria-label="Gün seçimini kapat"
+              className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-purple-300 hover:text-white transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          {secilenler.length === 0
+            ? <p className="text-purple-300/80 text-[15px]">Bu günde eğitim yok.</p>
+            : <div className="space-y-3">{secilenler.map(renderEgitim)}</div>}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Artımlı render tetikleyicisi. Ayrı bileşen: gözlemci durum değişimi ana
 // listeyi her kaydırmada yeniden render etmesin.
 const DahaFazlaTetik = ({ onGorundu, kalan }) => {
@@ -1752,7 +1877,7 @@ const TakvimView = () => {
                   </button>
                 )}
                 <div className="inline-flex items-center rounded-xl border border-white/15 bg-white/[0.04] p-0.5">
-                  {[{key:'liste',icon:<List className="w-4 h-4" />,label:t('cal_view_list')},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:t('cal_view_card')},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:t('cal_view_table')}].map(g=>(
+                  {[{key:'liste',icon:<List className="w-4 h-4" />,label:t('cal_view_list')},{key:'ay',icon:<CalendarIcon className="w-4 h-4" />,label:'Ay görünümü'},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:t('cal_view_card')},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:t('cal_view_table')}].map(g=>(
                     <button key={g.key} onClick={()=>setGorunum(g.key)} title={g.label} aria-label={g.label} aria-pressed={gorunum===g.key}
                       className={`p-1.5 rounded-lg transition-colors ${gorunum===g.key?'bg-amber-400 text-gray-900':'text-white/60 hover:text-white hover:bg-white/5'}`}>
                       {g.icon}
@@ -1849,6 +1974,7 @@ const TakvimView = () => {
 
             {/* Tamamen geçmiş haftaları say + toggle */}
             {(() => {
+              if (gorunum === 'ay') return null;
               const tamGecmisSayisi = haftaKeys.filter(k => tamGecmisHaftaCheck(haftalikTakvim[k])).length;
               if (tamGecmisSayisi === 0) return null;
               return (
@@ -1864,7 +1990,14 @@ const TakvimView = () => {
               );
             })()}
 
-            {haftaKeys.slice(0, gorunenHafta).map((haftaKey,idx) => {
+            {gorunum === 'ay' && filtrelenmis.length > 0 && (
+              <AyIzgarasi
+                egitimler={filtrelenmis}
+                ilkAy={parseTarih(filtrelenmis[0]?.tarih) || new Date()}
+                renderEgitim={renderEgitimKart} />
+            )}
+
+            {gorunum !== 'ay' && haftaKeys.slice(0, gorunenHafta).map((haftaKey,idx) => {
               const haftaEgitimleri = haftalikTakvim[haftaKey];
               if (!haftaEgitimleri?.length) return null;
               // Tamamen geçmiş hafta + toggle kapalı → gizle
@@ -1923,7 +2056,7 @@ const TakvimView = () => {
             {/* Artımlı render tetikleyicisi: görünür alana girince sonraki
                 haftalar eklenir. JS kapalıysa/gözlemci düşerse düğme olarak
                 çalışır, yani içerik hiçbir koşulda erişilemez kalmaz. */}
-            {gorunenHafta < haftaKeys.length && (
+            {gorunum !== 'ay' && gorunenHafta < haftaKeys.length && (
               <DahaFazlaTetik onGorundu={dahaFazlaHafta}
                 kalan={haftaKeys.length - gorunenHafta} />
             )}
