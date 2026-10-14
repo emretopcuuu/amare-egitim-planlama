@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, ChevronLeft, ChevronRight, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -620,6 +620,9 @@ const TakvimView = () => {
   // edip sayfayı "kart çorbası"na çeviriyordu. Varsayılan artık liste;
   // kart görünümü seçenek olarak duruyor.
   const [gorunum, setGorunum] = useState('liste');
+  // İkincil filtreler (kategori / eğitmen / abonelik) kapalı başlar —
+  // araç çubuğu üç satırdan bire indi.
+  const [filtrePaneli, setFiltrePaneli] = useState(false);
   const [gecmisAylariGoster, setGecmisAylariGoster] = useState(false); // tamamen geçmiş aylar default gizli
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
@@ -1334,9 +1337,16 @@ const TakvimView = () => {
           </div>
         </div>
 
+        {/* Konuşmacı Şeridi — en çok eğitimi olan ilk, tıkla → konuşmacı modal */}
+        <div className="px-4 pt-4">
+          <div className="container mx-auto max-w-7xl">
+            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]} />
+          </div>
+        </div>
+
         {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
         {enYakinEgitimler.length > 0 && (
-          <div className="px-4 pt-8 pb-6">
+          <div className="px-4 pt-4 pb-6">
             <div className="container mx-auto max-w-7xl space-y-3">
               <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
                 onKonusmaci={acLider}
@@ -1353,13 +1363,6 @@ const TakvimView = () => {
             </div>
           </div>
         )}
-
-        {/* Konuşmacı Şeridi — en çok eğitimi olan ilk, tıkla → konuşmacı modal */}
-        <div className="px-4 pt-2">
-          <div className="container mx-auto max-w-7xl">
-            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]} />
-          </div>
-        </div>
 
         {/* Bugün özel bölüm — eğer bugün eğitim varsa */}
         {bugunEgitimleri.length > 0 && (
@@ -1420,106 +1423,142 @@ const TakvimView = () => {
             listeyi render etmez → titreme yok). Scroll'da üstte belirir. */}
         <MobilGunNav sonrakiEgitim={sonrakiEgitim} gunSeridi={gunSeridi} />
 
-        {/* Arama + Filtreler + Görünüm — masaüstünde yapışkan, MOBİLDE AKAR */}
-        <div className="md:sticky md:top-0 z-20 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10 px-4 py-3 shadow-lg" data-no-pdf>
-          <div className="container mx-auto max-w-7xl">
-            {/* Arama — daha belirgin */}
-            <div className="relative mb-3">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
+        {/* Arama + filtreler — TEK araç çubuğu.
+            Eskiden üç ayrı satırda üç ayrı filtre boyutu (zaman / tür / kategori)
+            aynı "hap" diliyle çiziliyordu; iki hap aynı anda altın olunca hangisinin
+            seçili olduğu okunmuyordu. Artık her boyut kendi segment kutusunda,
+            ikincil filtreler kapalı panelde, ham <select> kabuğa uyduruldu. */}
+        <div className="md:sticky md:top-0 z-20 bg-[#2a1152]/92 backdrop-blur-md border-b border-white/10 px-4 py-3" data-no-pdf>
+          <div className="container mx-auto max-w-7xl space-y-2.5">
+
+            {/* Arama */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-purple-300/80 pointer-events-none" />
               <input type="text" ref={aramaInputRef} value={arama} onChange={e=>setArama(e.target.value)}
                 placeholder={t('cal_search_placeholder')}
-                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3.5 text-[18px] focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
-              {arama && <button onClick={()=>setArama('')} aria-label="Aramayı temizle" className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap"><X className="w-4 h-4" /></button>}
-              {/* Derin arama: video arşivi + konuşma metinleri (/ara) */}
-              <Link to={arama.trim() ? `/ara?q=${encodeURIComponent(arama.trim())}` : '/ara'}
-                className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[13px] font-bold text-amber-300 hover:text-amber-300 px-2 py-1 rounded-lg hover:bg-white/10 transition-all"
-                title="Video arşivi ve konuşma metinlerinde ara">
-                Derin Ara →
-              </Link>
+                className="w-full bg-white/[0.06] border border-white/15 focus:border-amber-400/70 focus:bg-white/[0.09] text-white placeholder-purple-300/70 rounded-xl pl-12 pr-32 sm:pr-36 py-3 text-[15px] focus:outline-none transition-colors" />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {arama && (
+                  <button onClick={()=>setArama('')} aria-label="Aramayı temizle"
+                    className="text-purple-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"><X className="w-4 h-4" /></button>
+                )}
+                <span className="hidden sm:block w-px h-5 bg-white/15" aria-hidden="true" />
+                <Link to={arama.trim() ? `/ara?q=${encodeURIComponent(arama.trim())}` : '/ara'}
+                  title="Video arşivi ve konuşma metinlerinde ara"
+                  className="hidden sm:inline-flex items-center text-[13px] font-semibold text-purple-200 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                  Derin ara
+                </Link>
+              </div>
             </div>
 
-            {/* Hızlı zaman filtreleri + Bugün + Sıfırla — mobilde tek satır kaydırmalı (#9) */}
-            <div className="flex items-center gap-2 mb-2 md:flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
-              <button onClick={scrollToToday} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold bg-amber-400 text-gray-900 hover:bg-amber-300 transition-all shadow">
+            {/* Araç çubuğu: bugüne git · zaman · tür · (sağda) sıfırla · daha fazla · görünüm */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={scrollToToday} title={t('cal_today_go')}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
                 <CalendarIcon className="w-3.5 h-3.5" />{t('cal_today_badge')}
               </button>
-              {[{key:'bu-hafta',label:'Bu Hafta'},{key:'gelecek-7',label:'7 Gün'},{key:'gelecek-30',label:'30 Gün'}].map(z=>(
-                <button key={z.key} onClick={()=>setZamanFiltre(zamanFiltre===z.key?null:z.key)}
-                  className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${zamanFiltre===z.key?'bg-white text-purple-800 shadow':'bg-white/10 text-white/70 hover:bg-white/20'}`}>
-                  {z.label}
-                </button>
-              ))}
-              {aktifFiltreSayisi > 0 && (
-                <button onClick={filtreyiSifirla} className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 border border-red-400/30 transition-all">
-                  <X className="w-3 h-3" />Filtreyi Sıfırla ({aktifFiltreSayisi})
-                </button>
-              )}
-            </div>
 
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              {/* Filtre butonları — mobilde tek satır kaydırmalı (#9) */}
-              <div className="flex gap-2 md:flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:max-w-full max-md:[&>*]:flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
+              {/* ZAMAN — tek segment kutusu */}
+              <div className="inline-flex items-center rounded-xl border border-white/15 bg-white/[0.04] p-0.5 max-md:overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                {[{key:'bu-hafta',label:'Bu Hafta'},{key:'gelecek-7',label:'7 Gün'},{key:'gelecek-30',label:'30 Gün'}].map(z=>(
+                  <button key={z.key} onClick={()=>setZamanFiltre(zamanFiltre===z.key?null:z.key)}
+                    aria-pressed={zamanFiltre===z.key}
+                    className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap transition-colors ${zamanFiltre===z.key?'bg-amber-400 text-gray-900':'text-white/70 hover:text-white hover:bg-white/5'}`}>
+                    {z.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* TÜR — tek segment kutusu */}
+              <div className="inline-flex items-center rounded-xl border border-white/15 bg-white/[0.04] p-0.5 max-md:overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {[
                   {key:'tumu',label:t('cal_filter_all')},
                   {key:'online',label:t('cal_filter_online'),icon:<Wifi className="w-3.5 h-3.5" />},
                   {key:'offline',label:t('cal_filter_offline'),icon:<Building2 className="w-3.5 h-3.5" />},
-                  {key:'yurtdisi',label:`🌍 ${t('cal_filter_abroad')}`,special:true},
+                  {key:'yurtdisi',label:t('cal_filter_abroad')},
                 ].map(f=>(
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[15px] font-semibold transition-all spring-tap ${filtre===f.key
-                      ? 'bg-amber-400 text-gray-900 border border-amber-400'
-                      : 'bg-transparent text-white/80 border border-white/25 hover:border-white/50 hover:text-white'}`}>
+                    aria-pressed={filtre===f.key}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap transition-colors ${filtre===f.key?'bg-amber-400 text-gray-900':'text-white/70 hover:text-white hover:bg-white/5'}`}>
                     {f.icon}{f.label}
                   </button>
                 ))}
-                {filtre==='offline'&&sehirler.length>0&&<>
-                  <div className="w-px h-8 bg-white/20 self-center mx-1" />
-                  {sehirler.map(s=><button key={s} onClick={()=>setSehirFiltre(sehirFiltre===s?null:s)} className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${sehirFiltre===s?'bg-amber-400 text-gray-900 border-amber-400':'bg-transparent text-white/70 border-white/25 hover:border-white/50'}`}>{s}</button>)}
-                </>}
               </div>
 
-              {/* Görünüm butonları */}
-              <div className="flex bg-white/10 rounded-lg p-0.5 gap-0.5">
-                {[{key:'liste',icon:<List className="w-4 h-4" />,label:t('cal_view_list')},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:t('cal_view_card')},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:t('cal_view_table')}].map(g=>(
-                  <button key={g.key} onClick={()=>setGorunum(g.key)} title={g.label} aria-label={g.label} aria-pressed={gorunum===g.key}
-                    className={`p-2 rounded-md transition-all spring-tap ${gorunum===g.key?'bg-white text-purple-800 shadow':'text-white/60 hover:text-white'}`}>
-                    {g.icon}
+              {/* Şehir — yalnız yüz yüze seçiliyken, ikincil dil */}
+              {filtre==='offline' && sehirler.length>0 && (
+                <div className="flex items-center gap-1.5 max-md:overflow-x-auto max-md:[&>*]:flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
+                  {sehirler.map(s2=>(
+                    <button key={s2} onClick={()=>setSehirFiltre(sehirFiltre===s2?null:s2)}
+                      className={`px-2.5 py-1 rounded-lg text-[13px] font-medium whitespace-nowrap transition-colors ${sehirFiltre===s2?'bg-white/15 text-white':'text-purple-300/70 hover:text-white'}`}>
+                      {s2}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="ml-auto flex items-center gap-2">
+                {aktifFiltreSayisi > 0 && (
+                  <button onClick={filtreyiSifirla}
+                    className="inline-flex items-center gap-1 text-[13px] font-semibold text-purple-200 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                    <X className="w-3 h-3" />Sıfırla ({aktifFiltreSayisi})
                   </button>
-                ))}
+                )}
+                {(tumKategoriler.length > 0 || tumKonusmacilar.length > 0) && (
+                  <button onClick={()=>setFiltrePaneli(v=>!v)} aria-expanded={filtrePaneli}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-colors ${filtrePaneli?'border-amber-400/60 text-amber-300':'border-white/15 text-white/80 hover:text-white hover:border-white/35'}`}>
+                    <SlidersHorizontal className="w-3.5 h-3.5" />Filtreler
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${filtrePaneli?'rotate-180':''}`} />
+                  </button>
+                )}
+                <div className="inline-flex items-center rounded-xl border border-white/15 bg-white/[0.04] p-0.5">
+                  {[{key:'liste',icon:<List className="w-4 h-4" />,label:t('cal_view_list')},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:t('cal_view_card')},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:t('cal_view_table')}].map(g=>(
+                    <button key={g.key} onClick={()=>setGorunum(g.key)} title={g.label} aria-label={g.label} aria-pressed={gorunum===g.key}
+                      className={`p-1.5 rounded-lg transition-colors ${gorunum===g.key?'bg-amber-400 text-gray-900':'text-white/60 hover:text-white hover:bg-white/5'}`}>
+                      {g.icon}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Kategori chip'leri */}
-            {tumKategoriler.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-white/10">
-                <span className="text-[13px] uppercase tracking-wider text-purple-300 font-semibold mr-1">Kategori:</span>
-                {tumKategoriler.map(kat => {
-                  const renk = KATEGORI_RENK[kat] || KATEGORI_RENK['Diğer'];
-                  const active = kategoriFiltre === kat;
-                  return (
-                    <button key={kat} onClick={()=>setKategoriFiltre(active ? null : kat)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold transition-all spring-tap ${active ? renk.bg + ' ' + renk.text + ' shadow ring-2 ring-amber-400' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${renk.dot}`} />
-                      {tDynamic(kat)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Konuşmacı dropdown */}
-            {tumKonusmacilar.length > 0 && (
-              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
-                <UsersIcon className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
-                <select value={konusmaciFiltre || ''} onChange={e=>setKonusmaciFiltre(e.target.value || null)}
-                  className="bg-white/10 backdrop-blur border border-white/20 text-white text-[13px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-[280px]">
-                  <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({tumKonusmacilar.length})</option>
-                  {tumKonusmacilar.map(k => <option key={k} value={k} className="bg-purple-900">{k}</option>)}
-                </select>
-                <a href="/api/ical" target="_blank" rel="noopener noreferrer" title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"
-                  className="ml-auto inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[13px] font-semibold bg-white/10 text-white/70 hover:bg-white/20 border border-white/20 transition-all">
-                  <Rss className="w-3 h-3" />Takvim Aboneliği
-                </a>
+            {/* İkincil filtreler — kapalı başlar, araç çubuğunu üç satırdan bire indirdi */}
+            {filtrePaneli && (
+              <div className="pt-3 mt-0.5 border-t border-white/10 flex flex-col gap-3">
+                {tumKategoriler.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[13px] text-purple-300/70 mr-1">Kategori</span>
+                    {tumKategoriler.map(kat => {
+                      const renk = KATEGORI_RENK[kat] || KATEGORI_RENK['Diğer'];
+                      const active = kategoriFiltre === kat;
+                      return (
+                        <button key={kat} onClick={()=>setKategoriFiltre(active ? null : kat)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium border transition-colors ${active ? 'bg-amber-400 text-gray-900 border-amber-400' : 'border-white/15 text-white/75 hover:text-white hover:border-white/35'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${renk.dot}`} aria-hidden="true" />
+                          {tDynamic(kat)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {tumKonusmacilar.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13px] text-purple-300/70">Eğitmen</span>
+                    <div className="relative">
+                      <select value={konusmaciFiltre || ''} onChange={e=>setKonusmaciFiltre(e.target.value || null)}
+                        className="appearance-none bg-white/[0.06] border border-white/15 hover:border-white/35 focus:border-amber-400/70 text-white text-[13px] rounded-lg pl-3 pr-8 py-1.5 focus:outline-none transition-colors max-w-[260px]">
+                        <option value="" className="bg-[#2a1152]">{t('rec_all_trainers')} ({tumKonusmacilar.length})</option>
+                        {tumKonusmacilar.map(k => <option key={k} value={k} className="bg-[#2a1152]">{adYaz(k)}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-300/80 pointer-events-none" />
+                    </div>
+                    <a href="/api/ical" target="_blank" rel="noopener noreferrer"
+                      title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"
+                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
+                      <Rss className="w-3 h-3" />Takvim aboneliği
+                    </a>
+                  </div>
+                )}
               </div>
             )}
           </div>

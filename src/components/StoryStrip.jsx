@@ -228,7 +228,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
             const top3 = idx < 3;
             return (
               <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
-                className="flex-shrink-0 flex flex-col items-center gap-1 group focus:outline-none spring-tap w-[68px]">
+                className="flex-shrink-0 flex flex-col items-center gap-1 group focus:outline-none spring-tap w-[84px] sm:w-[100px]">
                 <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-500' : 'bg-gradient-to-tr from-purple-400/60 to-purple-600/60'} group-hover:scale-105 transition-all`}>
                   <div className="w-full h-full rounded-full overflow-hidden bg-purple-900 border-2 border-purple-900">
                     {kayit?.fotoURL ? (
@@ -247,7 +247,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
                   </span>
                 </div>
                 <div className="text-center w-full">
-                  <div className="text-[13px] font-semibold text-white leading-snug line-clamp-1 max-w-[112px]">{adYaz((kayit?.ad || ad).split(' ').slice(0, 2).join(' '))}</div>
+                  <div className="text-[13px] font-semibold text-white leading-snug line-clamp-2 break-words">{adYaz((kayit?.ad || ad).split(' ').slice(0, 2).join(' '))}</div>
                 </div>
               </button>
             );
