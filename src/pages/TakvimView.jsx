@@ -297,10 +297,14 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
         <div className="md:hidden relative">
           {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
           <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
-            className={`relative block w-full ${isFirst ? 'aspect-square' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
+            className={`relative block w-full ${isFirst ? 'aspect-[4/5]' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
+            {/* Afişler DİKEY (1080x1350+). Kare kutuya object-cover ile basınca
+                ortadaki boş bölge kırpılıp başlık ve fotoğraf dışarıda kalıyordu;
+                mobilde ~340px anlamsız koyu alan görünüyordu. 4:5 + üstten
+                hizalı kırpma afişin başlık bölgesini korur. */}
             <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              className="w-full h-full object-cover" />
+              className="w-full h-full object-cover object-top" />
             {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
           </button>
           {/* Üst overlay — label + rozetler */}
@@ -498,15 +502,22 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
     <div className={`fixed bottom-[calc(57px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-40 ${barBg} border-t-2 shadow-2xl`} data-no-pdf>
       <div className="container mx-auto max-w-7xl px-3 py-2.5 md:py-3 flex items-center gap-3">
         <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse flex-shrink-0" aria-hidden="true" />
+        {/* Mobilde üç satıra taşıp hero başlığını kesiyordu: etiket + ad + katılımcı
+            sayısı alt alta sarıyordu. Artık etiket ile sayı AYNI satırda ve
+            eğitim adı tek satır; şerit yüksekliği yarıya indi. */}
         <div className="flex-1 min-w-0">
-          <div className={`text-[13px] font-bold uppercase tracking-wide ${etiketRenk}`}>
-            {etiketMetin}
+          <div className={`flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide ${etiketRenk}`}>
+            <span className="truncate">{etiketMetin}</span>
+            {canliKisi > 0 && (
+              <span className="flex-shrink-0 inline-flex items-center gap-1 normal-case text-white/90">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />{canliKisi}
+              </span>
+            )}
           </div>
           <div className="text-[13px] md:text-[15px] font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
-          {canliKisi > 0 && <div className="text-[13px] font-bold text-white/90 inline-flex items-center gap-1 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />şu an {canliKisi} kişi içeride</div>}
         </div>
         <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
-          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${butonRenk} font-extrabold text-[15px] md:text-[18px] px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>
+          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${butonRenk} font-extrabold text-[15px] md:text-[18px] px-3.5 md:px-6 py-2.5 md:py-3 rounded-xl shadow-lg spring-tap`}>
           <Video className="w-4 h-4 md:w-5 md:h-5" />{t('cal_join_meeting')}
         </a>
         <button onClick={() => setKapatildi(true)} aria-label="Kapat"
