@@ -20,6 +20,7 @@ import EgitmenSozleri from '../components/EgitmenSozleri';
 import EgitmenProfilDuzenleyici from '../components/EgitmenProfilDuzenleyici';
 import { gorselOlusturBasariKarti } from '../utils/gorselOlusturBasariKarti';
 
+import { baslikYaz } from '../utils/baslikYaz';
 const parseTarih = (t) => {
   if (!t) return null;
   const p = String(t).split('.').map(Number);
@@ -226,7 +227,7 @@ export default function LiderProfil() {
             <div className="text-[10px] uppercase tracking-wider mt-0.5">{egitim.d.toLocaleDateString(locale, { month: 'short' })}</div>
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-gray-900 truncate">{tDynamic(egitim.egitim)}</h4>
+            <h4 className="font-bold text-gray-900 truncate">{baslikYaz(tDynamic(egitim.egitim))}</h4>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
               {egitim.saat && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''}</span>}
               {egitim.yer && <span className="flex items-center gap-1">{isOnline ? <Wifi className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}{isOnline ? 'Zoom' : egitim.yer.slice(0, 30)}</span>}

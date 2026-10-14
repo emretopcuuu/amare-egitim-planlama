@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Bell, Phone, Mail, MessageCircle, Loader2, RefreshCw, Copy, Check } from 'lucide-react';
 import { auth } from '../utils/firebase';
 
+import { baslikYaz } from '../utils/baslikYaz';
 const temizleTelefon = (telefon) => {
   if (!telefon) return null;
   let t = telefon.replace(/[\s\-\(\)\.]/g, '');
@@ -90,7 +91,7 @@ const HatirlatmaModal = ({ takvim, egitmenler, onClose }) => {
   };
 
   const varsayilanMesaj = (egitim) =>
-    `Merhaba! 👋 Yarın ${egitim.tarih} tarihinde saat ${egitim.saat}'de "${egitim.egitim}" eğitimimizi hatırlatmak istedik. ${egitim.egitmen ? egitim.egitmen + ' ile ✨ ' : ''}Görüşmek üzere! 🎯 ONE TEAM 💜`;
+    `Merhaba! 👋 Yarın ${egitim.tarih} tarihinde saat ${egitim.saat}'de "${baslikYaz(egitim.egitim)}" eğitimimizi hatırlatmak istedik. ${egitim.egitmen ? egitim.egitmen + ' ile ✨ ' : ''}Görüşmek üzere! 🎯 ONE TEAM 💜`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -140,7 +141,7 @@ const HatirlatmaModal = ({ takvim, egitmenler, onClose }) => {
                   <div key={egitim.id} className="border border-gray-200 rounded-2xl overflow-hidden">
                     {/* Eğitim başlığı */}
                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 px-5 py-3 border-b border-purple-100">
-                      <div className="font-bold text-amare-purple">{egitim.egitim}</div>
+                      <div className="font-bold text-amare-purple">{baslikYaz(egitim.egitim)}</div>
                       <div className="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-x-3">
                         <span>🕐 {egitim.saat}{egitim.bitisSaati ? ` - ${egitim.bitisSaati}` : ''}</span>
                         <span>📍 {egitim.yer || 'ZOOM'}</span>
@@ -198,7 +199,7 @@ const HatirlatmaModal = ({ takvim, egitmenler, onClose }) => {
                                 ? `https://wa.me/${temizTel}?text=${encodeURIComponent(aktifMesaj)}`
                                 : null;
                               const mailUrl = eg.email
-                                ? `mailto:${eg.email}?subject=${encodeURIComponent(`Hatırlatma: ${egitim.egitim} - ${egitim.tarih}`)}&body=${encodeURIComponent(aktifMesaj)}`
+                                ? `mailto:${eg.email}?subject=${encodeURIComponent(`Hatırlatma: ${baslikYaz(egitim.egitim)} - ${egitim.tarih}`)}&body=${encodeURIComponent(aktifMesaj)}`
                                 : null;
 
                               return (
@@ -259,7 +260,7 @@ const HatirlatmaModal = ({ takvim, egitmenler, onClose }) => {
                               <div className="text-xs text-gray-500 mb-1.5">Sadece email:</div>
                               <div className="flex gap-2 flex-wrap">
                                 {egitmenler.filter(e => e.email && !temizleTelefon(e.telefon)).map((eg, idx) => {
-                                  const mailUrl = `mailto:${eg.email}?subject=${encodeURIComponent(`Hatırlatma: ${egitim.egitim} - ${egitim.tarih}`)}&body=${encodeURIComponent(aktifMesaj)}`;
+                                  const mailUrl = `mailto:${eg.email}?subject=${encodeURIComponent(`Hatırlatma: ${baslikYaz(egitim.egitim)} - ${egitim.tarih}`)}&body=${encodeURIComponent(aktifMesaj)}`;
                                   return (
                                     <a key={idx} href={mailUrl}
                                       className="flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs px-3 py-1.5 rounded-lg hover:bg-blue-100 font-semibold">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Copy, Check, Loader2, MessageCircle, RefreshCw } from 'lucide-react';
 import { auth } from '../utils/firebase';
 
+import { baslikYaz } from '../utils/baslikYaz';
 const DuyuruModal = ({ egitim, onClose }) => {
   const [metin, setMetin] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
@@ -60,7 +61,7 @@ const DuyuruModal = ({ egitim, onClose }) => {
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-xl font-bold text-gray-800">Duyuru Metni Oluştur</h2>
-            <p className="text-sm text-gray-500 mt-0.5 truncate max-w-xs">{egitim.egitim}</p>
+            <p className="text-sm text-gray-500 mt-0.5 truncate max-w-xs">{baslikYaz(egitim.egitim)}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X className="w-6 h-6" /></button>
         </div>

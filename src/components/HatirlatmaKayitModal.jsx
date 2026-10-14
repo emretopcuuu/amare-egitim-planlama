@@ -5,6 +5,7 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useTranslation } from '../context/LanguageContext';
 import confetti from 'canvas-confetti';
 
+import { baslikYaz } from '../utils/baslikYaz';
 const ZAMAN_KEYS = [
   { id: '5dk', key: 'reminder_5min', dk: 5 },
   { id: '10dk', key: 'reminder_10min', dk: 10 },
@@ -139,7 +140,7 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
             <button onClick={onClose} className="text-white/70 hover:text-white"><X className="w-5 h-5" /></button>
           </div>
           <div className="mt-3">
-            <h3 className="font-bold text-base">{egitim.egitim}</h3>
+            <h3 className="font-bold text-base">{baslikYaz(egitim.egitim)}</h3>
             <div className="flex items-center gap-2 mt-1 text-sm text-purple-200">
               <Clock className="w-3.5 h-3.5" />
               {egitim.tarih} {egitim.gun} • {egitim.saat}{egitim.bitisSaati ? `–${egitim.bitisSaati}` : ''}

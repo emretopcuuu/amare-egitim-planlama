@@ -105,6 +105,7 @@ const SEHIRLER = [
 // Yurtdışı tespiti — ülke adı veya AB büyük şehir adı yer'de/başlıkta geçerse
 import { getYurtdisi } from '../utils/yurtdisi';
 import { adYaz } from '../utils/adYaz';
+import { baslikYaz } from '../utils/baslikYaz';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -235,8 +236,9 @@ const CountdownBadge = ({ egitim }) => {
   if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-orange-500 text-white ring-2 ring-orange-300/40"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
   // < 24 saat — küçük + altın (yakın)
   if (cd.gun === 0) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-400/15 text-amber-200 border border-amber-400/30"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
-  // > 1 gün — sade (sakin)
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-purple-100 text-purple-700"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  // > 1 gün — HİÇ gösterme. "6 gün 10 saat" kimsenin kararını değiştirmiyor,
+  // ama her satırda bir rozet daha demekti; tarih zaten solda duruyor.
+  return null;
 };
 
 // ── Hero: Bir Sonraki Eğitim ─────────────────────────────────────────────────
@@ -312,7 +314,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                 kutu + object-cover uzun afişlerin ALTINI, yani konuşmacıları kesiyordu.
                 object-contain: afiş kendi oranında, tamamı görünür; sadece yükseklik
                 tavanı var ki mobilde ilk ekranı tek başına yutmasın. */}
-            <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
+            <img src={egitim.gorselUrl} alt={baslikYaz(egitim.egitim)} loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className={`relative mx-auto w-auto h-auto max-w-full ${isFirst ? 'max-h-[72vh]' : 'max-h-[44vh]'} object-contain`} />
             {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
@@ -340,7 +342,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                 : <span className="px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
             </div>
 
-            <h2 className={`${titleSize} font-extrabold text-white leading-tight font-display`}>{tDynamic(egitim.egitim)}</h2>
+            <h2 className={`${titleSize} font-extrabold text-white leading-tight font-display`}>{baslikYaz(tDynamic(egitim.egitim))}</h2>
 
             <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-[13px] md:text-[15px]':'text-[13px]'} text-purple-200`}>
               <span className="flex items-center gap-1.5"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'} text-amber-300`} />{tarih?.toLocaleDateString(locale,{day:'numeric',month:'long',weekday:'long'})}{egitim.saat ? ` • ${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : ''}</span>
@@ -526,7 +528,7 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
               </span>
             )}
           </div>
-          <div className="text-[13px] md:text-[15px] font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
+          <div className="text-[13px] md:text-[15px] font-bold text-white truncate">{baslikYaz(tDynamic(egitim.egitim))}</div>
         </div>
         <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
           className={`flex-shrink-0 inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 ${butonRenk} font-extrabold text-[15px] md:text-[18px] px-3.5 md:px-6 py-2.5 md:py-3 rounded-xl shadow-lg spring-tap`}>
@@ -549,6 +551,9 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
 // Konumlandırma: position:fixed (sticky, üstteki overflow-x-hidden sarmalayıcı yüzünden
 // bu sayfada pinlenmiyor; fixed ise animate-page-in transform'u kaldırıldığı için artık çalışır).
 // ═══════════════════════════════════════════════════════════════════════════════
+// Yapışkan gün bandı. Adı tarihsel olarak "Mobil"; Eki 2026'dan beri
+// masaüstünde de görünüyor (madde 6). sticky bu uygulamada kırık olduğu için
+// fixed kullanır; kendi scroll state'i ana listeyi her frame render etmesin diye.
 const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
   const [gorunenGun, setGorunenGun] = useState(null);
   const [gorunur, setGorunur] = useState(false);
@@ -574,7 +579,7 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
 
   if (gunSeridi.length <= 1 && !sonrakiEgitim) return null;
   return (
-    <div className={`md:hidden fixed top-0 left-0 right-0 z-40 bg-purple-950 border-b border-white/10 px-4 py-2 shadow-xl transition-transform duration-200 ${gorunur ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`} data-no-pdf>
+    <div className={`fixed top-0 left-0 right-0 z-40 bg-zemin-yuzey/95 backdrop-blur-md border-b border-white/10 px-4 py-2 transition-transform duration-200 ${gorunur ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`} data-no-pdf>
       <div className="container mx-auto max-w-7xl">
         {(gorunenGun || sonrakiEgitim) && (
           <div className="flex items-center justify-between gap-2 mb-1.5 text-[13px]">
@@ -587,7 +592,7 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
               return (
                 <button onClick={() => document.getElementById(`egitim-${sonrakiEgitim.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full font-bold ${canli ? 'bg-red-500/20 text-red-200 border border-red-400/40' : 'bg-white/10 text-amber-300 border border-white/15'}`}>
-                  {canli ? '🔴 CANLI' : '⏭'} {(sonrakiEgitim.egitim || '').slice(0, 18)}{(sonrakiEgitim.egitim || '').length > 18 ? '…' : ''}{!canli && cd?.durum === 'yakin' ? ` · ${cd.dakika}dk` : ''}
+                  {canli ? '🔴 CANLI' : '⏭'} {baslikYaz(sonrakiEgitim.egitim || '').slice(0, 18)}{(sonrakiEgitim.egitim || '').length > 18 ? '…' : ''}{!canli && cd?.durum === 'yakin' ? ` · ${cd.dakika}dk` : ''}
                 </button>
               );
             })()}
@@ -726,7 +731,7 @@ const TakvimView = () => {
   const swipeRef = useRef({ x: 0, y: 0, t: 0 });
   const egitimPaylas = async (egitim) => {
     const url = `${window.location.origin}/e/${egitim.id}`;
-    const metin = `${egitim.egitim} — ${egitim.tarih} ${egitim.saat || ''}`.trim();
+    const metin = `${baslikYaz(egitim.egitim)} — ${egitim.tarih} ${egitim.saat || ''}`.trim();
     try { navigator.vibrate?.(15); } catch {}
     if (navigator.share) { try { await navigator.share({ title: egitim.egitim, text: metin, url }); return; } catch {} }
     try { await navigator.clipboard.writeText(`${metin}\n${url}`); } catch {}
@@ -1016,7 +1021,7 @@ const TakvimView = () => {
     const online = isOnline(egitim);
     const cdKart = getCountdown(egitim);
     const gecmis = cdKart?.durum === 'gecmis';
-    const egitimAdi = tDynamic(egitim.egitim);
+    const egitimAdi = baslikYaz(tDynamic(egitim.egitim));
     const kategoriAdi = tDynamic(egitim.kategori);
     const hatirlatmaCount = hatirlatmaSayilari?.[egitim.id] || 0;
     const yurtdisi = getYurtdisi(egitim);
@@ -1024,7 +1029,7 @@ const TakvimView = () => {
 
     if (gorunum === 'kompakt') {
       return (
-        <tr key={egitim.id} id={`egitim-${egitim.id}`} className={`hover:bg-white/[0.06] transition-colors ${gecmis ? 'past-event' : 'hover-lift'}`}>
+        <tr key={egitim.id} id={`egitim-${egitim.id}`} className={`scroll-mt-28 hover:bg-white/[0.06] transition-colors ${gecmis ? 'past-event' : 'hover-lift'}`}>
           <td className="px-3 py-2 text-[15px] font-semibold text-purple-200 whitespace-nowrap">{trGun(egitim.gun, t)} {egitim.tarih}</td>
           <td className="px-3 py-2 text-[15px] text-purple-200 whitespace-nowrap">{egitim.saat ? `${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : '—'}</td>
           <td className="px-3 py-2 text-[15px] font-bold text-white/90">{egitimAdi}</td>
@@ -1037,7 +1042,7 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-24 md:scroll-mt-4 bg-white/[0.04] border border-white/10 rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+        <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-28 md:scroll-mt-28 bg-white/[0.04] border border-white/10 rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
           {/* Yurtdışı rozeti — z-20 (poster üstünde) */}
           {yurtdisi && (
             <div className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg">
@@ -1057,7 +1062,7 @@ const TakvimView = () => {
               <img src={egitim.gorselUrl} alt="" aria-hidden="true" loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-90" />
-              <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
+              <img src={egitim.gorselUrl} alt={baslikYaz(egitim.egitim)} loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
               {/* Üst sağ: countdown overlay */}
@@ -1171,7 +1176,7 @@ const TakvimView = () => {
       : 'bg-purple-800';
     const dateColumnText = (!yurtdisi && online) ? 'text-zemin-koyu' : 'text-white';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-24 md:scroll-mt-4 bg-white/[0.04] border border-white/10 rounded-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`group relative scroll-mt-28 md:scroll-mt-28 bg-white/[0.04] border border-white/10 rounded-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg gold-glow">
@@ -1195,15 +1200,21 @@ const TakvimView = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-bold text-white text-[18px] leading-tight">{egitimAdi}</h3>
                   <CountdownBadge egitim={egitim} />
-                  {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)}
-                    title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[13px] font-semibold bg-white/10 text-purple-200 hover:bg-white/15 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
-                  {hatirlatmaCount > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title={`${hatirlatmaCount} kişi hatırlatma kaydetti`}>
-                      <UsersIcon className="w-2.5 h-2.5" />{hatirlatmaCount}
-                    </span>
-                  )}
-                  {!gecmis && <EventActions egitim={egitim} />}
+                  {/* İkincil eylemler (kademe 3): masaüstünde satırın üstüne
+                      gelince veya klavyeyle odaklanınca açılır, mobilde hep
+                      görünür. Birincil eylem (Katıl / Rezervasyon) aşağıda ve
+                      her zaman görünür. */}
+                  <span className="inline-flex items-center gap-2 flex-wrap transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
+                    {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)}
+                      title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[13px] font-semibold bg-white/10 text-purple-200 hover:bg-white/15 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
+                    {hatirlatmaCount > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-400/15 text-amber-200 border border-amber-400/30" title={`${hatirlatmaCount} kişi hatırlatma kaydetti`}>
+                        <UsersIcon className="w-2.5 h-2.5" />{hatirlatmaCount}
+                      </span>
+                    )}
+                    {!gecmis && <EventActions egitim={egitim} />}
+                  </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[15px] text-purple-300/80">
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-300" />{egitim.saat ? <>{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-purple-300/70">({egitim.sure})</span>}</> : <span className="text-amber-300 italic">{t('cal_time_tbd')}</span>}</span>
@@ -1212,7 +1223,7 @@ const TakvimView = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
-                  {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-amber-200 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
+                  {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-purple-200 border border-white/15"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
                 {/* Eğitmen adı sağdaki avatarın altında zaten yazıyor; mobilde avatar
                     gizlendiği için metin YALNIZ orada tutuluyor (md altı). */}
@@ -1429,7 +1440,7 @@ const TakvimView = () => {
                           {e._yd ? e._yd.anahtar : e._sehir}
                         </span>
                       </div>
-                      <div className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-1.5">{tDynamic(e.egitim)}</div>
+                      <div className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-1.5">{baslikYaz(tDynamic(e.egitim))}</div>
                       <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
                     </a>
                   ))}

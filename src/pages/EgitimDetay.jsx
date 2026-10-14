@@ -15,6 +15,7 @@ import { katilTikla } from '../utils/katilim';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
 
+import { baslikYaz } from '../utils/baslikYaz';
 const parseTarih = (t) => {
   if (!t) return null;
   const parts = String(t).split('.').map(Number);
@@ -110,7 +111,7 @@ const EgitimDetay = () => {
   // Title + meta — SPA için (Edge Function crawler için ayrıca yapıyor)
   useEffect(() => {
     if (egitim) {
-      document.title = `${egitim.egitim} — One Team Eğitim Takvimi`;
+      document.title = `${baslikYaz(egitim.egitim)} — One Team Eğitim Takvimi`;
     }
     return () => { document.title = 'One Team Eğitim Yönetim Sistemi'; };
   }, [egitim]);
@@ -203,7 +204,7 @@ const EgitimDetay = () => {
               const gecerliIdx = posterIdx < posterler.length ? posterIdx : 0;
               return (
                 <div className="relative bg-gray-100 max-h-[500px] flex items-center justify-center overflow-hidden">
-                  <img src={posterler[gecerliIdx]} alt={egitim.egitim} className="w-full h-auto max-h-[500px] object-contain" />
+                  <img src={posterler[gecerliIdx]} alt={baslikYaz(egitim.egitim)} className="w-full h-auto max-h-[500px] object-contain" />
                   {cokluMu && (
                     <>
                       <button onClick={() => setPosterIdx(i => (i - 1 + posterler.length) % posterler.length)} aria-label="Önceki görsel"
@@ -226,7 +227,7 @@ const EgitimDetay = () => {
             <div className="p-6 md:p-8">
               {/* Başlık + kategori */}
               <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
-                <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-tight font-display">{tDynamic(egitim.egitim)}</h1>
+                <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-tight font-display">{baslikYaz(tDynamic(egitim.egitim))}</h1>
                 {egitim.kategori && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-purple-50 text-purple-800 border border-purple-300">
                     <Tag className="w-3.5 h-3.5" />{tDynamic(egitim.kategori)}
@@ -412,7 +413,7 @@ const EgitimDetay = () => {
                 {ayniKonusmaciEgitimleri.map(e => (
                   <Link key={e.id} to={`/e/${e.id}`}
                     className="bg-white/10 hover:bg-white/20 border border-white/10 hover:border-amber-400/40 rounded-xl p-3 transition-all hover-lift">
-                    <div className="text-white font-bold text-sm line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                    <div className="text-white font-bold text-sm line-clamp-2 mb-1">{baslikYaz(tDynamic(e.egitim))}</div>
                     <div className="text-purple-200 text-xs flex items-center gap-2">
                       <CalendarIcon className="w-3 h-3" />{e.tarih}
                       {e.saat && <><Clock className="w-3 h-3 ml-1" />{e.saat}</>}
@@ -433,7 +434,7 @@ const EgitimDetay = () => {
                 {benzerKategoriler.map(e => (
                   <Link key={e.id} to={`/e/${e.id}`}
                     className="bg-white/10 hover:bg-white/20 border border-white/10 hover:border-amber-400/40 rounded-xl p-3 transition-all hover-lift">
-                    <div className="text-white font-bold text-sm line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                    <div className="text-white font-bold text-sm line-clamp-2 mb-1">{baslikYaz(tDynamic(e.egitim))}</div>
                     <div className="text-purple-200 text-xs flex items-center gap-2">
                       <CalendarIcon className="w-3 h-3" />{e.tarih}
                     </div>
