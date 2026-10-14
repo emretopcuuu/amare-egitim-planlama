@@ -32,6 +32,14 @@ const splitEgitmen = (e) => {
     .filter(n => n.length > 1);
 };
 
+
+// Eğitmen adları veritabanında BÜYÜK HARF duruyor ("ZİYA ŞAKİR YILMAZ").
+// Ekranda hepsi büyük harf olunca hiyerarşi düzleşiyor; Türkçe duyarlı
+// baş-harf yazımına çevrilir. Veri değişmez, yalnız görüntü.
+const adYaz = (s) => String(s || '')
+  .toLocaleLowerCase('tr-TR')
+  .replace(/(^|[\s\-'’./(])(\p{L})/gu, (_, onek, harf) => onek + harf.toLocaleUpperCase('tr-TR'));
+
 const StoryStrip = ({ takvim, konusmacilar }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -180,9 +188,9 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
   return (
     <>
       <div className="-mx-4 px-4 mb-4">
-        <div className="flex items-center gap-2 mb-2 text-purple-200 text-xs uppercase tracking-wider font-semibold">
+        <div className="flex items-center gap-2 mb-2 text-purple-200 text-[13px] uppercase tracking-wider font-semibold">
           <span>{t('cal_upcoming_trainers')}</span>
-          <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full text-[10px] normal-case tracking-normal">
+          <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full text-[13px] normal-case tracking-normal">
             En aktif {konusmaciListesi.length}
           </span>
         </div>
@@ -239,13 +247,13 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
                     )}
                   </div>
                   {/* Eğitim sayısı badge */}
-                  <span className="absolute -bottom-0.5 -right-0.5 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center shadow border-2 border-purple-900">
+                  <span className="absolute -bottom-0.5 -right-0.5 bg-amber-400 text-gray-900 text-[13px] font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center shadow border-2 border-purple-900">
                     {sayi}
                   </span>
                 </div>
                 <div className="text-center w-full">
-                  <div className="text-[10px] sm:text-[11px] font-bold text-white leading-tight line-clamp-2 max-w-[68px]">{(kayit?.ad || ad).split(' ').slice(0, 3).join(' ')}</div>
-                  {kayit?.unvan && <div className="text-[9px] text-amber-300/80 mt-0.5 line-clamp-1">{kayit.unvan}</div>}
+                  <div className="text-[13px] font-semibold text-white leading-snug line-clamp-2 max-w-[104px]">{adYaz((kayit?.ad || ad).split(' ').slice(0, 3).join(' '))}</div>
+                  {kayit?.unvan && <div className="text-[13px] text-amber-300/80 mt-0.5 line-clamp-1">{kayit.unvan}</div>}
                 </div>
               </button>
             );

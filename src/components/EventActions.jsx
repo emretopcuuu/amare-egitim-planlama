@@ -67,10 +67,10 @@ const EventActions = ({ egitim, dark = false, compact = false }) => {
   const wUrl = whatsappShareUrl(egitim);
 
   const triggerCls = dark
-    ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-colors spring-tap'
+    ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-colors spring-tap'
     : compact
-    ? 'inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors spring-tap'
-    : 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors spring-tap';
+    ? 'inline-flex items-center justify-center w-7 h-7 rounded-lg text-[13px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors spring-tap'
+    : 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[13px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors spring-tap';
 
   return (
     <>
@@ -83,7 +83,7 @@ const EventActions = ({ egitim, dark = false, compact = false }) => {
         <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: 224 }}
           className="z-[100] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden animate-scaleIn">
-          <div className="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold uppercase tracking-wide flex items-center justify-between">
+          <div className="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[13px] font-bold uppercase tracking-wide flex items-center justify-between">
             <span>Aksiyonlar</span>
             <button onClick={(e) => { e.stopPropagation(); setOpen(false); }} className="hover:bg-white/20 rounded p-0.5">
               <X className="w-3.5 h-3.5" />
@@ -91,32 +91,32 @@ const EventActions = ({ egitim, dark = false, compact = false }) => {
           </div>
           {gUrl && (
             <a href={gUrl} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-sm text-gray-700 border-b border-gray-100">
-              <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">G</div>
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-[15px] text-gray-700 border-b border-gray-100">
+              <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[13px]">G</div>
               Google Takvim
             </a>
           )}
           {oUrl && (
             <a href={oUrl} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-sm text-gray-700 border-b border-gray-100">
-              <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">O</div>
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-[15px] text-gray-700 border-b border-gray-100">
+              <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[13px]">O</div>
               Outlook
             </a>
           )}
           <button onClick={() => { downloadICS(egitim); setOpen(false); }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-sm text-gray-700 border-b border-gray-100">
+            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-[15px] text-gray-700 border-b border-gray-100">
             <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600">
               <CalendarPlus className="w-4 h-4" />
             </div>
             Apple / Diğer (.ics)
           </button>
           <a href={wUrl} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-sm text-gray-700 border-b border-gray-100">
-            <div className="w-6 h-6 rounded bg-green-100 flex items-center justify-center text-green-600 font-bold text-xs">W</div>
+            className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-[15px] text-gray-700 border-b border-gray-100">
+            <div className="w-6 h-6 rounded bg-green-100 flex items-center justify-center text-green-600 font-bold text-[13px]">W</div>
             WhatsApp ile paylaş
           </a>
           <button onClick={handleCopy}
-            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-sm text-gray-700">
+            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 text-[15px] text-gray-700">
             <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600">
               {copied ? <Check className="w-4 h-4 text-green-600" /> : <Link2 className="w-4 h-4" />}
             </div>

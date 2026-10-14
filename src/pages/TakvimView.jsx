@@ -186,7 +186,7 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false 
           <User className="w-1/2 h-1/2 text-purple-400" />
         </div>
       )}
-      {size !== 'sm' && <span className={`text-[10px] text-center leading-tight max-w-[80px] ${dark ? 'text-white/80' : 'text-gray-600'}`}>{k?.ad||ad}</span>}
+      {size !== 'sm' && <span className={`text-[13px] text-center leading-tight max-w-[80px] ${dark ? 'text-white/80' : 'text-gray-600'}`}>{k?.ad||ad}</span>}
     </button>
   );
 };
@@ -199,10 +199,10 @@ const KonusmaciModal = ({ ad, kayit, onClose }) => !ad ? null : (
       <div className="flex flex-col items-center text-center">
         {kayit?.fotoURL ? <img src={kayit.fotoURL} alt={kayit.ad||ad} className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 shadow-lg mb-4" style={{ objectPosition: 'center 25%' }} />
           : <div className="w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center border-4 border-purple-200 mb-4"><User className="w-16 h-16 text-purple-300" /></div>}
-        <h3 className="text-xl font-bold text-gray-800">{kayit?.ad||ad}</h3>
+        <h3 className="text-2xl font-bold text-gray-800">{kayit?.ad||ad}</h3>
         {kayit?.unvan && <p className="text-purple-600 font-medium mt-1">{kayit.unvan}</p>}
-        {kayit?.biyografi && <p className="text-gray-500 text-sm mt-3 leading-relaxed">{kayit.biyografi}</p>}
-        {kayit?.linkedin && <a href={`mailto:${kayit.linkedin}`} className="flex items-center gap-1.5 text-blue-500 text-sm mt-3 hover:underline"><Mail className="w-4 h-4" />{kayit.linkedin}</a>}
+        {kayit?.biyografi && <p className="text-gray-500 text-[15px] mt-3 leading-relaxed">{kayit.biyografi}</p>}
+        {kayit?.linkedin && <a href={`mailto:${kayit.linkedin}`} className="flex items-center gap-1.5 text-blue-500 text-[15px] mt-3 hover:underline"><Mail className="w-4 h-4" />{kayit.linkedin}</a>}
       </div>
     </div>
   </div>
@@ -220,18 +220,18 @@ const CountdownBadge = ({ egitim }) => {
     return `${c.dakika} ${t('cd_minutes')}`;
   };
   if (cd.durum === 'canli') return cd.gec
-    ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-amber-500 text-white ring-4 ring-amber-300/40"><Timer className="w-3.5 h-3.5" />{t('badge_ongoing')}</span>
-    : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />{t('cal_now_live')}</span>;
-  if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">{t('cd_completed')}</span>;
+    ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-bold bg-amber-500 text-white ring-4 ring-amber-300/40"><Timer className="w-3.5 h-3.5" />{t('badge_ongoing')}</span>
+    : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />{t('cal_now_live')}</span>;
+  if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-gray-200 text-gray-500">{t('cd_completed')}</span>;
   // 1 dakika kala — dev rozet + altın halka
   const oneMinuteAway = cd.durum === 'yakin' && cd.gun === 0 && cd.sa === 0 && cd.dakika <= 1;
-  if (oneMinuteAway) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-amber-400 text-gray-900 imminent-pulse ring-4 ring-amber-300/60 gold-glow"><Timer className="w-4 h-4" />Birazdan başlıyor!</span>;
+  if (oneMinuteAway) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-bold bg-amber-400 text-gray-900 imminent-pulse ring-4 ring-amber-300/60 gold-glow"><Timer className="w-4 h-4" />Birazdan başlıyor!</span>;
   // < 1 saat — orta boy + turuncu (acil)
-  if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white ring-2 ring-orange-300/40"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-orange-500 text-white ring-2 ring-orange-300/40"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
   // < 24 saat — küçük + altın (yakın)
-  if (cd.gun === 0) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  if (cd.gun === 0) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-100 text-amber-800 border border-amber-300"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
   // > 1 gün — sade (sakin)
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-purple-100 text-purple-700"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
 };
 
 // ── Hero: Bir Sonraki Eğitim ─────────────────────────────────────────────────
@@ -267,10 +267,10 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   ];
   const labels = [t('cd_next'), t('cd_2nd'), t('cd_3rd')];
   const isFirst = sira === 1;
-  const titleSize = isFirst ? 'text-xl md:text-5xl lg:text-6xl' : 'text-base md:text-xl';
+  const titleSize = isFirst ? 'text-2xl md:text-6xl lg:text-6xl' : 'text-[18px] md:text-2xl';
   const padding = isFirst ? 'p-4 md:p-12 lg:p-16' : 'p-3 md:p-5';
   const posterSize = isFirst ? 'w-24 md:w-72 lg:w-96' : 'w-20 md:w-40';
-  const countdownSize = isFirst ? 'text-lg md:text-4xl lg:text-5xl min-w-[36px] md:min-w-[76px] lg:min-w-[90px] px-2 md:px-5 lg:px-6 py-1.5 md:py-4 lg:py-5' : 'text-sm md:text-lg min-w-[32px] md:min-w-[40px] px-1.5 md:px-2 py-1';
+  const countdownSize = isFirst ? 'text-[18px] md:text-4xl lg:text-6xl min-w-[36px] md:min-w-[76px] lg:min-w-[90px] px-2 md:px-5 lg:px-6 py-1.5 md:py-4 lg:py-5' : 'text-[15px] md:text-[18px] min-w-[32px] md:min-w-[40px] px-1.5 md:px-2 py-1';
   const avatarSizeVal = isFirst ? 'md' : 'sm';
   const avatarSizeDesktop = isFirst ? 'xxl' : 'lg';
 
@@ -300,15 +300,15 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="w-full h-full object-cover" />
-            {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
+            {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
           </button>
           {/* Üst overlay — label + rozetler */}
           <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 flex-wrap bg-gradient-to-b from-black/60 to-transparent">
-            <span className={`${isFirst ? 'text-xs' : 'text-[10px]'} font-extrabold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
-            {yurtdisi && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-gray-900 shadow"><span>{yurtdisi.bayrak}</span>{yurtdisi.kisa}</span>}
+            <span className={`${isFirst ? 'text-[13px]' : 'text-[13px]'} font-extrabold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
+            {yurtdisi && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-extrabold bg-amber-400 text-gray-900 shadow"><span>{yurtdisi.bayrak}</span>{yurtdisi.kisa}</span>}
             {cd?.durum === 'canli' && (cd.gec
-              ? <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
-              : <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
+              ? <span className="ml-auto px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
+              : <span className="ml-auto px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
           </div>
         </div>
       )}
@@ -318,16 +318,16 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           <div className="flex-1 min-w-0">
             {/* DESKTOP label + rozet (mobil'de yok, poster overlay'i var) */}
             <div className={`flex items-center gap-2 mb-2 flex-wrap ${egitim.gorselUrl ? 'hidden md:flex' : ''}`}>
-              <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
-              {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
+              <span className={`${isFirst?'text-[15px]':'text-[13px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
+              {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[13px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
               {cd?.durum === 'canli' && (cd.gec
-                ? <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
-                : <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
+                ? <span className="px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
+                : <span className="px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />{t('cal_now_live')}</span>)}
             </div>
 
             <h2 className={`${titleSize} font-extrabold text-white leading-tight font-display`}>{tDynamic(egitim.egitim)}</h2>
 
-            <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-xs md:text-sm':'text-[10px] md:text-xs'} text-purple-200`}>
+            <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-[13px] md:text-[15px]':'text-[13px]'} text-purple-200`}>
               <span className="flex items-center gap-1.5"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'} text-amber-300`} />{tarih?.toLocaleDateString(locale,{day:'numeric',month:'long',weekday:'long'})}{egitim.saat ? ` • ${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : ''}</span>
               <span className="flex items-center gap-1.5">{online?<Wifi className="w-3.5 h-3.5 text-amber-300" />:<MapPin className="w-3.5 h-3.5 text-amber-300" />}{online?'Zoom':egitim.yer}</span>
             </div>
@@ -337,8 +337,8 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
               <div className="flex gap-1.5 md:gap-2 mt-3">
                 {[{v:gun,l:t('cd_day'),k:'g'},{v:saat,l:t('cd_hour'),k:'s'},{v:dakika,l:t('cd_min'),k:'d'},{v:saniye,l:t('cd_sec'),k:'sn'}].map(({v,l,k})=>(
                   <div key={l} className={`flex-1 md:flex-none bg-white/10 backdrop-blur rounded-xl ${isFirst ? 'py-2 md:py-4 px-2 md:px-5 lg:px-6' : 'py-1 px-1.5 md:px-2'} text-center border border-white/10`}>
-                    <div className={`font-extrabold text-white tabular-nums font-display ${isFirst ? 'text-xl md:text-4xl lg:text-5xl' : 'text-sm md:text-lg'}`}><span key={`${k}-${v}`} className="cd-digit">{String(v).padStart(2,'0')}</span></div>
-                    <div className="text-[8px] text-amber-300/80 uppercase tracking-wider">{l}</div>
+                    <div className={`font-extrabold text-white tabular-nums font-display ${isFirst ? 'text-2xl md:text-4xl lg:text-6xl' : 'text-[15px] md:text-[18px]'}`}><span key={`${k}-${v}`} className="cd-digit">{String(v).padStart(2,'0')}</span></div>
+                    <div className="text-[13px] text-amber-300/80 uppercase tracking-wider">{l}</div>
                   </div>
                 ))}
               </div>
@@ -346,7 +346,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             {sonSaatDev && (
               <div className="inline-flex items-center gap-2 mt-3 bg-white/10 backdrop-blur rounded-xl px-3.5 py-2 border border-white/10">
                 <Timer className="w-4 h-4 md:w-5 md:h-5 text-amber-300" />
-                <span className="text-sm md:text-base text-purple-100">
+                <span className="text-[15px] md:text-[18px] text-purple-100">
                   {t('cd_starting_in')}{' '}
                   <b className="text-white font-extrabold tabular-nums">
                     <span key={`pd-${dakika}`} className="cd-digit">{dakika}</span> {t('cd_min').toLowerCase()}{' '}
@@ -366,14 +366,14 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                     : canliDev
                     ? 'min-h-[72px] md:min-h-[80px] bg-green-500 hover:bg-green-600 ring-2 ring-green-300/60'
                     : 'min-h-[64px] md:min-h-[72px] bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/60'} text-white font-extrabold rounded-2xl shadow-2xl transition-all spring-tap imminent-pulse`}>
-                  <span className="flex items-center gap-2.5 text-xl md:text-2xl tracking-wide">
+                  <span className="flex items-center gap-2.5 text-2xl tracking-wide">
                     <Video className="w-6 h-6 md:w-7 md:h-7" />{t('cal_join_meeting').toLocaleUpperCase(locale)}
                   </span>
-                  {canliDev && <span className={`text-xs md:text-sm font-medium ${gecKatil ? 'text-amber-50' : 'text-green-100'}`}>{gecKatil ? t('cd_late_help') : t('cd_started_help')}</span>}
-                  {canliKisi > 0 && <span className="inline-flex items-center gap-1.5 text-xs md:text-sm font-bold text-white/95 mt-0.5"><span className="w-2 h-2 rounded-full bg-red-300 animate-pulse" />şu an {canliKisi} kişi içeride</span>}
+                  {canliDev && <span className={`text-[13px] md:text-[15px] font-medium ${gecKatil ? 'text-amber-50' : 'text-green-100'}`}>{gecKatil ? t('cd_late_help') : t('cd_started_help')}</span>}
+                  {canliKisi > 0 && <span className="inline-flex items-center gap-1.5 text-[13px] md:text-[15px] font-bold text-white/95 mt-0.5"><span className="w-2 h-2 rounded-full bg-red-300 animate-pulse" />şu an {canliKisi} kişi içeride</span>}
                 </a>
                 <button onClick={()=>onHatirlatma?.(egitim)}
-                  className="mt-2 w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs md:text-sm bg-white/10 hover:bg-white/20 text-white/90 font-bold rounded-xl border border-white/15 transition-all spring-tap">
+                  className="mt-2 w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-[13px] md:text-[15px] bg-white/10 hover:bg-white/20 text-white/90 font-bold rounded-xl border border-white/15 transition-all spring-tap">
                   <Bell className="w-3.5 h-3.5" />{t('cal_get_reminder')}
                 </button>
               </div>
@@ -381,19 +381,19 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
               <div className="flex gap-2 mt-3">
                 {online && zoomId && (
                   <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
-                    className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-sm md:text-base' : 'px-3 py-2 text-xs'} bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
+                    className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-[15px] md:text-[18px]' : 'px-3 py-2 text-[13px]'} bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
                     <Wifi className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />{t('cal_join_meeting')}
                   </a>
                 )}
                 {!online && (
                   <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
                     onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
-                    className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-sm md:text-base' : 'px-3 py-2 text-xs'} bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
+                    className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-[15px] md:text-[18px]' : 'px-3 py-2 text-[13px]'} bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
                     <CalendarDays className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />{t('cal_reserve')}
                   </a>
                 )}
                 <button onClick={()=>onHatirlatma?.(egitim)}
-                  className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-5 py-2.5 text-sm' : 'px-3 py-2 text-xs'} bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl border border-white/20 transition-all spring-tap`}>
+                  className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-5 py-2.5 text-[15px]' : 'px-3 py-2 text-[13px]'} bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl border border-white/20 transition-all spring-tap`}>
                   <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />{t('cal_get_reminder')}
                 </button>
               </div>
@@ -409,7 +409,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                   <div className="flex -space-x-2">
                     {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size="sm" dark />)}
                   </div>
-                  <span className="text-xs text-white/70 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
+                  <span className="text-[13px] text-white/70 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
                 </div>
               </div>
             )}
@@ -421,15 +421,15 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
               <img src={egitim.gorselUrl} alt="Poster" loading="lazy"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
-              {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
+              {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
             </button>
           )}
         </div>
 
         {/* DESKTOP yurtdışı badge — sağ üst absolute (mobilde poster overlay'inde) */}
         {yurtdisi && (
-          <div className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow ${egitim.gorselUrl ? 'hidden md:inline-flex' : ''}`}>
-            <span className="text-base leading-none">{yurtdisi.bayrak}</span>
+          <div className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow ${egitim.gorselUrl ? 'hidden md:inline-flex' : ''}`}>
+            <span className="text-[18px] leading-none">{yurtdisi.bayrak}</span>
             ULUSLARARASI · {yurtdisi.kisa}
           </div>
         )}
@@ -493,14 +493,14 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
       <div className="container mx-auto max-w-7xl px-3 py-2.5 md:py-3 flex items-center gap-3">
         <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse flex-shrink-0" aria-hidden="true" />
         <div className="flex-1 min-w-0">
-          <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wide ${etiketRenk}`}>
+          <div className={`text-[13px] font-bold uppercase tracking-wide ${etiketRenk}`}>
             {etiketMetin}
           </div>
-          <div className="text-xs md:text-sm font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
-          {canliKisi > 0 && <div className="text-[10px] md:text-xs font-bold text-white/90 inline-flex items-center gap-1 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />şu an {canliKisi} kişi içeride</div>}
+          <div className="text-[13px] md:text-[15px] font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
+          {canliKisi > 0 && <div className="text-[13px] font-bold text-white/90 inline-flex items-center gap-1 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />şu an {canliKisi} kişi içeride</div>}
         </div>
         <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
-          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${butonRenk} font-extrabold text-sm md:text-base px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>
+          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${butonRenk} font-extrabold text-[15px] md:text-[18px] px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>
           <Video className="w-4 h-4 md:w-5 md:h-5" />{t('cal_join_meeting')}
         </a>
         <button onClick={() => setKapatildi(true)} aria-label="Kapat"
@@ -548,7 +548,7 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
     <div className={`md:hidden fixed top-0 left-0 right-0 z-40 bg-purple-950 border-b border-white/10 px-4 py-2 shadow-xl transition-transform duration-200 ${gorunur ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`} data-no-pdf>
       <div className="container mx-auto max-w-7xl">
         {(gorunenGun || sonrakiEgitim) && (
-          <div className="flex items-center justify-between gap-2 mb-1.5 text-[11px]">
+          <div className="flex items-center justify-between gap-2 mb-1.5 text-[13px]">
             <span className="text-purple-200/80 font-bold truncate">
               {gorunenGun ? `📍 ${(() => { const d = parseTarih(gorunenGun); return d ? d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }) : gorunenGun; })()}` : ''}
             </span>
@@ -570,8 +570,8 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
               <button key={g.tarih}
                 onClick={() => { const el = document.querySelector(`[data-tarih="${g.tarih}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
                 className={`flex-shrink-0 flex flex-col items-center px-2.5 py-1 rounded-xl border transition-all ${g.bugun ? 'bg-amber-400 text-purple-900 border-amber-300 font-extrabold shadow' : 'bg-white/8 text-white/80 border-white/15'}`}>
-                <span className="text-[9px] uppercase leading-none opacity-80">{g.gunAd}</span>
-                <span className="text-sm font-bold leading-tight">{g.gunNo}</span>
+                <span className="text-[13px] uppercase leading-none opacity-80">{g.gunAd}</span>
+                <span className="text-[15px] font-bold leading-tight">{g.gunNo}</span>
               </button>
             ))}
           </div>
@@ -952,8 +952,8 @@ const TakvimView = () => {
   // null = bilinmiyor (mobil ağda fetch fail) → takvim gösterilir, false = explicit gizli
   if (takvimYayinlandi === false) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 py-12 px-4"><div className="container mx-auto max-w-2xl"><div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
-      <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto mb-4" /><h2 className="text-3xl font-bold text-gray-800 mb-4">{t('cal_not_published_title')}</h2><p className="text-gray-600 mb-6">{t('cal_not_published_desc')}</p>
-      <p className="text-gray-500 text-sm mb-6">Eğer takvim yayında olduğu halde bu uyarıyı görüyorsanız, tarayıcı önbelleğini sıfırlamak için aşağıdaki butona tıklayın.</p>
+      <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto mb-4" /><h2 className="text-4xl font-bold text-gray-800 mb-4">{t('cal_not_published_title')}</h2><p className="text-gray-600 mb-6">{t('cal_not_published_desc')}</p>
+      <p className="text-gray-500 text-[15px] mb-6">Eğer takvim yayında olduğu halde bu uyarıyı görüyorsanız, tarayıcı önbelleğini sıfırlamak için aşağıdaki butona tıklayın.</p>
       <div className="flex gap-3 justify-center flex-wrap">
         <button onClick={() => { window.location.href = window.location.pathname + '?bust=' + Date.now(); }} className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors flex items-center gap-2">
           <Loader2 className="w-4 h-4" /> Sayfayı Yenile
@@ -982,11 +982,11 @@ const TakvimView = () => {
     if (gorunum === 'kompakt') {
       return (
         <tr key={egitim.id} id={`egitim-${egitim.id}`} className={`hover:bg-purple-50 transition-colors ${gecmis ? 'past-event' : 'hover-lift'}`}>
-          <td className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap">{trGun(egitim.gun, t)} {egitim.tarih}</td>
-          <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap">{egitim.saat ? `${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : '—'}</td>
-          <td className="px-3 py-2 text-sm font-bold text-gray-800">{egitimAdi}</td>
-          <td className="px-3 py-2 text-sm text-gray-600">{egitim.egitmen||'—'}</td>
-          <td className="px-3 py-2">{egitim.kategori?<span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>:'—'}</td>
+          <td className="px-3 py-2 text-[15px] font-semibold text-gray-700 whitespace-nowrap">{trGun(egitim.gun, t)} {egitim.tarih}</td>
+          <td className="px-3 py-2 text-[15px] text-gray-600 whitespace-nowrap">{egitim.saat ? `${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : '—'}</td>
+          <td className="px-3 py-2 text-[15px] font-bold text-gray-800">{egitimAdi}</td>
+          <td className="px-3 py-2 text-[15px] text-gray-600">{egitim.egitmen||'—'}</td>
+          <td className="px-3 py-2">{egitim.kategori?<span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>:'—'}</td>
           <td className="px-3 py-2 flex items-center gap-1.5"><CountdownBadge egitim={egitim} /><EventActions egitim={egitim} compact /></td>
         </tr>
       );
@@ -997,8 +997,8 @@ const TakvimView = () => {
         <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-24 md:scroll-mt-4 bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
           {/* Yurtdışı rozeti — z-20 (poster üstünde) */}
           {yurtdisi && (
-            <div className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg">
-              <span className="text-xs leading-none">{yurtdisi.bayrak}</span>
+            <div className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg">
+              <span className="text-[13px] leading-none">{yurtdisi.bayrak}</span>
               <span>{yurtdisi.kisa}</span>
             </div>
           )}
@@ -1014,31 +1014,31 @@ const TakvimView = () => {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               {/* Üst sağ: countdown overlay */}
               <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 flex-wrap">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${online?'bg-blue-500/80 text-white':'bg-white/80 text-purple-800'}`}>
+                <span className={`text-[13px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${online?'bg-blue-500/80 text-white':'bg-white/80 text-purple-800'}`}>
                   {online ? '🌐 Online' : '📍 ' + (getSehir(egitim) || 'Yer')}
                 </span>
                 <CountdownBadge egitim={egitim} />
-                {egitim.gorselUrl2 && <span className="bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
+                {egitim.gorselUrl2 && <span className="bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
               </div>
               {/* Alt gradient — başlık okunurluğu için */}
               <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none" />
               {/* Alt: başlık + tarih overlay */}
               <div className="absolute inset-x-0 bottom-0 p-3 text-left">
-                <div className="text-white/80 text-[10px] uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5">
+                <div className="text-white/80 text-[13px] uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5">
                   <Clock className="w-3 h-3" />{egitim.tarih} {trGun(egitim.gun, t).slice(0, 3)}{egitim.saat ? ` • ${egitim.saat}` : ''}
                 </div>
-                <h3 className="font-extrabold text-white leading-tight text-base line-clamp-2 font-display drop-shadow-md">{egitimAdi}</h3>
+                <h3 className="font-extrabold text-white leading-tight text-[18px] line-clamp-2 font-display drop-shadow-md">{egitimAdi}</h3>
               </div>
             </button>
           ) : (
             /* Posteri olmayan kartlar için kompakt üst kısım */
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between mb-2 gap-1">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?t('cal_filter_online'):getSehir(egitim)||t('cal_filter_offline')}</span>
+                <span className={`text-[13px] font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?t('cal_filter_online'):getSehir(egitim)||t('cal_filter_offline')}</span>
                 <CountdownBadge egitim={egitim} />
               </div>
-              <h3 className="font-bold text-gray-900 leading-tight text-base">{egitimAdi}</h3>
-              <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+              <h3 className="font-bold text-gray-900 leading-tight text-[18px]">{egitimAdi}</h3>
+              <div className="text-[13px] text-gray-500 mt-1 flex items-center gap-1">
                 <Clock className="w-3 h-3" />{egitim.tarih} {trGun(egitim.gun, t)}{egitim.saat ? ` • ${egitim.saat}` : ''}
               </div>
             </div>
@@ -1051,7 +1051,7 @@ const TakvimView = () => {
                 <>
                   {egitim.kategori && (
                     <div>
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}
                       </span>
                     </div>
@@ -1061,7 +1061,7 @@ const TakvimView = () => {
                       <div className="flex -space-x-2">
                         {konusmacilar2.slice(0, 3).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={acLider} size="sm" />)}
                       </div>
-                      <span className="text-xs text-gray-600 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
+                      <span className="text-[13px] text-gray-600 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
                     </div>
                   )}
                 </>
@@ -1073,7 +1073,7 @@ const TakvimView = () => {
                   <div className="hidden md:flex flex-col gap-3">{detayIcerik}</div>
                   {/* Mobil: akordeon (#3) — kart kısalır, isteyen açar */}
                   <details className="md:hidden group">
-                    <summary className="list-none cursor-pointer text-[11px] font-bold text-purple-500 flex items-center gap-1 select-none">
+                    <summary className="list-none cursor-pointer text-[13px] font-bold text-purple-500 flex items-center gap-1 select-none">
                       <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
                       {konusmacilar2.length > 0 ? `${konusmacilar2.length} konuşmacı` : 'Detay'}{egitim.kategori ? ` · ${kategoriAdi}` : ''}
                     </summary>
@@ -1085,15 +1085,15 @@ const TakvimView = () => {
             {/* Katıl / Rezervasyon — mobilde tam genişlik, 48px (#8) */}
             {!gecmis && online && zoomId && (
               <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
-                className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-xl shadow spring-tap">
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] bg-blue-500 hover:bg-blue-600 text-white text-[15px] font-bold rounded-xl shadow spring-tap">
                 <Wifi className="w-4 h-4" />{t('cal_join_meeting')}
-                {egitim.katilTiklamaSayisi > 0 && <span className="text-[10px] font-normal opacity-90">· {egitim.katilTiklamaSayisi} kişi</span>}
+                {egitim.katilTiklamaSayisi > 0 && <span className="text-[13px] font-normal opacity-90">· {egitim.katilTiklamaSayisi} kişi</span>}
               </a>
             )}
             {!gecmis && !online && (
               <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
                 onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
-                className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl shadow spring-tap">
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white text-[15px] font-bold rounded-xl shadow spring-tap">
                 <CalendarDays className="w-4 h-4" />{t('cal_reserve')}
               </a>
             )}
@@ -1101,9 +1101,9 @@ const TakvimView = () => {
               <div className="flex items-center gap-2 mt-auto">
                 <button onClick={()=>setHatirlatmaModal(egitim)}
                   title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 min-h-[44px] md:min-h-0 md:py-2 rounded-lg text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 transition-colors spring-tap">
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 min-h-[44px] md:min-h-0 md:py-2 rounded-lg text-[13px] font-bold bg-purple-600 text-white hover:bg-purple-700 transition-colors spring-tap">
                   <Bell className="w-3.5 h-3.5" />{t('cal_remind')}
-                  {hatirlatmaCount > 0 && <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] bg-white/30">{hatirlatmaCount}</span>}
+                  {hatirlatmaCount > 0 && <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[13px] bg-white/30">{hatirlatmaCount}</span>}
                 </button>
                 <EventActions egitim={egitim} />
               </div>
@@ -1123,8 +1123,8 @@ const TakvimView = () => {
       <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-24 md:scroll-mt-4 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
-          <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
-            <span className="text-sm leading-none">{yurtdisi.bayrak}</span>
+          <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
+            <span className="text-[15px] leading-none">{yurtdisi.bayrak}</span>
             <span>ULUSLARARASI · {yurtdisi.kisa}</span>
           </div>
         )}
@@ -1133,48 +1133,48 @@ const TakvimView = () => {
         <div className="flex items-start gap-3 p-3">
           {/* Date badge — FIXED size, her kartta aynı boyut */}
           <div className={`flex-shrink-0 flex flex-col items-center justify-center px-2 py-3 w-[64px] h-[88px] ${dateColumnGradient} text-white rounded-xl shadow-lg`}>
-            <div className="text-xl font-extrabold leading-none font-display">{gunNo}</div>
-            <div className="text-[10px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
-            <div className="text-[9px] opacity-70 mt-1 leading-none">{trGun(egitim.gun, t).slice(0, 3)}</div>
-            {yurtdisi ? <span className="text-sm mt-1">{yurtdisi.bayrak}</span> : online && <Wifi className="w-3 h-3 mt-1 opacity-70" />}
+            <div className="text-2xl font-extrabold leading-none font-display">{gunNo}</div>
+            <div className="text-[13px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
+            <div className="text-[13px] opacity-70 mt-1 leading-none">{trGun(egitim.gun, t).slice(0, 3)}</div>
+            {yurtdisi ? <span className="text-[15px] mt-1">{yurtdisi.bayrak}</span> : online && <Wifi className="w-3 h-3 mt-1 opacity-70" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-gray-900 text-base leading-tight">{egitimAdi}</h3>
+                  <h3 className="font-bold text-gray-900 text-[18px] leading-tight">{egitimAdi}</h3>
                   <CountdownBadge egitim={egitim} />
                   {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)}
                     title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[13px] font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
                   {hatirlatmaCount > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title={`${hatirlatmaCount} kişi hatırlatma kaydetti`}>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title={`${hatirlatmaCount} kişi hatırlatma kaydetti`}>
                       <UsersIcon className="w-2.5 h-2.5" />{hatirlatmaCount}
                     </span>
                   )}
                   {!gecmis && <EventActions egitim={egitim} />}
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[15px] text-gray-500">
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.saat ? <>{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-gray-400">({egitim.sure})</span>}</> : <span className="text-amber-600 italic">{t('cal_time_tbd')}</span>}</span>
                   {egitim.yer && <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5 text-blue-500" />:<MapPin className="w-3.5 h-3.5 text-red-400" />}<span className="truncate max-w-[220px]">{online?'Zoom':egitim.yer}</span></span>}
-                  {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200" title={t('cal_zoom_real')}>📊 {egitim.zoomGercekKatilim} {t('cal_attended')}{egitim.zoomOrtDakika?` · ${t('cal_avg')} ${egitim.zoomOrtDakika} dk`:''}</span>}
+                  {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-blue-50 text-blue-700 border border-blue-200" title={t('cal_zoom_real')}>📊 {egitim.zoomGercekKatilim} {t('cal_attended')}{egitim.zoomOrtDakika?` · ${t('cal_avg')} ${egitim.zoomOrtDakika} dk`:''}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
-                  {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
+                  {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
+                  {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
-                {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0">{konusmacilar2.join(', ')}</span></div>}
+                {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-[15px] text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0">{konusmacilar2.join(', ')}</span></div>}
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? (
                   <span className="inline-flex items-center gap-2 flex-wrap">
-                    <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a>
-                    {egitim.katilTiklamaSayisi > 0 && <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} {t('cal_attended')}</span>}
+                    <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a>
+                    {egitim.katilTiklamaSayisi > 0 && <span className="inline-flex items-center gap-1 mt-2 text-[13px] font-bold text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} {t('cal_attended')}</span>}
                   </span>
                 ) : null; })()}
                 {/* Fiziki etkinlik → Katlama rezervasyon (farkındalık: tıklama sayılır) */}
                 {!online && !gecmis && (
                   <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
                     onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
-                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all">
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[13px] font-bold rounded-lg shadow hover:shadow-md transition-all">
                     <CalendarDays className="w-3.5 h-3.5" />{t('cal_reserve')}
                   </a>
                 )}
@@ -1183,8 +1183,8 @@ const TakvimView = () => {
                 {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={acLider} />)}
                 {konusmacilar2.length > 4 && (
                   <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                    <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 text-purple-700 font-bold text-sm">+{konusmacilar2.length - 4}</div>
-                    <span className="text-[10px] text-gray-500">daha</span>
+                    <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 text-purple-700 font-bold text-[15px]">+{konusmacilar2.length - 4}</div>
+                    <span className="text-[13px] text-gray-500">daha</span>
                   </div>
                 )}
               </div>
@@ -1195,7 +1195,7 @@ const TakvimView = () => {
               <img src={egitim.gorselUrl} alt="Afiş" loading="lazy"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className="w-full rounded shadow-sm object-cover" />
-              {egitim.gorselUrl2 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-amare-purple text-white text-[8px] font-bold flex items-center justify-center" title="2 görsel">2</span>}
+              {egitim.gorselUrl2 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-amare-purple text-white text-[13px] font-bold flex items-center justify-center" title="2 görsel">2</span>}
             </button>
           )}
         </div>
@@ -1235,24 +1235,24 @@ const TakvimView = () => {
                 gidiyor; girişsizken yalnız tekrar eden parçalar gidiyor. */}
             <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf
               data-kabuk={isAuthenticated ? 'ust' : undefined}>
-              <button onClick={() => navigate('/')} data-kabuk="ust" className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
+              <button onClick={() => navigate('/')} data-kabuk="ust" className="flex items-center text-white/70 hover:text-white text-[15px]"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {/* MOBİL: dil+PDF "⋯" menüsünde (#4) — üst bar sade kalsın */}
                 <div className="relative md:hidden" data-kabuk="ust">
                   <button onClick={() => setMobilMenuAcik(v => !v)} aria-label="Diğer seçenekler"
-                    className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-white font-extrabold text-lg leading-none spring-tap">⋯</button>
+                    className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-white font-extrabold text-[18px] leading-none spring-tap">⋯</button>
                   {mobilMenuAcik && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setMobilMenuAcik(false)} />
                       <div className="absolute right-0 top-11 z-50 bg-purple-950 border border-white/20 rounded-2xl shadow-2xl p-3 w-56 space-y-2">
-                        <div className="text-[10px] font-bold text-purple-300/70 uppercase">Dil</div>
+                        <div className="text-[13px] font-bold text-purple-300/70 uppercase">Dil</div>
                         <LanguageSwitcher />
                         <button onClick={() => { setMobilMenuAcik(false); exportPDF(); }} disabled={pdfYukleniyor}
-                          className="w-full flex items-center gap-2 bg-white/10 text-white px-3 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">
+                          className="w-full flex items-center gap-2 bg-white/10 text-white px-3 py-2.5 rounded-xl text-[15px] font-semibold disabled:opacity-50">
                           <Download className="w-4 h-4" />{pdfYukleniyor ? t('cal_preparing') : t('cal_download_pdf')}
                         </button>
                         <Link to="/ara" onClick={() => setMobilMenuAcik(false)}
-                          className="w-full flex items-center gap-2 bg-white/10 text-white px-3 py-2.5 rounded-xl text-sm font-semibold">
+                          className="w-full flex items-center gap-2 bg-white/10 text-white px-3 py-2.5 rounded-xl text-[15px] font-semibold">
                           <Search className="w-4 h-4" />Derin Ara
                         </Link>
                       </div>
@@ -1262,21 +1262,21 @@ const TakvimView = () => {
                 <div className="hidden md:block"><LanguageSwitcher /></div>
                 {/* Bu butonlar mobile'da bottom nav ile duplicate — sadece md+ ekranlarda göster */}
                 <button onClick={()=>navigate('/konusmacilar')}
-                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-[13px] sm:text-[15px] spring-tap">
                   <User className="w-4 h-4" />{t('trainers_title')}
                 </button>
                 <button onClick={()=>navigate('/kayitli-egitimler')}
-                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-[13px] sm:text-[15px] spring-tap">
                   <Video className="w-4 h-4" />{t('rec_title')}
                 </button>
-                <button onClick={exportPDF} disabled={pdfYukleniyor} className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
+                <button onClick={exportPDF} disabled={pdfYukleniyor} className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-[13px] sm:text-[15px] spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
                 </button>
                 {/* Üye Girişi — pasif buton, isteyen tıklar */}
                 {!isAuthenticated ? (
                   <button onClick={() => setGirisModalAcik(true)}
                     title="Marka Ortağı girişi yap (email/telefon/Amare ID)"
-                    className="flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/40 border border-amber-300/40 text-amber-100 px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                    className="flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/40 border border-amber-300/40 text-amber-100 px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-[13px] sm:text-[15px] spring-tap">
                     <LogIn className="w-4 h-4" />
                     <span className="hidden sm:inline">{t('hp_giris')}</span>
                     <span className="sm:hidden">{t('hp_giris_kisa')}</span>
@@ -1285,7 +1285,7 @@ const TakvimView = () => {
                   <div className="flex items-center gap-1">
                     <button onClick={() => navigate('/profil')}
                       title="Profilim"
-                      className="flex items-center gap-1.5 bg-green-400/15 hover:bg-green-400/25 border border-green-300/30 text-green-100 px-3 py-2 rounded-xl text-xs font-semibold transition spring-tap">
+                      className="flex items-center gap-1.5 bg-green-400/15 hover:bg-green-400/25 border border-green-300/30 text-green-100 px-3 py-2 rounded-xl text-[13px] font-semibold transition spring-tap">
                       <div className="w-2 h-2 rounded-full bg-green-400" />
                       <span className="hidden sm:inline">{displayName?.split(' ')[0] || email?.split('@')[0] || 'Marka Ortağı'}</span>
                       <UserCircle className="w-4 h-4 sm:hidden" />
@@ -1299,7 +1299,7 @@ const TakvimView = () => {
                 )}
               </div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white mt-3">{t('cal_title')}</h1>
+            <h1 className="text-4xl md:text-4xl font-extrabold text-white mt-3">{t('cal_title')}</h1>
             <p className="text-purple-200 mt-1">{filtrelenmis.length} {t('cal_trainings')}</p>
           </div>
         </div>
@@ -1317,15 +1317,15 @@ const TakvimView = () => {
             <div className="container mx-auto max-w-7xl">
               <div className="bg-gradient-to-r from-amber-500/20 via-purple-600/20 to-pink-500/20 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider gold-glow">
+                  <div className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider gold-glow">
                     📍 {t('cal_today_badge')}
                   </div>
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-wrap gap-2 text-[13px]">
                     {bugunCanli > 0 && <span className="bg-red-500 text-white px-2.5 py-1 rounded-full font-bold animate-pulse inline-flex items-center gap-1"><span className="w-1.5 h-1.5 bg-white rounded-full" />{bugunCanli} {t('cal_live_short')}</span>}
                     {bugunGelecek > 0 && <span className="bg-green-500 text-white px-2.5 py-1 rounded-full font-bold">{bugunGelecek} {t('cal_upcoming_short')}</span>}
                     {bugunGecmis > 0 && <span className="bg-white/15 text-white/70 px-2.5 py-1 rounded-full">{bugunGecmis} TAMAMLANDI</span>}
                   </div>
-                  <span className="text-purple-200 text-sm ml-auto hidden sm:inline">{bugunEgitimleri.length} toplam eğitim bugün</span>
+                  <span className="text-purple-200 text-[15px] ml-auto hidden sm:inline">{bugunEgitimleri.length} toplam eğitim bugün</span>
                 </div>
               </div>
             </div>
@@ -1338,10 +1338,10 @@ const TakvimView = () => {
             <div className="container mx-auto max-w-7xl">
               <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider gold-glow">
+                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider gold-glow">
                     🌍 {t('cal_intl_badge')}
                   </span>
-                  <span className="text-amber-200 text-sm font-semibold">
+                  <span className="text-amber-200 text-[15px] font-semibold">
                     {yurtdisiYaklasan.length} {t('cal_intl_count')}
                   </span>
                 </div>
@@ -1352,12 +1352,12 @@ const TakvimView = () => {
                       {/* Bayrak emojisi KALDIRILDI: Windows'ta emoji yerine ülke harfleri
                           çiziliyor ("ZA") ve yanındaki kodla birebir tekrar ediyordu. */}
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-amber-400 text-gray-900 text-[11px] font-bold px-2 py-0.5 rounded-full">{e._yd.kisa}</span>
-                        <span className="text-amber-200 text-[11px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
+                        <span className="bg-amber-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full">{e._yd.kisa}</span>
+                        <span className="text-amber-200 text-[13px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
                       </div>
-                      <div className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
-                      <div className="text-purple-200 text-xs">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
-                      {e.yer && <div className="text-amber-300/70 text-[11px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
+                      <div className="text-white font-bold text-[15px] leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                      <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
+                      {e.yer && <div className="text-amber-300/70 text-[13px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
                 </Karusel>
@@ -1372,10 +1372,10 @@ const TakvimView = () => {
             <div className="container mx-auto max-w-7xl">
               <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 border-2 border-emerald-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
+                  <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
                     📍 {t('cal_tr_badge')}
                   </span>
-                  <span className="text-emerald-200 text-sm font-semibold">
+                  <span className="text-emerald-200 text-[15px] font-semibold">
                     {yurticiFizikiYaklasan.length} {t('cal_tr_count')}
                   </span>
                 </div>
@@ -1384,13 +1384,13 @@ const TakvimView = () => {
                     <a key={e.id} href={`/e/${e.id}`}
                       className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-colors duration-200">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-base leading-none">📍</span>
-                        <span className="bg-emerald-400 text-gray-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
-                        <span className="text-emerald-200 text-[10px] font-semibold uppercase ml-auto">TR</span>
+                        <span className="text-[18px] leading-none">📍</span>
+                        <span className="bg-emerald-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
+                        <span className="text-emerald-200 text-[13px] font-semibold uppercase ml-auto">TR</span>
                       </div>
-                      <div className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
-                      <div className="text-purple-200 text-xs">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
-                      {e.yer && <div className="text-emerald-300/70 text-[11px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
+                      <div className="text-white font-bold text-[15px] leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                      <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
+                      {e.yer && <div className="text-emerald-300/70 text-[13px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
                 </Karusel>
@@ -1431,11 +1431,11 @@ const TakvimView = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
               <input type="text" ref={aramaInputRef} value={arama} onChange={e=>setArama(e.target.value)}
                 placeholder={t('cal_search_placeholder')}
-                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
+                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3.5 text-[18px] focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && <button onClick={()=>setArama('')} aria-label="Aramayı temizle" className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap"><X className="w-4 h-4" /></button>}
               {/* Derin arama: video arşivi + konuşma metinleri (/ara) */}
               <Link to={arama.trim() ? `/ara?q=${encodeURIComponent(arama.trim())}` : '/ara'}
-                className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-300/80 hover:text-amber-200 px-2 py-1 rounded-lg hover:bg-white/10 transition-all"
+                className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[13px] font-bold text-amber-300/80 hover:text-amber-200 px-2 py-1 rounded-lg hover:bg-white/10 transition-all"
                 title="Video arşivi ve konuşma metinlerinde ara">
                 Derin Ara →
               </Link>
@@ -1443,17 +1443,17 @@ const TakvimView = () => {
 
             {/* Hızlı zaman filtreleri + Bugün + Sıfırla — mobilde tek satır kaydırmalı (#9) */}
             <div className="flex items-center gap-2 mb-2 md:flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
-              <button onClick={scrollToToday} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400 text-gray-900 hover:bg-amber-300 transition-all shadow">
+              <button onClick={scrollToToday} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold bg-amber-400 text-gray-900 hover:bg-amber-300 transition-all shadow">
                 <CalendarIcon className="w-3.5 h-3.5" />{t('cal_today_badge')}
               </button>
               {[{key:'bu-hafta',label:'Bu Hafta'},{key:'gelecek-7',label:'7 Gün'},{key:'gelecek-30',label:'30 Gün'}].map(z=>(
                 <button key={z.key} onClick={()=>setZamanFiltre(zamanFiltre===z.key?null:z.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${zamanFiltre===z.key?'bg-white text-purple-800 shadow':'bg-white/10 text-white/70 hover:bg-white/20'}`}>
+                  className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${zamanFiltre===z.key?'bg-white text-purple-800 shadow':'bg-white/10 text-white/70 hover:bg-white/20'}`}>
                   {z.label}
                 </button>
               ))}
               {aktifFiltreSayisi > 0 && (
-                <button onClick={filtreyiSifirla} className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 border border-red-400/30 transition-all">
+                <button onClick={filtreyiSifirla} className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 border border-red-400/30 transition-all">
                   <X className="w-3 h-3" />Filtreyi Sıfırla ({aktifFiltreSayisi})
                 </button>
               )}
@@ -1469,7 +1469,7 @@ const TakvimView = () => {
                   {key:'yurtdisi',label:`🌍 ${t('cal_filter_abroad')}`,special:true},
                 ].map(f=>(
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap ${filtre===f.key
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[15px] font-semibold transition-all spring-tap ${filtre===f.key
                       ? (f.special ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg ring-2 ring-amber-300' : 'bg-white text-purple-800 shadow-lg')
                       : (f.special ? 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 border border-amber-400/30' : 'bg-white/10 text-white/80 hover:bg-white/20')}`}>
                     {f.icon}{f.label}
@@ -1477,7 +1477,7 @@ const TakvimView = () => {
                 ))}
                 {filtre==='offline'&&sehirler.length>0&&<>
                   <div className="w-px h-8 bg-white/20 self-center mx-1" />
-                  {sehirler.map(s=><button key={s} onClick={()=>setSehirFiltre(sehirFiltre===s?null:s)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${sehirFiltre===s?'bg-amber-400 text-gray-900':'bg-white/10 text-white/70 hover:bg-white/20'}`}>{s}</button>)}
+                  {sehirler.map(s=><button key={s} onClick={()=>setSehirFiltre(sehirFiltre===s?null:s)} className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${sehirFiltre===s?'bg-amber-400 text-gray-900':'bg-white/10 text-white/70 hover:bg-white/20'}`}>{s}</button>)}
                 </>}
               </div>
 
@@ -1495,13 +1495,13 @@ const TakvimView = () => {
             {/* Kategori chip'leri */}
             {tumKategoriler.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-white/10">
-                <span className="text-[10px] uppercase tracking-wider text-purple-300 font-semibold mr-1">Kategori:</span>
+                <span className="text-[13px] uppercase tracking-wider text-purple-300 font-semibold mr-1">Kategori:</span>
                 {tumKategoriler.map(kat => {
                   const renk = KATEGORI_RENK[kat] || KATEGORI_RENK['Diğer'];
                   const active = kategoriFiltre === kat;
                   return (
                     <button key={kat} onClick={()=>setKategoriFiltre(active ? null : kat)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all spring-tap ${active ? renk.bg + ' ' + renk.text + ' shadow ring-2 ring-amber-400' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold transition-all spring-tap ${active ? renk.bg + ' ' + renk.text + ' shadow ring-2 ring-amber-400' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${renk.dot}`} />
                       {tDynamic(kat)}
                     </button>
@@ -1515,12 +1515,12 @@ const TakvimView = () => {
               <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
                 <UsersIcon className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
                 <select value={konusmaciFiltre || ''} onChange={e=>setKonusmaciFiltre(e.target.value || null)}
-                  className="bg-white/10 backdrop-blur border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-[280px]">
+                  className="bg-white/10 backdrop-blur border border-white/20 text-white text-[13px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-[280px]">
                   <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({tumKonusmacilar.length})</option>
                   {tumKonusmacilar.map(k => <option key={k} value={k} className="bg-purple-900">{k}</option>)}
                 </select>
                 <a href="/api/ical" target="_blank" rel="noopener noreferrer" title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"
-                  className="ml-auto inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-white/70 hover:bg-white/20 border border-white/20 transition-all">
+                  className="ml-auto inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[13px] font-semibold bg-white/10 text-white/70 hover:bg-white/20 border border-white/20 transition-all">
                   <Rss className="w-3 h-3" />Takvim Aboneliği
                 </a>
               </div>
@@ -1532,7 +1532,7 @@ const TakvimView = () => {
         {swipeIpucu && (
           <div className="md:hidden px-4 pt-3" data-no-pdf>
             <div className="container mx-auto max-w-7xl">
-              <div className="flex items-center gap-2 bg-white/10 border border-amber-300/30 rounded-xl px-3 py-2 text-[11px] text-amber-100">
+              <div className="flex items-center gap-2 bg-white/10 border border-amber-300/30 rounded-xl px-3 py-2 text-[13px] text-amber-100">
                 <span>💡 Kartı <b>sola kaydır</b> → hatırlatma · <b>sağa kaydır</b> → paylaş</span>
                 <button onClick={() => { setSwipeIpucu(false); try { localStorage.setItem('amare_swipe_ipucu', '1'); } catch {} }}
                   className="ml-auto text-white/60 p-1" aria-label="Kapat"><X className="w-3.5 h-3.5" /></button>
@@ -1549,9 +1549,9 @@ const TakvimView = () => {
                 ? (
                   <div className="text-center py-16">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 border border-white/15 mb-3"><RotateCw className="w-8 h-8 text-amber-300/70" /></div>
-                    <p className="text-white font-bold text-lg mb-1">Eğitimler yüklenemedi</p>
-                    <p className="text-purple-200/70 text-sm mb-4 max-w-sm mx-auto">Bağlantı veya önbellek sorunu olabilir. Sayfayı yenileyince düzelir.</p>
-                    <button onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold text-sm px-5 py-2.5 rounded-full spring-tap shadow-lg"><RotateCw className="w-4 h-4" />Yenile</button>
+                    <p className="text-white font-bold text-[18px] mb-1">Eğitimler yüklenemedi</p>
+                    <p className="text-purple-200/70 text-[15px] mb-4 max-w-sm mx-auto">Bağlantı veya önbellek sorunu olabilir. Sayfayı yenileyince düzelir.</p>
+                    <button onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold text-[15px] px-5 py-2.5 rounded-full spring-tap shadow-lg"><RotateCw className="w-4 h-4" />Yenile</button>
                   </div>
                 )
                 : aktifFiltreSayisi > 0
@@ -1565,7 +1565,7 @@ const TakvimView = () => {
               if (tamGecmisSayisi === 0) return null;
               return (
                 <button onClick={() => setGecmisAylariGoster(s => !s)}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.10] border border-white/15 text-purple-200/80 hover:text-white text-xs sm:text-sm font-semibold rounded-xl px-4 py-2.5 transition-all spring-tap">
+                  className="w-full inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.10] border border-white/15 text-purple-200/80 hover:text-white text-[13px] sm:text-[15px] font-semibold rounded-xl px-4 py-2.5 transition-all spring-tap">
                   <svg className={`w-4 h-4 transition-transform ${gecmisAylariGoster ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -1590,7 +1590,7 @@ const TakvimView = () => {
                   <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
                     <table className="w-full text-left">
                       <thead><tr className="bg-purple-50 border-b border-purple-200">
-                        {[t('th_date'),t('th_time'),t('th_training'),t('th_speaker'),t('th_category'),t('th_status')].map(h=><th key={h} className="px-3 py-2 text-xs font-bold text-purple-700 uppercase">{h}</th>)}
+                        {[t('th_date'),t('th_time'),t('th_training'),t('th_speaker'),t('th_category'),t('th_status')].map(h=><th key={h} className="px-3 py-2 text-[13px] font-bold text-purple-700 uppercase">{h}</th>)}
                       </tr></thead>
                       <tbody className="divide-y divide-gray-100">{egitimler.map(renderEgitimKart)}</tbody>
                     </table>
@@ -1606,9 +1606,9 @@ const TakvimView = () => {
                   <div className="absolute left-0 top-12 bottom-4 w-1 rounded-full bg-gradient-to-b from-amber-400/40 via-purple-400/30 to-transparent hidden lg:block" />
 
                   <div className="flex items-center gap-3 mb-4 lg:pl-6">
-                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg md:text-xl shadow gold-glow font-display whitespace-nowrap">{aralik}</div>
+                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-[18px] md:text-2xl shadow gold-glow font-display whitespace-nowrap">{aralik}</div>
                     <div className="flex-1 h-px bg-gradient-to-r from-white/20 via-amber-400/30 to-transparent" />
-                    <div className="text-purple-300 text-sm">{haftaEgitimleri.length} {t('cal_trainings')}</div>
+                    <div className="text-purple-300 text-[15px]">{haftaEgitimleri.length} {t('cal_trainings')}</div>
                   </div>
 
                   {/* Geçmiş eğitimler — açılır kapanır, üstte */}
@@ -1616,9 +1616,9 @@ const TakvimView = () => {
                     <details className="mb-4 group">
                       <summary className="cursor-pointer select-none flex items-center gap-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl px-4 py-3 hover:bg-white/15 transition-all">
                         <svg className="w-5 h-5 text-purple-300 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        <span className="text-sm font-bold text-white">{t('cal_past')}</span>
-                        <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">{gecmisler.length}</span>
-                        <span className="text-xs text-purple-300 ml-auto">{t('cal_past_show')}</span>
+                        <span className="text-[15px] font-bold text-white">{t('cal_past')}</span>
+                        <span className="bg-white/20 text-white text-[13px] font-bold px-2.5 py-0.5 rounded-full">{gecmisler.length}</span>
+                        <span className="text-[13px] text-purple-300 ml-auto">{t('cal_past_show')}</span>
                       </summary>
                       <div className="mt-3">
                         {renderGrup(gecmisler)}
@@ -1634,7 +1634,7 @@ const TakvimView = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">{t('copyright')}</div>
+        <div className="border-t border-white/10 py-6 text-center text-white/40 text-[15px]">{t('copyright')}</div>
       </div>
 
       <PosterCarouselModal acik={!!posterModal} urls={posterModal?.urls} baslik={posterModal?.baslik}
@@ -1648,7 +1648,7 @@ const TakvimView = () => {
       {/* Yüzen "Bugüne Dön" (#2) — mobilde alt navigasyonun üstünde */}
       {showScrollTop && (
         <button onClick={scrollToToday}
-          className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-20 right-6 z-40 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white text-purple-800 font-extrabold text-sm shadow-2xl border-2 border-amber-300 transition-all hover:scale-105 spring-tap"
+          className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-20 right-6 z-40 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white text-purple-800 font-extrabold text-[15px] shadow-2xl border-2 border-amber-300 transition-all hover:scale-105 spring-tap"
           title={t('cal_today_go')} aria-label={t('cal_today_back')} data-no-pdf>
           📅 Bugün
         </button>

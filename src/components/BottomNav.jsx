@@ -42,7 +42,7 @@ const BottomNav = () => {
               }`
             }>
             <Icon className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-semibold">{label}</span>
+            <span className="text-[13px] font-semibold">{label}</span>
           </NavLink>
           );
         })}
