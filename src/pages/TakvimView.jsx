@@ -112,6 +112,7 @@ import { gorselBoyut } from '../utils/gorselBoyut';
 import { benimEgitimlerim } from '../utils/benimTakvimim';
 import { yuzOdak } from '../utils/yuzOdak';
 import { kategoriAl, kategoriOtomatikMi } from '../utils/kategoriTuret';
+import { Vurgula, sadelestir } from '../components/Vurgula';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -1067,8 +1068,13 @@ const TakvimView = () => {
       }
     }
     if (arama.trim()) {
-      const q = arama.toLocaleUpperCase('tr-TR');
-      const fields = [e.egitim, e.egitmen, e.yer, e.kategori, e.tarih, e.gun].map(f=>(f||'').toLocaleUpperCase('tr-TR'));
+      // Türkçe duyarsız arama: toLocaleUpperCase('tr-TR') ile "isinma" -> "İSİNMA"
+      // oluyor ve "ISINMA-HİKAYE-SUNUM" ile EŞLEŞMİYORDU (ölçüldü: 0 sonuç).
+      // sadelestir() aksanları tek karaktere indirger, i/ı/İ/I hepsi eşleşir.
+      const q = sadelestir(arama);
+      // Türetilmiş kategori de aranabilir olmalı: "liderlik" araması 1 sonuç
+      // veriyordu, oysa Liderlik kategorisinde beşten fazla eğitim vardı.
+      const fields = [e.egitim, e.egitmen, e.yer, e.kategori, kategoriAl(e), e.tarih, e.gun].map(sadelestir);
       if (!fields.some(f => f.includes(q))) return false;
     }
     return true;
@@ -1538,7 +1544,7 @@ const TakvimView = () => {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-white text-[18px] leading-tight">{egitimAdi}</h3>
+                  <h3 className="font-bold text-white text-[18px] leading-tight"><Vurgula metin={egitimAdi} sorgu={arama} /></h3>
                   {benimMi && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-amber-400 text-zemin-koyu"
                       title={konusmacisiMiyim(egitim) ? 'Bu eğitimin konuşmacısısın' : 'Bu eğitim için hatırlatma kurdun'}>
@@ -1568,12 +1574,12 @@ const TakvimView = () => {
                   {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-bold bg-white/[0.06] text-purple-200 border border-white/15" title={t('cal_zoom_real')}>📊 {egitim.zoomGercekKatilim} {t('cal_attended')}{egitim.zoomOrtDakika?` · ${t('cal_avg')} ${egitim.zoomOrtDakika} dk`:''}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {kategori && <span title={kategoriOtomatik ? 'Kategori girilmemiş, başlıktan tahmin edildi' : undefined} className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border} ${kategoriOtomatik ? 'border-dashed' : ''}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
+                  {kategori && <span title={kategoriOtomatik ? 'Kategori girilmemiş, başlıktan tahmin edildi' : undefined} className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border} ${kategoriOtomatik ? 'border-dashed' : ''}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} /><Vurgula metin={kategoriAdi} sorgu={arama} /></span>}
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-purple-200 border border-white/15"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
                 {/* Eğitmen adı sağdaki avatarın altında zaten yazıyor; mobilde avatar
                     gizlendiği için metin YALNIZ orada tutuluyor (md altı). */}
-                {konusmacilar2.length>0 && <div className="md:hidden flex items-center gap-1 mt-2 text-[15px] text-purple-200"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0">{konusmacilar2.map(adYaz).join(', ')}</span></div>}
+                {konusmacilar2.length>0 && <div className="md:hidden flex items-center gap-1 mt-2 text-[15px] text-purple-200"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0"><Vurgula metin={konusmacilar2.map(adYaz).join(', ')} sorgu={arama} /></span></div>}
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? (
                   <span className="inline-flex items-center gap-2 flex-wrap">
                     <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-zemin-koyu text-[13px] font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a>
