@@ -370,7 +370,8 @@ const HomePage = () => {
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-gradient-to-r ${e._yd.renk} text-white shadow`}>
-                        <span>{e._yd.bayrak}</span>{e._yd.kisa}
+                        {/* Bayrak emojisi yok: Windows'ta harfe düşüp kodu tekrar ediyor */}
+                        {e._yd.kisa}
                       </span>
                       <span className="text-amber-300/90 text-xs font-bold">{e.tarih}</span>
                     </div>

@@ -1086,9 +1086,29 @@ export const DataProvider = ({ children }) => {
   // halka açık sayfalarda HİÇBİR İŞARET OLMADAN görünüyordu → "gizledim ama
   // duruyor" karışıklığı (Dallas 2027 vakası). Artık süzgeç herkese uygulanır;
   // yönetim ekranları `takvimHam`'ı kullanır, orada gizliler görünmeye devam eder.
+  // ── Görüntüleme normalizasyonu (Eki 2026) ──
+  // Takvimde saat alanı kimi kayıtta "." olarak duruyor (tam gün etkinlikler).
+  // Arayüz bunu olduğu gibi basınca ekranda "5.11.2026 Pazartesi • ." çıkıyordu.
+  // Veriye dokunmadan, OKUMA anında temizlenir — bütün tüketiciler düzelir.
+  const bosSaat = (v) => {
+    const x = String(v ?? '').trim();
+    return (!x || x === '.' || x === '-' || x === '--') ? '' : x;
+  };
+  const baslikDuzelt = (v) => String(v ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s-(\S)/g, ' - $1')   // "CAPETOWN -TR&EU" → "CAPETOWN - TR&EU"
+    .trim();
+  const temizle = (e) => {
+    const saat = bosSaat(e.saat), bitis = bosSaat(e.bitisSaati), sure = bosSaat(e.sure);
+    const baslik = baslikDuzelt(e.egitim);
+    if (saat === e.saat && bitis === e.bitisSaati && sure === e.sure && baslik === e.egitim) return e;
+    return { ...e, saat, bitisSaati: bitis, sure, egitim: baslik };
+  };
+  const takvimTemiz = useMemo(() => (takvim || []).map(temizle), [takvim]);
+
   const takvimGorunur = useMemo(() => {
     const liste = [];
-    for (const e of takvim) {
+    for (const e of takvimTemiz) {
       if (e?.gizli === true) continue;
       if (e?.gorselGizli === true) {
         const { gorselUrl, gorselUrl2, ...kalan } = e;
@@ -1098,12 +1118,12 @@ export const DataProvider = ({ children }) => {
       liste.push(e);
     }
     return liste;
-  }, [takvim]);
+  }, [takvimTemiz]);
 
   const value = {
     egitmenler,
     takvim: takvimGorunur,
-    takvimHam: takvim, // admin ekranları için ham liste (süzgeçsiz)
+    takvimHam: takvimTemiz, // admin ekranları için süzgeçsiz liste (saat/başlık yine temiz)
     takvimYayinlandi,
     loading,
     isAdmin,

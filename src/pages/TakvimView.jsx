@@ -1349,10 +1349,11 @@ const TakvimView = () => {
                   {yurtdisiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
                       className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-colors duration-200">
+                      {/* Bayrak emojisi KALDIRILDI: Windows'ta emoji yerine ülke harfleri
+                          çiziliyor ("ZA") ve yanındaki kodla birebir tekrar ediyordu. */}
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl leading-none">{e._yd.bayrak}</span>
-                        <span className="bg-amber-400 text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{e._yd.kisa}</span>
-                        <span className="text-amber-200 text-[10px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
+                        <span className="bg-amber-400 text-gray-900 text-[11px] font-bold px-2 py-0.5 rounded-full">{e._yd.kisa}</span>
+                        <span className="text-amber-200 text-[11px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
                       </div>
                       <div className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
                       <div className="text-purple-200 text-xs">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
