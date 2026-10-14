@@ -1,8 +1,19 @@
 // Boş durum görselleri — SVG illustrations
 import React from 'react';
 
-// "Arama sonucu yok" — büyüteç + soluk yıldız
-export const EmptySearch = ({ title = 'Sonuç bulunamadı', desc = 'Filtreyi değiştirip tekrar dene', onReset, resetLabel = 'Filtreyi sıfırla' }) => (
+// "Arama sonucu yok" — büyüteç + soluk yıldız.
+// `oneriler` ve `aktifFiltreler` opsiyoneldir: boş ekran çıkmaz sokak olmasın
+// diye "şunu mu demek istediniz" ve "şu filtreyi kaldır" çıkışları verir.
+export const EmptySearch = ({
+  title = 'Sonuç bulunamadı',
+  desc = 'Filtreyi değiştirip tekrar dene',
+  onReset,
+  resetLabel = 'Filtreyi sıfırla',
+  oneriler = [],
+  onOneri,
+  aktifFiltreler = [],
+  ekEylem = null,
+}) => (
   <div className="text-center py-12 px-4">
     <svg viewBox="0 0 200 200" className="w-32 h-32 mx-auto mb-4 opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       {/* Halkalar */}
@@ -19,12 +30,47 @@ export const EmptySearch = ({ title = 'Sonuç bulunamadı', desc = 'Filtreyi de�
     </svg>
     <h3 className="text-white text-lg font-bold mb-1">{title}</h3>
     <p className="text-purple-200 text-sm mb-4">{desc}</p>
-    {onReset && (
-      <button onClick={onReset}
-        className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 px-5 py-2.5 rounded-xl font-bold transition-all spring-tap">
-        {resetLabel}
-      </button>
+
+    {/* "Şunu mu demek istediniz?" — yazım hatası boş ekranla cezalandırılmasın */}
+    {oneriler.length > 0 && (
+      <div className="mb-4">
+        <p className="text-purple-300/80 text-sm mb-2">Şunu mu demek istediniz?</p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {oneriler.map((o) => (
+            <button key={o} onClick={() => onOneri?.(o)}
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold border border-amber-400/40 text-amber-200 hover:bg-amber-400/15 transition-colors">
+              {o}
+            </button>
+          ))}
+        </div>
+      </div>
     )}
+
+    {/* Aktif filtreler tek tek kaldırılabilsin: hepsini sıfırlamak tek çare olmasın */}
+    {aktifFiltreler.length > 0 && (
+      <div className="mb-4">
+        <p className="text-purple-300/80 text-sm mb-2">Açık olan filtreler</p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {aktifFiltreler.map((f) => (
+            <button key={f.anahtar} onClick={f.kaldir} title={`"${f.etiket}" filtresini kaldır`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/[0.06] border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors">
+              {f.etiket}
+              <span aria-hidden="true" className="text-purple-300/80">×</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      {onReset && (
+        <button onClick={onReset}
+          className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 px-5 py-2.5 rounded-xl font-bold transition-all spring-tap">
+          {resetLabel}
+        </button>
+      )}
+      {ekEylem}
+    </div>
   </div>
 );
 

@@ -106,6 +106,7 @@ const SEHIRLER = [
 import { getYurtdisi } from '../utils/yurtdisi';
 import { adYaz } from '../utils/adYaz';
 import { baslikYaz } from '../utils/baslikYaz';
+import { yakinEslesmeler } from '../utils/yakinEslesme';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -898,7 +899,12 @@ const TakvimView = () => {
     return true;
   }), [takvim, filtre, sehirFiltre, kategoriFiltre, konusmaciFiltre, zamanFiltre, arama]);
 
+  // Filtre/arama aktifken sayfanın üst yarısı (hero, bugün bandı, yaklaşan
+  // etkinlikler) gizlenir: o bölümler filtreye tabi değil ve "0 eğitim"
+  // yazarken dolu durmaları kullanıcıyı yanıltıyordu. Eğitmen şeridi bilinçli
+  // kalır (kalıcı karar: her zaman en üstte).
   const aktifFiltreSayisi = (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
+  const filtreAktif = aktifFiltreSayisi > 0;
 
   // Yurtdışı yaklaşan eğitimler (gelecek 12 ay — büyük convention'lar erken planlanır)
   const yurtdisiYaklasan = useMemo(() => {
@@ -933,6 +939,36 @@ const TakvimView = () => {
     [yurtdisiYaklasan, yurticiFizikiYaklasan]
   );
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
+
+  // ── Boş sonuç için çıkış yolları (madde 3) ──
+  // Arama bir şey döndürmediğinde kullanıcı çıkmaz sokakta kalmasın: yazım
+  // toleranslı öneri + açık filtreleri tek tek kaldırma.
+  const aramaHavuzu = useMemo(() => {
+    const h = new Set();
+    for (const e of takvim || []) {
+      if (e?.egitim) h.add(e.egitim);
+      if (e?.kategori) h.add(e.kategori);
+      const sh = getSehir(e); if (sh && sh !== 'Diğer') h.add(sh);
+      for (const k of splitEgitmen(e?.egitmen)) h.add(String(k).trim());
+    }
+    return [...h];
+  }, [takvim]);
+
+  const aramaOnerileri = useMemo(
+    () => (arama.trim() ? yakinEslesmeler(arama, aramaHavuzu, { adet: 3 }).map(baslikYaz) : []),
+    [arama, aramaHavuzu]
+  );
+
+  const acikFiltreler = useMemo(() => {
+    const l = [];
+    if (arama.trim()) l.push({ anahtar: 'ara', etiket: `Arama: "${arama.trim()}"`, kaldir: () => setArama('') });
+    if (filtre !== 'tumu') l.push({ anahtar: 'tur', etiket: ({ online: t('cal_filter_online'), offline: t('cal_filter_offline'), yurtdisi: t('cal_filter_abroad') })[filtre] || filtre, kaldir: () => setFiltre('tumu') });
+    if (zamanFiltre) l.push({ anahtar: 'zaman', etiket: ({ 'bu-hafta': 'Bu Hafta', 'gelecek-7': '7 Gün', 'gelecek-30': '30 Gün' })[zamanFiltre] || zamanFiltre, kaldir: () => setZamanFiltre(null) });
+    if (kategoriFiltre) l.push({ anahtar: 'kategori', etiket: tDynamic(kategoriFiltre), kaldir: () => setKategoriFiltre(null) });
+    if (konusmaciFiltre) l.push({ anahtar: 'egitmen', etiket: adYaz(konusmaciFiltre), kaldir: () => setKonusmaciFiltre(null) });
+    if (sehirFiltre) l.push({ anahtar: 'sehir', etiket: sehirFiltre, kaldir: () => setSehirFiltre(null) });
+    return l;
+  }, [arama, filtre, zamanFiltre, kategoriFiltre, konusmaciFiltre, sehirFiltre, t, tDynamic]);
 
   // Bugün özel — bugün gerçekleşen tüm eğitimleri ayır
   const bugunEgitimleri = useMemo(() => {
@@ -1421,7 +1457,7 @@ const TakvimView = () => {
         </div>
 
         {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
-        {enYakinEgitimler.length > 0 && (
+        {!filtreAktif && enYakinEgitimler.length > 0 && (
           <div className="px-4 pt-4 pb-6">
             <div className="container mx-auto max-w-7xl space-y-3">
               <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
@@ -1441,7 +1477,7 @@ const TakvimView = () => {
         )}
 
         {/* Bugün özel bölüm — eğer bugün eğitim varsa */}
-        {bugunEgitimleri.length > 0 && (
+        {!filtreAktif && bugunEgitimleri.length > 0 && (
           <div className="px-4 pt-2">
             <div className="container mx-auto max-w-7xl">
               <div className="bg-gradient-to-r from-amber-500/20 via-purple-600/20 to-pink-500/20 border border-amber-400/30 rounded-2xl p-4 backdrop-blur-sm">
@@ -1465,7 +1501,7 @@ const TakvimView = () => {
             Eskiden iki ayrı bant vardı (altın/zümrüt); aynı şablonun iki
             rengiydi ve sayfada gereksiz tekrar üretiyordu. Ayrım artık
             renkle değil, kartın üzerindeki ülke/şehir çipiyle yapılıyor. */}
-        {yaklasanEtkinlikler.length > 0 && (
+        {!filtreAktif && yaklasanEtkinlikler.length > 0 && (
           <div className="px-4 pt-2">
             <div className="container mx-auto max-w-7xl">
               <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 overflow-hidden">
@@ -1667,7 +1703,19 @@ const TakvimView = () => {
                   </div>
                 )
                 : aktifFiltreSayisi > 0
-                  ? <EmptySearch onReset={filtreyiSifirla} />
+                  ? <EmptySearch
+                      onReset={filtreyiSifirla}
+                      desc={arama.trim() ? `"${arama.trim()}" için takvimde eşleşen eğitim yok.` : 'Seçili filtrelerle eşleşen eğitim yok.'}
+                      oneriler={aramaOnerileri}
+                      onOneri={(o) => setArama(o)}
+                      aktifFiltreler={acikFiltreler}
+                      ekEylem={arama.trim() ? (
+                        <Link to={`/ara?q=${encodeURIComponent(arama.trim())}`}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[15px] border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors">
+                          Video arşivinde ara
+                        </Link>
+                      ) : null}
+                    />
                   : <EmptyCompleted />
             )}
 
