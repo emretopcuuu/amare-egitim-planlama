@@ -751,17 +751,7 @@ const TakvimView = () => {
     setGorunum(searchParams.get('gorunum') || 'liste');
   }, [searchParams]);
 
-  // Klavye kısayolları
-  useKeyboardShortcuts({
-    '/': () => aramaInputRef.current?.focus(),
-    '?': () => setYardimAcik(true),
-    'Escape': () => {
-      if (konusmaciModal) setKonusmaciModal(null);
-      else if (posterModal) setPosterModal(null);
-      else if (hatirlatmaModal) setHatirlatmaModal(null);
-      else if (yardimAcik) setYardimAcik(false);
-    },
-  }, [konusmaciModal, posterModal, hatirlatmaModal, yardimAcik]);
+
 
   // Pull-to-refresh (mobile)
   const { pullY, refreshing } = usePullToRefresh(async () => {
@@ -997,7 +987,53 @@ const TakvimView = () => {
 
   const dahaFazlaHafta = useCallback(() => setGorunenHafta(n => n + 3), []);
 
+  // ── Klavye ile liste gezinme (madde 10) ──
+  // j/k ve ok tuşlarıyla kartlar arasında atlar. Ekranın üst kısmına en yakın
+  // kartı "şu anki" sayar; böylece kullanıcı nereden devam edeceğini bilir.
+  const kartaGit = useCallback((yon) => {
+    const kartlar = [...document.querySelectorAll('[data-tarih]')];
+    if (!kartlar.length) return;
+    const esik = 140; // yapışkan bandın altı
+    let i = kartlar.findIndex(k => k.getBoundingClientRect().top > esik);
+    if (i === -1) i = kartlar.length;
+    const hedef = yon > 0 ? kartlar[Math.min(i, kartlar.length - 1)]
+                          : kartlar[Math.max(0, (i === 0 ? 0 : i - 2))];
+    if (!hedef) return;
+    hedef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Odak da taşınsın ki ekran okuyucu kartı okusun.
+    const odaklanabilir = hedef.querySelector('a[href], button');
+    odaklanabilir?.focus({ preventScroll: true });
+  }, []);
+
+  // Filtre sonucu değişince ekran okuyucuya tek cümlelik duyuru.
+  const [duyuru, setDuyuru] = useState('');
+  useEffect(() => {
+    if (loading) return;
+    const n = filtrelenmis.length;
+    setDuyuru(n === 0
+      ? 'Eşleşen eğitim bulunamadı.'
+      : `${n} eğitim listeleniyor.${aktifFiltreSayisi > 0 ? ` ${aktifFiltreSayisi} filtre açık.` : ''}`);
+  }, [filtrelenmis.length, aktifFiltreSayisi, loading]);
+
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
+
+  // Klavye kısayolları
+  useKeyboardShortcuts({
+    '/': () => aramaInputRef.current?.focus(),
+    '?': () => setYardimAcik(true),
+    // Liste gezinme: j/k (ok tuşları bilinçli bağlanmadı; hook
+    // preventDefault çağırdığı için normal kaydırmayı öldürürdü)
+    'j': () => kartaGit(1),
+    'k': () => kartaGit(-1),
+    'Escape': () => {
+      if (konusmaciModal) setKonusmaciModal(null);
+      else if (posterModal) setPosterModal(null);
+      else if (hatirlatmaModal) setHatirlatmaModal(null);
+      else if (yardimAcik) setYardimAcik(false);
+      // Katman yoksa Esc filtreyi temizler: çıkmaz sokaktan tek tuşla çıkış.
+      else if (aktifFiltreSayisi > 0) filtreyiSifirla();
+    },
+  }, [konusmaciModal, posterModal, hatirlatmaModal, yardimAcik, aktifFiltreSayisi, kartaGit]);
 
   // ── Boş sonuç için çıkış yolları (madde 3) ──
   // Arama bir şey döndürmediğinde kullanıcı çıkmaz sokakta kalmasın: yazım
@@ -1873,7 +1909,11 @@ const TakvimView = () => {
       <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
       <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
 
-      {/* Floating Scroll-to-Top FAB */}
+      {/* Ekran okuyucu duyurusu: filtre sonucu değişince tek cümle. Görsel
+          olarak gizli ama erişilebilirlik ağacında okunur. */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">{duyuru}</div>
+
+            {/* Floating Scroll-to-Top FAB */}
       {/* Yüzen "Bugüne Dön" (#2) — mobilde alt navigasyonun üstünde */}
       {showScrollTop && (
         <button onClick={scrollToToday}

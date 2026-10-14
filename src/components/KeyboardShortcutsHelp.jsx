@@ -5,7 +5,9 @@ import { Keyboard, X } from 'lucide-react';
 const SHORTCUTS = [
   { keys: ['/'],                  desc: 'Arama kutusuna odaklan' },
   { keys: ['?'],                  desc: 'Bu yardım penceresi' },
-  { keys: ['Esc'],                desc: 'Açık modalı kapat' },
+  { keys: ['Esc'],                desc: 'Açık modalı kapat; modal yoksa filtreyi temizle' },
+  { keys: ['J'],                  desc: 'Takvimde sonraki eğitime git' },
+  { keys: ['K'],                  desc: 'Takvimde önceki eğitime git' },
   { keys: ['←', '→'],             desc: 'Video açıkken önceki / sonraki video' },
   { keys: ['F'],                  desc: 'Video açıkken favoriye ekle/çıkar' },
   { keys: ['Space'],              desc: 'Video oynat / duraklat (Vimeo iframe)' },
