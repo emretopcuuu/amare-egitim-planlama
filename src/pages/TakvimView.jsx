@@ -958,9 +958,18 @@ const TakvimView = () => {
   const swipeRef = useRef({ x: 0, y: 0, t: 0 });
   const egitimPaylas = async (egitim) => {
     const url = `${window.location.origin}/e/${egitim.id}`;
-    const metin = `${baslikYaz(egitim.egitim)} — ${egitim.tarih} ${egitim.saat || ''}`.trim();
+    const egitmenler = splitEgitmen(egitim.egitmen).map(adYaz).join(', ');
+    const platform = isOnline(egitim) ? 'Zoom' : (getSehir(egitim) || egitim.yer || '');
+    const saatMetni = egitim.saat
+      ? `${egitim.saat}${egitim.bitisSaati ? `–${egitim.bitisSaati}` : ''} (TSİ)`
+      : '';
+    const metin = [
+      egitmenler ? `${egitmenler} · ${baslikYaz(egitim.egitim)}` : baslikYaz(egitim.egitim),
+      [egitim.tarih, egitim.gun, saatMetni].filter(Boolean).join(' '),
+      platform,
+    ].filter(Boolean).join('\n');
     try { navigator.vibrate?.(15); } catch {}
-    if (navigator.share) { try { await navigator.share({ title: egitim.egitim, text: metin, url }); return; } catch {} }
+    if (navigator.share) { try { await navigator.share({ title: baslikYaz(egitim.egitim), text: metin, url }); return; } catch {} }
     try { await navigator.clipboard.writeText(`${metin}\n${url}`); } catch {}
   };
   const swipeProps = (egitim, gecmis) => ({
@@ -1739,7 +1748,8 @@ const TakvimView = () => {
         {/* Konuşmacı Şeridi — en çok eğitimi olan ilk, tıkla → konuşmacı modal */}
         <div className="px-4 pt-4">
           <div className="container mx-auto max-w-7xl">
-            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]} />
+            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]}
+              onEgitmenSec={(ad) => { setKonusmaciFiltre(ad); setBenimFiltre(false); }} />
           </div>
         </div>
 
@@ -1982,6 +1992,26 @@ const TakvimView = () => {
             )}
           </div>
         </div>
+
+        {/* Eğitmen filtresi açıkken profiline köprü. Şeritteki avatara dokunan
+            kişi "eğitimleri ne zaman" diye bakıyor; profil bir tık ötede durur. */}
+        {konusmaciFiltre && (
+          <div className="px-4 pt-3">
+            <div className="container mx-auto max-w-7xl">
+              <div className="flex flex-wrap items-center gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-[13px] text-purple-200">
+                <span><strong className="text-white">{adYaz(konusmaciFiltre)}</strong> eğitimleri gösteriliyor</span>
+                <Link to={`/lider/${makeCoreId(konusmaciFiltre)}`}
+                  className="dokun-44 ml-auto inline-flex items-center min-h-[36px] px-2.5 rounded-lg font-semibold text-amber-200 hover:text-white hover:bg-white/10 transition-colors">
+                  Profiline git
+                </Link>
+                <button onClick={() => setKonusmaciFiltre(null)}
+                  className="dokun-44 inline-flex items-center min-h-[36px] px-2.5 rounded-lg font-semibold text-purple-200 hover:text-white hover:bg-white/10 transition-colors">
+                  Filtreyi kaldır
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Kategori filtresi dürüstlüğü: veri eksikliğinden gizlenenleri söyle */}
         {kategorisizGizlenen > 0 && (
