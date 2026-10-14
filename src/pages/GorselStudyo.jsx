@@ -118,7 +118,8 @@ const b64ToUrl = (b64, mime = 'image/png') => {
 export default function GorselStudyo() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { takvim, konusmacilar, egitimGuncelle, geminiApiKey, openaiApiKey } = useData();
+  // Stüdyo gizli etkinliği de düzenleyebilmeli → ham liste
+  const { takvimHam: takvim, konusmacilar, egitimGuncelle, geminiApiKey, openaiApiKey } = useData();
 
   const egitimId = params.get('egitim') || '';
   const egitim = useMemo(() => (takvim || []).find(e => e.id === egitimId) || null, [takvim, egitimId]);

@@ -290,7 +290,7 @@ const extractZoomId = (yer) => {
 const AdminPanel = () => {
   const navigate = useNavigate();
   const {
-    egitmenler, takvim, takvimYayinlandi, isAdmin, loading,
+    egitmenler, takvimHam: takvim, takvimYayinlandi, isAdmin, loading,
     otomatikTakvimOlustur, exceldenTakvimYukle,
     egitimSil, egitimGuncelle, manuelEgitimEkle,
     basvuruSil, basvuruDurumGuncelle,

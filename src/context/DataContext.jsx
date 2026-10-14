@@ -1082,8 +1082,11 @@ export const DataProvider = ({ children }) => {
   // bülten, katil-tikla) uygulamanın TÜM yüzeylerini kapatır; elle Firestore REST
   // çağrısı yapan birini kapatmaz. Kuralı sıkılaştırmak liste sorgularını kırar
   // (üç fetch yolu da filtresiz list) — bilinçli olarak yapılmadı.
+  // 14 Eki 2026: Önce admin her şeyi görüyordu. Ama gizlenen etkinlik admin'e
+  // halka açık sayfalarda HİÇBİR İŞARET OLMADAN görünüyordu → "gizledim ama
+  // duruyor" karışıklığı (Dallas 2027 vakası). Artık süzgeç herkese uygulanır;
+  // yönetim ekranları `takvimHam`'ı kullanır, orada gizliler görünmeye devam eder.
   const takvimGorunur = useMemo(() => {
-    if (isAdmin) return takvim; // admin her şeyi görür (panel/stüdyo bozulmasın)
     const liste = [];
     for (const e of takvim) {
       if (e?.gizli === true) continue;
@@ -1095,7 +1098,7 @@ export const DataProvider = ({ children }) => {
       liste.push(e);
     }
     return liste;
-  }, [takvim, isAdmin]);
+  }, [takvim]);
 
   const value = {
     egitmenler,

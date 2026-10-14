@@ -12,7 +12,8 @@ const AdminGlobalSearch = () => {
   const [q, setQ] = useState('');
   const inputRef = useRef(null);
   const navigate = useNavigate();
-  const { takvim = [], egitmenler = [], konusmacilar = [] } = useData();
+  // Admin araması gizlileri de bulmalı → ham liste
+  const { takvimHam: takvim = [], egitmenler = [], konusmacilar = [] } = useData();
   const [videolar, setVideolar] = useState([]);
 
   useEffect(() => {
