@@ -100,6 +100,7 @@ const SEHIRLER = [
 
 // Yurtdışı tespiti — ülke adı veya AB büyük şehir adı yer'de/başlıkta geçerse
 import { getYurtdisi } from '../utils/yurtdisi';
+import { adYaz } from '../utils/adYaz';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -186,7 +187,7 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false 
           <User className="w-1/2 h-1/2 text-purple-400" />
         </div>
       )}
-      {size !== 'sm' && <span className={`text-[13px] text-center leading-tight max-w-[80px] ${dark ? 'text-white/80' : 'text-gray-600'}`}>{k?.ad||ad}</span>}
+      {size !== 'sm' && <span className={`text-[13px] text-center leading-snug max-w-[96px] ${dark ? 'text-white/80' : 'text-gray-600'}`}>{adYaz(k?.ad||ad)}</span>}
     </button>
   );
 };
@@ -450,7 +451,12 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
 
   const online = egitim ? isOnline(egitim) : false;
   const zoomId = zoomIdBul(egitim);
-  const aktif = !kapatildi && online && !!zoomId && (cd?.durum === 'yakin' || cd?.durum === 'canli');
+  // Mobilde altta üç katman üst üste biniyordu: katıl şeridi + alt menü + sayfa.
+  // Ekranın dörtte biri kapanıyordu. Şerit artık yalnız SON 15 DAKİKADA ya da
+  // yayın canlıyken çıkar; öncesinde sayfanın tepesindeki hero zaten katıl
+  // düğmesini gösteriyor.
+  const sonDakikalar = cd?.durum === 'yakin' && cd.gun === 0 && cd.sa === 0 && cd.dakika <= 15;
+  const aktif = !kapatildi && online && !!zoomId && (sonDakikalar || cd?.durum === 'canli');
   useEffect(() => { onAktifDegisti?.(aktif); }, [aktif, onAktifDegisti]);
 
   // Canlı sayaç: bar aktifken yalnız BU eğitimin doc'unu dinle (tek doc, ucuz)
@@ -839,6 +845,13 @@ const TakvimView = () => {
       )
       .sort((a, b) => a._d - b._d);
   }, [takvim]);
+
+  // Yurtdışı + yurtiçi TEK listede, tarihe göre. Bant tek olduğu için
+  // kaynak da tek: iki ayrı bant aynı şablonun iki rengiydi.
+  const yaklasanEtkinlikler = useMemo(
+    () => [...yurtdisiYaklasan, ...yurticiFizikiYaklasan].sort((a, b) => a._d - b._d),
+    [yurtdisiYaklasan, yurticiFizikiYaklasan]
+  );
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
 
   // Bugün özel — bugün gerçekleşen tüm eğitimleri ayır
@@ -1304,6 +1317,26 @@ const TakvimView = () => {
           </div>
         </div>
 
+        {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
+        {enYakinEgitimler.length > 0 && (
+          <div className="px-4 pt-8 pb-6">
+            <div className="container mx-auto max-w-7xl space-y-3">
+              <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
+                onKonusmaci={acLider}
+                onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
+              {enYakinEgitimler.length > 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {enYakinEgitimler.slice(1).map((egitim, i) => (
+                    <HeroBolum key={egitim.id} egitim={egitim} sira={i + 2} konusmacilar={konusmacilar||[]}
+                      onKonusmaci={acLider}
+                      onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Konuşmacı Şeridi — en çok eğitimi olan ilk, tıkla → konuşmacı modal */}
         <div className="px-4 pt-2">
           <div className="container mx-auto max-w-7xl">
@@ -1332,89 +1365,36 @@ const TakvimView = () => {
           </div>
         )}
 
-        {/* Yurtdışı yaklaşan etkinlikler — özel altın bant */}
-        {yurtdisiYaklasan.length > 0 && (
+        {/* Yaklaşan etkinlikler — yurtdışı + yurtiçi TEK bant.
+            Eskiden iki ayrı bant vardı (altın/zümrüt); aynı şablonun iki
+            rengiydi ve sayfada gereksiz tekrar üretiyordu. Ayrım artık
+            renkle değil, kartın üzerindeki ülke/şehir çipiyle yapılıyor. */}
+        {yaklasanEtkinlikler.length > 0 && (
           <div className="px-4 pt-2">
             <div className="container mx-auto max-w-7xl">
               <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 overflow-hidden">
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider">
-                    🌍 {t('cal_intl_badge')}
-                  </span>
-                  <span className="text-amber-300 text-[15px] font-semibold">
-                    {yurtdisiYaklasan.length} {t('cal_intl_count')}
-                  </span>
+                <div className="flex items-baseline gap-3 mb-4 flex-wrap">
+                  <h2 className="text-white text-[18px] font-bold font-display">{t('cal_upcoming_events')}</h2>
+                  <span className="text-purple-300/70 text-[13px]">{yaklasanEtkinlikler.length}</span>
                 </div>
                 <Karusel okRenk="bg-amber-400/90 hover:bg-amber-400 text-gray-900">
-                  {yurtdisiYaklasan.map(e => (
+                  {yaklasanEtkinlikler.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
-                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-colors duration-200">
-                      {/* Bayrak emojisi KALDIRILDI: Windows'ta emoji yerine ülke harfleri
-                          çiziliyor ("ZA") ve yanındaki kodla birebir tekrar ediyordu. */}
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-amber-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full">{e._yd.kisa}</span>
-                        <span className="text-amber-300 text-[13px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
+                      className="flex-shrink-0 w-60 sm:w-72 bg-white/[0.06] hover:bg-white/10 border border-white/10 hover:border-amber-300/50 rounded-xl p-4 transition-colors duration-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-amber-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full">
+                          {e._yd ? e._yd.kisa : 'TR'}
+                        </span>
+                        <span className="text-purple-300/70 text-[13px] font-semibold uppercase tracking-wide ml-auto truncate max-w-[55%]">
+                          {e._yd ? e._yd.anahtar : e._sehir}
+                        </span>
                       </div>
-                      <div className="text-white font-bold text-[15px] leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                      <div className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-1.5">{tDynamic(e.egitim)}</div>
                       <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
-                      {e.yer && <div className="text-amber-300 text-[13px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
                 </Karusel>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Yurtiçi FİZİKİ yaklaşan etkinlikler — şehir ön planda, emerald bant */}
-        {yurticiFizikiYaklasan.length > 0 && (
-          <div className="px-4 pt-2">
-            <div className="container mx-auto max-w-7xl">
-              <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 overflow-hidden">
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider">
-                    📍 {t('cal_tr_badge')}
-                  </span>
-                  <span className="text-purple-200 text-[15px] font-semibold">
-                    {yurticiFizikiYaklasan.length} {t('cal_tr_count')}
-                  </span>
-                </div>
-                <Karusel okRenk="bg-emerald-400/90 hover:bg-white/10 text-amber-300">
-                  {yurticiFizikiYaklasan.map(e => (
-                    <a key={e.id} href={`/e/${e.id}`}
-                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-amber-300/50 rounded-xl p-3 transition-colors duration-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[18px] leading-none">📍</span>
-                        <span className="bg-white/10 text-amber-300 text-[13px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
-                        <span className="text-purple-200 text-[13px] font-semibold uppercase ml-auto">TR</span>
-                      </div>
-                      <div className="text-white font-bold text-[15px] leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
-                      <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
-                      {e.yer && <div className="text-purple-300/70 text-[13px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
-                    </a>
-                  ))}
-                </Karusel>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
-        {enYakinEgitimler.length > 0 && (
-          <div className="px-4 py-4">
-            <div className="container mx-auto max-w-7xl space-y-3">
-              <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
-                onKonusmaci={acLider}
-                onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
-              {enYakinEgitimler.length > 1 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {enYakinEgitimler.slice(1).map((egitim, i) => (
-                    <HeroBolum key={egitim.id} egitim={egitim} sira={i + 2} konusmacilar={konusmacilar||[]}
-                      onKonusmaci={acLider}
-                      onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         )}

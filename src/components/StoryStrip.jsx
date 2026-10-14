@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../context/LanguageContext';
 import { makeSafeId, makeCoreId } from '../context/DataContext';
 import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
+import { adYaz } from '../utils/adYaz';
 import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const parseTarih = (t) => {
@@ -33,12 +34,6 @@ const splitEgitmen = (e) => {
 };
 
 
-// Eğitmen adları veritabanında BÜYÜK HARF duruyor ("ZİYA ŞAKİR YILMAZ").
-// Ekranda hepsi büyük harf olunca hiyerarşi düzleşiyor; Türkçe duyarlı
-// baş-harf yazımına çevrilir. Veri değişmez, yalnız görüntü.
-const adYaz = (s) => String(s || '')
-  .toLocaleLowerCase('tr-TR')
-  .replace(/(^|[\s\-'’./(])(\p{L})/gu, (_, onek, harf) => onek + harf.toLocaleUpperCase('tr-TR'));
 
 const StoryStrip = ({ takvim, konusmacilar }) => {
   const { t } = useTranslation();
@@ -234,7 +229,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
             return (
               <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 group focus:outline-none spring-tap w-[68px]">
-                <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-500' : 'bg-gradient-to-tr from-purple-400/60 to-purple-600/60'} group-hover:scale-105 transition-all`}>
+                <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-500' : 'bg-gradient-to-tr from-purple-400/60 to-purple-600/60'} group-hover:scale-105 transition-all`}>
                   <div className="w-full h-full rounded-full overflow-hidden bg-purple-900 border-2 border-purple-900">
                     {kayit?.fotoURL ? (
                       <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
@@ -252,8 +247,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
                   </span>
                 </div>
                 <div className="text-center w-full">
-                  <div className="text-[13px] font-semibold text-white leading-snug line-clamp-2 max-w-[104px]">{adYaz((kayit?.ad || ad).split(' ').slice(0, 3).join(' '))}</div>
-                  {kayit?.unvan && <div className="text-[13px] text-amber-300/80 mt-0.5 line-clamp-1">{kayit.unvan}</div>}
+                  <div className="text-[13px] font-semibold text-white leading-snug line-clamp-1 max-w-[112px]">{adYaz((kayit?.ad || ad).split(' ').slice(0, 2).join(' '))}</div>
                 </div>
               </button>
             );

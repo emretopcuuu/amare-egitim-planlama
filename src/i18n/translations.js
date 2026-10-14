@@ -349,6 +349,7 @@ const translations = {
     rec_to_top: 'En üste dön',
 
     // Egitim Yolum (EgitimYolumBlok)
+    cal_upcoming_events: 'Yaklaşan etkinlikler',
     ey_no_rank: 'Rütbe bilgin henüz sistemde eşleşmedi.',
     ey_no_rank_sub: 'Amare hesabın senkronize olduğunda burası otomatik dolar.',
     ey_active: 'Aktif',
@@ -710,6 +711,7 @@ const translations = {
     rec_to_top: 'Back to top',
 
     // Egitim Yolum (EgitimYolumBlok)
+    cal_upcoming_events: 'Upcoming events',
     ey_no_rank: 'Your rank has not been matched in the system yet.',
     ey_no_rank_sub: 'This fills in automatically once your Amare account syncs.',
     ey_active: 'Active',
@@ -1071,6 +1073,7 @@ const translations = {
     rec_to_top: 'Nach oben',
 
     // Egitim Yolum (EgitimYolumBlok)
+    cal_upcoming_events: 'Kommende Veranstaltungen',
     ey_no_rank: 'Dein Rang ist im System noch nicht zugeordnet.',
     ey_no_rank_sub: 'Sobald dein Amare-Konto synchronisiert ist, füllt sich dieser Bereich automatisch.',
     ey_active: 'Aktiv',
@@ -1431,6 +1434,7 @@ const translations = {
     rec_to_top: 'Naar boven',
 
     // Egitim Yolum (EgitimYolumBlok)
+    cal_upcoming_events: 'Aankomende evenementen',
     ey_no_rank: 'Je rang is nog niet gekoppeld in het systeem.',
     ey_no_rank_sub: 'Zodra je Amare-account is gesynchroniseerd, vult dit zich automatisch.',
     ey_active: 'Actief',
