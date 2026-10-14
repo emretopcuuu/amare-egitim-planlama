@@ -51,6 +51,7 @@ export default function LiderProfil() {
   const navigate = useNavigate();
   const { t, locale, tDynamic, lang } = useTranslation();
   const { takvim, konusmacilar, isAdmin } = useData();
+
   const { isAuthenticated, email } = useAuth();
   const { toggle: takipToggle, isTakip } = useTakipEgitmenler();
 
@@ -316,6 +317,16 @@ export default function LiderProfil() {
                 {ilgili.length > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{ilgili.length}</b> <span className="text-white/60 text-xs">{t('lp_training')}</span></span></>}
               </div>
 
+              {/* Takvime köprü + takip (madde 8). Eğitmen sayfasına gelen kişi
+                  "bu kişinin eğitimleri ne zaman" sorusuyla geliyor; cevabı
+                  tek dokunuş uzakta olsun. */}
+              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mt-3">
+                <Link to={`/takvim?egitmen=${encodeURIComponent(ad)}`}
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-900 text-sm font-bold transition-colors">
+                  Takvimde eğitimleri
+                  {ilgili.length > 0 && <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-gray-900/15 text-[13px]">{ilgili.length}</span>}
+                </Link>
+              </div>
               {/* UX8 — öne çıkan ilham sözü */}
               {oneCikanSoz && <p className="mt-2.5 text-amber-100/85 italic text-sm leading-snug max-w-xl mx-auto sm:mx-0">"{oneCikanSoz}"</p>}
 
