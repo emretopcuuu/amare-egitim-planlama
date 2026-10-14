@@ -338,7 +338,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                 {[{v:gun,l:t('cd_day'),k:'g'},{v:saat,l:t('cd_hour'),k:'s'},{v:dakika,l:t('cd_min'),k:'d'},{v:saniye,l:t('cd_sec'),k:'sn'}].map(({v,l,k})=>(
                   <div key={l} className={`flex-1 md:flex-none bg-white/10 backdrop-blur rounded-xl ${isFirst ? 'py-2 md:py-4 px-2 md:px-5 lg:px-6' : 'py-1 px-1.5 md:px-2'} text-center border border-white/10`}>
                     <div className={`font-extrabold text-white tabular-nums font-display ${isFirst ? 'text-2xl md:text-4xl lg:text-6xl' : 'text-[15px] md:text-[18px]'}`}><span key={`${k}-${v}`} className="cd-digit">{String(v).padStart(2,'0')}</span></div>
-                    <div className="text-[13px] text-amber-300/80 uppercase tracking-wider">{l}</div>
+                    <div className="text-[13px] text-amber-300 uppercase tracking-wider">{l}</div>
                   </div>
                 ))}
               </div>
@@ -346,7 +346,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             {sonSaatDev && (
               <div className="inline-flex items-center gap-2 mt-3 bg-white/10 backdrop-blur rounded-xl px-3.5 py-2 border border-white/10">
                 <Timer className="w-4 h-4 md:w-5 md:h-5 text-amber-300" />
-                <span className="text-[15px] md:text-[18px] text-purple-100">
+                <span className="text-[15px] md:text-[18px] text-purple-200">
                   {t('cd_starting_in')}{' '}
                   <b className="text-white font-extrabold tabular-nums">
                     <span key={`pd-${dakika}`} className="cd-digit">{dakika}</span> {t('cd_min').toLowerCase()}{' '}
@@ -549,7 +549,7 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
       <div className="container mx-auto max-w-7xl">
         {(gorunenGun || sonrakiEgitim) && (
           <div className="flex items-center justify-between gap-2 mb-1.5 text-[13px]">
-            <span className="text-purple-200/80 font-bold truncate">
+            <span className="text-purple-200 font-bold truncate">
               {gorunenGun ? `📍 ${(() => { const d = parseTarih(gorunenGun); return d ? d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }) : gorunenGun; })()}` : ''}
             </span>
             {sonrakiEgitim && (() => {
@@ -557,7 +557,7 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
               const canli = cd?.durum === 'canli';
               return (
                 <button onClick={() => document.getElementById(`egitim-${sonrakiEgitim.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full font-bold ${canli ? 'bg-green-500/25 text-green-200 border border-green-400/40' : 'bg-white/10 text-amber-200 border border-white/15'}`}>
+                  className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full font-bold ${canli ? 'bg-green-500/25 text-green-200 border border-green-400/40' : 'bg-white/10 text-amber-300 border border-white/15'}`}>
                   {canli ? '🔴 CANLI' : '⏭'} {(sonrakiEgitim.egitim || '').slice(0, 18)}{(sonrakiEgitim.egitim || '').length > 18 ? '…' : ''}{!canli && cd?.durum === 'yakin' ? ` · ${cd.dakika}dk` : ''}
                 </button>
               );
@@ -1204,7 +1204,7 @@ const TakvimView = () => {
   };
 
   return (
-    <div className={`min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 ${katilBarAktif ? 'pb-32 md:pb-20' : ''}`}>
+    <div className={`min-h-screen overflow-x-hidden bg-[#2a1152] ${katilBarAktif ? 'pb-32 md:pb-20' : ''}`}>
       {/* Yapışkan katıl barı — son 1 saat + canlı (en yakın online eğitim) */}
       {enYakinEgitimler.length > 0 && (
         <YapiskanKatilBar egitim={enYakinEgitimler[0]} onAktifDegisti={setKatilBarAktif} />
@@ -1315,7 +1315,7 @@ const TakvimView = () => {
         {bugunEgitimleri.length > 0 && (
           <div className="px-4 pt-2">
             <div className="container mx-auto max-w-7xl">
-              <div className="bg-gradient-to-r from-amber-500/20 via-purple-600/20 to-pink-500/20 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="bg-gradient-to-r from-amber-500/20 via-purple-600/20 to-pink-500/20 border border-amber-400/30 rounded-2xl p-4 backdrop-blur-sm">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider gold-glow">
                     📍 {t('cal_today_badge')}
@@ -1336,12 +1336,12 @@ const TakvimView = () => {
         {yurtdisiYaklasan.length > 0 && (
           <div className="px-4 pt-2">
             <div className="container mx-auto max-w-7xl">
-              <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
+              <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider gold-glow">
+                  <span className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider">
                     🌍 {t('cal_intl_badge')}
                   </span>
-                  <span className="text-amber-200 text-[15px] font-semibold">
+                  <span className="text-amber-300 text-[15px] font-semibold">
                     {yurtdisiYaklasan.length} {t('cal_intl_count')}
                   </span>
                 </div>
@@ -1353,11 +1353,11 @@ const TakvimView = () => {
                           çiziliyor ("ZA") ve yanındaki kodla birebir tekrar ediyordu. */}
                       <div className="flex items-center gap-2 mb-1">
                         <span className="bg-amber-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full">{e._yd.kisa}</span>
-                        <span className="text-amber-200 text-[13px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
+                        <span className="text-amber-300 text-[13px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
                       </div>
                       <div className="text-white font-bold text-[15px] leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
                       <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
-                      {e.yer && <div className="text-amber-300/70 text-[13px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
+                      {e.yer && <div className="text-amber-300 text-[13px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
                 </Karusel>
@@ -1370,27 +1370,27 @@ const TakvimView = () => {
         {yurticiFizikiYaklasan.length > 0 && (
           <div className="px-4 pt-2">
             <div className="container mx-auto max-w-7xl">
-              <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 border-2 border-emerald-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
+              <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
+                  <span className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-[13px] font-extrabold uppercase tracking-wider">
                     📍 {t('cal_tr_badge')}
                   </span>
-                  <span className="text-emerald-200 text-[15px] font-semibold">
+                  <span className="text-purple-200 text-[15px] font-semibold">
                     {yurticiFizikiYaklasan.length} {t('cal_tr_count')}
                   </span>
                 </div>
-                <Karusel okRenk="bg-emerald-400/90 hover:bg-emerald-400 text-gray-900">
+                <Karusel okRenk="bg-emerald-400/90 hover:bg-white/10 text-amber-300">
                   {yurticiFizikiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
-                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-colors duration-200">
+                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-amber-300/50 rounded-xl p-3 transition-colors duration-200">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[18px] leading-none">📍</span>
-                        <span className="bg-emerald-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
-                        <span className="text-emerald-200 text-[13px] font-semibold uppercase ml-auto">TR</span>
+                        <span className="bg-white/10 text-amber-300 text-[13px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
+                        <span className="text-purple-200 text-[13px] font-semibold uppercase ml-auto">TR</span>
                       </div>
                       <div className="text-white font-bold text-[15px] leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
                       <div className="text-purple-200 text-[13px]">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
-                      {e.yer && <div className="text-emerald-300/70 text-[13px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
+                      {e.yer && <div className="text-purple-300/70 text-[13px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
                 </Karusel>
@@ -1435,7 +1435,7 @@ const TakvimView = () => {
               {arama && <button onClick={()=>setArama('')} aria-label="Aramayı temizle" className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap"><X className="w-4 h-4" /></button>}
               {/* Derin arama: video arşivi + konuşma metinleri (/ara) */}
               <Link to={arama.trim() ? `/ara?q=${encodeURIComponent(arama.trim())}` : '/ara'}
-                className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[13px] font-bold text-amber-300/80 hover:text-amber-200 px-2 py-1 rounded-lg hover:bg-white/10 transition-all"
+                className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[13px] font-bold text-amber-300 hover:text-amber-300 px-2 py-1 rounded-lg hover:bg-white/10 transition-all"
                 title="Video arşivi ve konuşma metinlerinde ara">
                 Derin Ara →
               </Link>
@@ -1471,7 +1471,7 @@ const TakvimView = () => {
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[15px] font-semibold transition-all spring-tap ${filtre===f.key
                       ? (f.special ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg ring-2 ring-amber-300' : 'bg-white text-purple-800 shadow-lg')
-                      : (f.special ? 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 border border-amber-400/30' : 'bg-white/10 text-white/80 hover:bg-white/20')}`}>
+                      : (f.special ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-400/30' : 'bg-white/10 text-white/80 hover:bg-white/20')}`}>
                     {f.icon}{f.label}
                   </button>
                 ))}
@@ -1548,9 +1548,9 @@ const TakvimView = () => {
               takvim.length === 0
                 ? (
                   <div className="text-center py-16">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 border border-white/15 mb-3"><RotateCw className="w-8 h-8 text-amber-300/70" /></div>
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 border border-white/15 mb-3"><RotateCw className="w-8 h-8 text-amber-300" /></div>
                     <p className="text-white font-bold text-[18px] mb-1">Eğitimler yüklenemedi</p>
-                    <p className="text-purple-200/70 text-[15px] mb-4 max-w-sm mx-auto">Bağlantı veya önbellek sorunu olabilir. Sayfayı yenileyince düzelir.</p>
+                    <p className="text-purple-300/70 text-[15px] mb-4 max-w-sm mx-auto">Bağlantı veya önbellek sorunu olabilir. Sayfayı yenileyince düzelir.</p>
                     <button onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold text-[15px] px-5 py-2.5 rounded-full spring-tap shadow-lg"><RotateCw className="w-4 h-4" />Yenile</button>
                   </div>
                 )
@@ -1565,7 +1565,7 @@ const TakvimView = () => {
               if (tamGecmisSayisi === 0) return null;
               return (
                 <button onClick={() => setGecmisAylariGoster(s => !s)}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.10] border border-white/15 text-purple-200/80 hover:text-white text-[13px] sm:text-[15px] font-semibold rounded-xl px-4 py-2.5 transition-all spring-tap">
+                  className="w-full inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.10] border border-white/15 text-purple-200 hover:text-white text-[13px] sm:text-[15px] font-semibold rounded-xl px-4 py-2.5 transition-all spring-tap">
                   <svg className={`w-4 h-4 transition-transform ${gecmisAylariGoster ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
