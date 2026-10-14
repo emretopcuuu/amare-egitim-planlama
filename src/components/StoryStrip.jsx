@@ -229,7 +229,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
             return (
               <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 group focus:outline-none spring-tap w-[84px] sm:w-[100px]">
-                <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-500' : 'bg-gradient-to-tr from-purple-400/60 to-purple-600/60'} group-hover:scale-105 transition-all`}>
+                <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-300 to-amber-600' : 'bg-white/15'} group-hover:scale-105 transition-all`}>
                   <div className="w-full h-full rounded-full overflow-hidden bg-purple-900 border-2 border-purple-900">
                     {kayit?.fotoURL ? (
                       <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"

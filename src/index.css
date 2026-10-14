@@ -8,12 +8,12 @@
 
 /* #7a — Custom text selection (altın highlight + mor metin) */
 ::selection {
-  background: rgba(251, 191, 36, 0.85);
-  color: #581c87;
+  background: rgba(196, 166, 92, 0.9);
+  color: #0B1F27;
 }
 ::-moz-selection {
-  background: rgba(251, 191, 36, 0.85);
-  color: #581c87;
+  background: rgba(196, 166, 92, 0.9);
+  color: #0B1F27;
 }
 
 /* #7b — Custom scrollbar (altın çubuk, mor track) */
@@ -56,7 +56,7 @@ html {
   select:focus-visible,
   textarea:focus-visible,
   [tabindex]:focus-visible {
-    outline: 2px solid #F5D77A;
+    outline: 2px solid #E4D19B;
     outline-offset: 2px;
     border-radius: 6px;
   }
@@ -67,7 +67,7 @@ html {
   }
 
   html, body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-zemin text-gray-900;
     overflow-x: hidden;
     max-width: 100vw;
     /* Premium font stack — Inter (modern sans-serif) */
@@ -135,13 +135,13 @@ html {
   .text-gold-shimmer {
     background: linear-gradient(
       90deg,
-      #fbbf24 0%,
-      #fde68a 20%,
-      #ffffff 35%,
-      #fde68a 50%,
-      #fbbf24 65%,
-      #f59e0b 80%,
-      #fbbf24 100%
+      #A88A3F 0%,
+      #E4D19B 20%,
+      #F4E6B8 35%,
+      #E4D19B 50%,
+      #A88A3F 65%,
+      #8C7132 80%,
+      #A88A3F 100%
     );
     background-size: 200% 100%;
     -webkit-background-clip: text;
@@ -234,10 +234,10 @@ html {
   /* Yavaş döner mor→altın gradient — premium atmosfer */
   .hero-mesh {
     background:
-      radial-gradient(at 20% 30%, rgba(245, 215, 122, 0.18) 0%, transparent 50%),
-      radial-gradient(at 80% 70%, rgba(122, 47, 109, 0.4) 0%, transparent 50%),
-      radial-gradient(at 50% 100%, rgba(245, 215, 122, 0.1) 0%, transparent 60%),
-      linear-gradient(135deg, #5F2756 0%, #3D1734 100%);
+      radial-gradient(at 20% 30%, rgba(228, 209, 155, 0.16) 0%, transparent 50%),
+      radial-gradient(at 80% 70%, rgba(23, 70, 86, 0.55) 0%, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(228, 209, 155, 0.10) 0%, transparent 60%),
+      linear-gradient(135deg, #174656 0%, #0B1F27 100%);
     background-size: 200% 200%;
     animation: meshShift 20s ease-in-out infinite;
   }
@@ -386,8 +386,8 @@ html {
     position: fixed;
     top: 0;
     left: 0;
-    background: #F5D77A;
-    color: #1a103d;
+    background: #E4D19B;
+    color: #0B1F27;
     padding: 8px 16px;
     border-radius: 0 0 8px 0;
     font-weight: 700;
@@ -615,10 +615,10 @@ html {
         mordu. Kartların kendi yüzeyleri de aynı aileye çekiliyor. */
   html[data-gomulu] .from-purple-900.via-purple-800.to-indigo-900,
   html[data-gomulu] .from-purple-950.via-purple-900.to-indigo-950 {
-    background-image: linear-gradient(160deg, #101828 0%, #1d2b47 100%) !important;
+    background-image: linear-gradient(160deg, #09191F 0%, #12303B 100%) !important;
   }
-  html[data-gomulu] .bg-purple-950 { background-color: #16203a !important; }
-  html[data-gomulu] .bg-purple-900 { background-color: #1d2b47 !important; }
+  html[data-gomulu] .bg-purple-950 { background-color: #0B1F27 !important; }
+  html[data-gomulu] .bg-purple-900 { background-color: #12303B !important; }
   /* Dekor mor blur'ları sakinleşiyor: lacivert üstünde mor leke olarak kalıyorlardı. */
   html[data-gomulu] .bg-purple-500\/20 { background-color: rgba(91,127,158,.18) !important; }
 
