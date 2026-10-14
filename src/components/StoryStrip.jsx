@@ -193,14 +193,14 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
           {/* Sol ok butonu — desktop'ta görünür, scrollable iken aktif */}
           {canScrollLeft && (
             <button onClick={() => scrollBy(-1)} aria-label="Sola kaydır"
-              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-purple-800 shadow-xl items-center justify-center transition-all opacity-0 group-hover:opacity-100 spring-tap"
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-amber-400/90 hover:bg-amber-400 text-zemin-koyu shadow-lg items-center justify-center transition-all opacity-0 group-hover:opacity-100 spring-tap"
               style={{ marginLeft: '-12px' }}>
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
           {canScrollRight && (
             <button onClick={() => scrollBy(1)} aria-label="Sağa kaydır"
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-purple-800 shadow-xl items-center justify-center transition-all opacity-0 group-hover:opacity-100 spring-tap"
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-amber-400/90 hover:bg-amber-400 text-zemin-koyu shadow-lg items-center justify-center transition-all opacity-0 group-hover:opacity-100 spring-tap"
               style={{ marginRight: '-12px' }}>
               <ChevronRight className="w-5 h-5" />
             </button>

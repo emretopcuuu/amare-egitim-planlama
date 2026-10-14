@@ -53,7 +53,7 @@ export const EmptySearch = ({
         <div className="flex flex-wrap items-center justify-center gap-2">
           {aktifFiltreler.map((f) => (
             <button key={f.anahtar} onClick={f.kaldir} title={`"${f.etiket}" filtresini kaldır`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/[0.06] border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors">
+              className="dokun-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/[0.06] border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors">
               {f.etiket}
               <span aria-hidden="true" className="text-purple-300/80">×</span>
             </button>
@@ -65,7 +65,7 @@ export const EmptySearch = ({
     <div className="flex flex-wrap items-center justify-center gap-2">
       {onReset && (
         <button onClick={onReset}
-          className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 px-5 py-2.5 rounded-xl font-bold transition-all spring-tap">
+          className="dokun-44 inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 px-5 py-2.5 rounded-xl font-bold transition-all spring-tap">
           {resetLabel}
         </button>
       )}

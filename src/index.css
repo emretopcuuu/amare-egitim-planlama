@@ -718,3 +718,31 @@ html {
   /* Logo/ikonları küçült */
   svg { max-width: 20px; max-height: 20px; }
 }
+
+/* ── Dokunma hedefi genişletme (Eki 2026) ──
+   Ölçümde mobilde 197 düğme/bağlantı 44px'in altındaydı (bazıları 32px);
+   Apple ve Google'ın eşiği 44px. Elemanı büyütmek düzeni bozacağı için
+   GÖRSEL boyut korunur, yalnız dokunma alanı görünmez bir katmanla 44px'e
+   çıkarılır. Yalnız dokunmatik girdide açılır: farede gereksiz. */
+@media (pointer: coarse) {
+  /* Kendisi konumlandirilmis (absolute/fixed/sticky) elemanlar disarida:
+     onlara position:relative vermek yerlesimi bozar. */
+  button:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]),
+  a[href]:not([class*="absolute"]):not([class*="fixed"]):not(.skip-link),
+  [role="button"]:not([class*="absolute"]):not([class*="fixed"]),
+  .dokun-44 { position: relative; }
+
+  button:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"])::after,
+  a[href]:not([class*="absolute"]):not([class*="fixed"]):not(.skip-link)::after,
+  [role="button"]:not([class*="absolute"]):not([class*="fixed"])::after,
+  .dokun-44::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    /* Görünmez; yalnız parmağın isabet alanını büyütür. */
+  }
+}

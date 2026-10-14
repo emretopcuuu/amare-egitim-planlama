@@ -56,13 +56,13 @@ function Karusel({ children, okRenk = 'bg-white/20 hover:bg-white/40 text-white'
       </div>
       {solVar && (
         <button onClick={() => kaydir(-1)} aria-label="Sola kaydır"
-          className={`absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition-colors duration-150 ${okRenk}`}>
+          className={`absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition-colors duration-150 ${okRenk}`}>
           <ChevronLeft className="w-5 h-5" />
         </button>
       )}
       {sagVar && (
         <button onClick={() => kaydir(1)} aria-label="Sağa kaydır"
-          className={`absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition-colors duration-150 ${okRenk}`}>
+          className={`absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition-colors duration-150 ${okRenk}`}>
           <ChevronRight className="w-5 h-5" />
         </button>
       )}
@@ -202,14 +202,14 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false 
 const KonusmaciModal = ({ ad, kayit, onClose }) => !ad ? null : (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative animate-scaleIn" onClick={e=>e.stopPropagation()}>
-      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+      <button onClick={onClose} className="dokun-44 absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
       <div className="flex flex-col items-center text-center">
         {kayit?.fotoURL ? <img src={kayit.fotoURL} alt={kayit.ad||ad} className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 shadow-lg mb-4" style={{ objectPosition: 'center 25%' }} />
           : <div className="w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center border-4 border-purple-200 mb-4"><User className="w-16 h-16 text-purple-300" /></div>}
         <h3 className="text-2xl font-bold text-gray-800">{kayit?.ad||ad}</h3>
         {kayit?.unvan && <p className="text-purple-600 font-medium mt-1">{kayit.unvan}</p>}
         {kayit?.biyografi && <p className="text-gray-500 text-[15px] mt-3 leading-relaxed">{kayit.biyografi}</p>}
-        {kayit?.linkedin && <a href={`mailto:${kayit.linkedin}`} className="flex items-center gap-1.5 text-amber-300 text-[15px] mt-3 hover:underline"><Mail className="w-4 h-4" />{kayit.linkedin}</a>}
+        {kayit?.linkedin && <a href={`mailto:${kayit.linkedin}`} className="dokun-44 flex items-center gap-1.5 text-amber-300 text-[15px] mt-3 hover:underline"><Mail className="w-4 h-4" />{kayit.linkedin}</a>}
       </div>
     </div>
   </div>
@@ -616,14 +616,14 @@ const MobilGunNav = ({ sonrakiEgitim, gunSeridi, arama, setArama, aktifFiltreSay
             )}
           </div>
           <button onClick={onFiltre} aria-label="Filtreler"
-            className={`flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-xl text-[13px] font-semibold border transition-colors ${aktifFiltreSayisi > 0 ? 'border-amber-400/60 text-amber-200 bg-amber-400/10' : 'border-white/15 text-white/80 hover:border-white/35'}`}>
+            className={`dokun-44 flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-xl text-[13px] font-semibold border transition-colors ${aktifFiltreSayisi > 0 ? 'border-amber-400/60 text-amber-200 bg-amber-400/10' : 'border-white/15 text-white/80 hover:border-white/35'}`}>
             <SlidersHorizontal className="w-4 h-4" />
             <span className="hidden sm:inline">Filtreler</span>
             {aktifFiltreSayisi > 0 && <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-amber-400 text-zemin-koyu text-[13px] font-bold">{aktifFiltreSayisi}</span>}
           </button>
           {aktifFiltreSayisi > 0 && (
             <button onClick={onSifirla} aria-label="Filtreleri sıfırla" title="Filtreleri sıfırla"
-              className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors"><X className="w-4 h-4" /></button>
+              className="dokun-44 flex-shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-xl border border-white/15 text-purple-200 hover:text-white hover:border-white/35 transition-colors"><X className="w-4 h-4" /></button>
           )}
         </div>
         {gunSeridi.length > 1 && (
@@ -1441,7 +1441,7 @@ const TakvimView = () => {
                   className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-[13px] sm:text-[15px] spring-tap">
                   <Video className="w-4 h-4" />{t('rec_title')}
                 </button>
-                <button onClick={exportPDF} disabled={pdfYukleniyor} className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-[13px] sm:text-[15px] spring-tap">
+                <button onClick={exportPDF} disabled={pdfYukleniyor} className="dokun-44 hidden md:flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-[13px] sm:text-[15px] spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
                 </button>
                 {/* Üye Girişi — pasif buton, isteyen tıklar */}
@@ -1539,7 +1539,7 @@ const TakvimView = () => {
                 <Karusel okRenk="bg-amber-400/90 hover:bg-amber-400 text-gray-900">
                   {yaklasanEtkinlikler.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
-                      className="flex-shrink-0 w-60 sm:w-72 bg-white/[0.06] hover:bg-white/10 border border-white/10 hover:border-amber-300/50 rounded-xl p-4 transition-colors duration-200">
+                      className="dokun-44 flex-shrink-0 w-60 sm:w-72 bg-white/[0.06] hover:bg-white/10 border border-white/10 hover:border-amber-300/50 rounded-xl p-4 transition-colors duration-200">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="bg-amber-400 text-gray-900 text-[13px] font-bold px-2 py-0.5 rounded-full">
                           {e._yd ? e._yd.kisa : 'TR'}
@@ -1595,7 +1595,7 @@ const TakvimView = () => {
             {/* Araç çubuğu: bugüne git · zaman · tür · (sağda) sıfırla · daha fazla · görünüm */}
             <div className="flex items-center gap-2 flex-wrap">
               <button onClick={scrollToToday} title={t('cal_today_go')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
+                className="dokun-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
                 <CalendarIcon className="w-3.5 h-3.5" />{t('cal_today_badge')}
               </button>
 
@@ -1641,7 +1641,7 @@ const TakvimView = () => {
               <div className="ml-auto flex items-center gap-2">
                 {aktifFiltreSayisi > 0 && (
                   <button onClick={filtreyiSifirla}
-                    className="inline-flex items-center gap-1 text-[13px] font-semibold text-purple-200 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                    className="dokun-44 inline-flex items-center gap-1 text-[13px] font-semibold text-purple-200 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
                     <X className="w-3 h-3" />Sıfırla ({aktifFiltreSayisi})
                   </button>
                 )}
@@ -1695,7 +1695,7 @@ const TakvimView = () => {
                     </div>
                     <a href="/api/ical" target="_blank" rel="noopener noreferrer"
                       title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"
-                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
+                      className="dokun-44 ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-white/80 hover:text-white border border-white/15 hover:border-white/35 transition-colors">
                       <Rss className="w-3 h-3" />Takvim aboneliği
                     </a>
                   </div>
@@ -1837,7 +1837,7 @@ const TakvimView = () => {
       {/* Yüzen "Bugüne Dön" (#2) — mobilde alt navigasyonun üstünde */}
       {showScrollTop && (
         <button onClick={scrollToToday}
-          className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-20 right-6 z-40 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-amber-400 text-zemin-koyu font-extrabold text-[15px] shadow-lg border border-amber-300/50 transition-all hover:scale-105 spring-tap"
+          className="dokun-44 fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-20 right-6 z-40 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-amber-400 text-zemin-koyu font-extrabold text-[15px] shadow-lg border border-amber-300/50 transition-all hover:scale-105 spring-tap"
           title={t('cal_today_go')} aria-label={t('cal_today_back')} data-no-pdf>
           📅 Bugün
         </button>
