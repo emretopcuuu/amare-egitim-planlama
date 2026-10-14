@@ -270,7 +270,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   const isFirst = sira === 1;
   const titleSize = isFirst ? 'text-2xl md:text-6xl lg:text-6xl' : 'text-[18px] md:text-2xl';
   const padding = isFirst ? 'p-4 md:p-12 lg:p-16' : 'p-3 md:p-5';
-  const posterSize = isFirst ? 'w-24 md:w-72 lg:w-96' : 'w-20 md:w-40';
+  const posterSize = isFirst
+    ? 'w-auto h-auto max-w-[96px] md:max-w-[288px] lg:max-w-[384px]'
+    : 'w-auto h-auto max-w-[80px] md:max-w-[160px]';
   const countdownSize = isFirst ? 'text-[18px] md:text-4xl lg:text-6xl min-w-[36px] md:min-w-[76px] lg:min-w-[90px] px-2 md:px-5 lg:px-6 py-1.5 md:py-4 lg:py-5' : 'text-[15px] md:text-[18px] min-w-[32px] md:min-w-[40px] px-1.5 md:px-2 py-1';
   const avatarSizeVal = isFirst ? 'md' : 'sm';
   const avatarSizeDesktop = isFirst ? 'xxl' : 'lg';
@@ -298,6 +300,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
           <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
             className="relative block w-full overflow-hidden bg-black/20">
+            <img src={egitim.gorselUrl} alt="" aria-hidden="true" loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-90" />
             {/* Afişler tek oranda üretilmiyor: Marka 1080x1350, Program afişi
                 1080x(konuşmacı sayısına göre uzayan), Canvas 1080x1080. Sabit oranlı
                 kutu + object-cover uzun afişlerin ALTINI, yani konuşmacıları kesiyordu.
@@ -305,7 +310,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                 tavanı var ki mobilde ilk ekranı tek başına yutmasın. */}
             <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              className={`mx-auto w-auto h-auto max-w-full ${isFirst ? 'max-h-[72vh]' : 'max-h-[44vh]'} object-contain`} />
+              className={`relative mx-auto w-auto h-auto max-w-full ${isFirst ? 'max-h-[72vh]' : 'max-h-[44vh]'} object-contain`} />
             {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
           </button>
           {/* Üst overlay — label + rozetler */}
@@ -1041,9 +1046,14 @@ const TakvimView = () => {
           {egitim.gorselUrl ? (
             <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
               className="relative w-full aspect-[4/5] overflow-hidden group bg-[#1a0d2e]">
+              {/* Şerit afişin kendi renginden: aynı görsel bulanık + büyütülmüş
+                  halde zeminde. Ek network isteği yok, aynı URL. */}
+              <img src={egitim.gorselUrl} alt="" aria-hidden="true" loading="lazy"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-90" />
               <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
               {/* Üst sağ: countdown overlay */}
               <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 flex-wrap">
                 <span className={`text-[13px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${online?'bg-blue-500/80 text-white':'bg-white/80 text-purple-800'}`}>
