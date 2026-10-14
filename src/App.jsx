@@ -107,7 +107,9 @@ function PageViewTracker() {
 function PageTransitionWrapper({ children }) {
   const location = useLocation();
   // key değişince component yeniden mount olur, animate-page-in tetiklenir
-  return <div key={location.pathname} className="animate-page-in">{children}</div>;
+  // <main>: ekran okuyucuda ana içerik bölgesi. Yoktu; "içeriğe atla"
+  // bağlantısının hedefi ve bölge gezinmesi bunun üzerine kurulu.
+  return <main id="main-content" key={location.pathname} className="animate-page-in">{children}</main>;
 }
 
 function AppRoutes() {

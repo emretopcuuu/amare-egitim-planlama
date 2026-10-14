@@ -441,7 +441,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 
           {/* DESKTOP poster — sağda (mobilde üstte gösterildi) */}
           {egitim.gorselUrl && (
-            <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform relative">
+            <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} aria-label={`${baslikYaz(egitim.egitim)} afişini büyüt`} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform relative">
               <img src={egitim.gorselUrl} alt="Poster"
                 loading={isFirst ? 'eager' : 'lazy'} fetchpriority={isFirst ? 'high' : 'auto'}
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
@@ -1601,7 +1601,8 @@ const TakvimView = () => {
             </div>
           </div>
           {egitim.gorselUrl && (
-            <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="relative hidden sm:flex w-14 flex-shrink-0 border-l border-white/10 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
+            <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} aria-label={`${baslikYaz(egitim.egitim)} afişini büyüt`}
+              className="relative hidden sm:flex w-14 flex-shrink-0 border-l border-white/10 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
               <img src={gorselBoyut(egitim.gorselUrl, 56)} alt="Afiş" loading="lazy" width="56"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className="w-full max-h-[76px] object-contain rounded shadow-sm" />
