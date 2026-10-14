@@ -297,14 +297,15 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
         <div className="md:hidden relative">
           {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
           <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
-            className={`relative block w-full ${isFirst ? 'aspect-[4/5]' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
-            {/* Afişler DİKEY (1080x1350+). Kare kutuya object-cover ile basınca
-                ortadaki boş bölge kırpılıp başlık ve fotoğraf dışarıda kalıyordu;
-                mobilde ~340px anlamsız koyu alan görünüyordu. 4:5 + üstten
-                hizalı kırpma afişin başlık bölgesini korur. */}
+            className="relative block w-full overflow-hidden bg-black/20">
+            {/* Afişler tek oranda üretilmiyor: Marka 1080x1350, Program afişi
+                1080x(konuşmacı sayısına göre uzayan), Canvas 1080x1080. Sabit oranlı
+                kutu + object-cover uzun afişlerin ALTINI, yani konuşmacıları kesiyordu.
+                object-contain: afiş kendi oranında, tamamı görünür; sadece yükseklik
+                tavanı var ki mobilde ilk ekranı tek başına yutmasın. */}
             <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              className="w-full h-full object-cover object-top" />
+              className={`mx-auto w-auto h-auto max-w-full ${isFirst ? 'max-h-[72vh]' : 'max-h-[44vh]'} object-contain`} />
             {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
           </button>
           {/* Üst overlay — label + rozetler */}
@@ -425,7 +426,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform relative">
               <img src={egitim.gorselUrl} alt="Poster" loading="lazy"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
-                className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
+                className={`${posterSize} max-h-[72vh] object-contain rounded-xl shadow-2xl border-2 border-white/20`} />
               {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[13px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
             </button>
           )}
@@ -1039,10 +1040,10 @@ const TakvimView = () => {
           {/* SİNEMA POSTERİ TASARIMI — poster aspect-square + gradient overlay altta */}
           {egitim.gorselUrl ? (
             <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
-              className="relative w-full aspect-square overflow-hidden group bg-gray-100">
+              className="relative w-full aspect-[4/5] overflow-hidden group bg-[#1a0d2e]">
               <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
               {/* Üst sağ: countdown overlay */}
               <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 flex-wrap">
                 <span className={`text-[13px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${online?'bg-blue-500/80 text-white':'bg-white/80 text-purple-800'}`}>
@@ -1227,7 +1228,7 @@ const TakvimView = () => {
             <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="relative hidden sm:flex w-14 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
               <img src={egitim.gorselUrl} alt="Afiş" loading="lazy"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
-                className="w-full rounded shadow-sm object-cover" />
+                className="w-full max-h-[76px] object-contain rounded shadow-sm" />
               {egitim.gorselUrl2 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-amare-purple text-white text-[13px] font-bold flex items-center justify-center" title="2 görsel">2</span>}
             </button>
           )}
