@@ -3,7 +3,7 @@
 //
 // SYNC STRATEJİ:
 //   - Yazma: localStorage anında + Firestore debounced (10sn)
-//   - Okuma: ilk login'de Firestore'dan localStorage'a merge (newer-wins)
+//   - Okuma: her açılışta Firestore'dan localStorage'a merge (newer-wins; OneTeam uygulaması da aynı belgeye yazıyor)
 //   - Cross-device: kullanıcı başka cihazdan girer, kalan izlemeleri görür
 
 import { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ const KEY = 'amare_watch_progress_v1';
 const COMPLETED_PCT = 95;  // % bu üstündeyse "tamamlandı" sayılır, devam etme listesinden çıkar
 const MIN_TRACK_SEC = 8;   // çok kısa izlemeleri sayma (tıklamış kapatmış vs.)
 const FIRESTORE_DEBOUNCE_MS = 10_000; // 10sn — yazma frequency
-const FIRESTORE_MERGE_KEY = 'amare_watch_progress_merged_v1'; // ilk merge yapildi mi?
+const FIRESTORE_MERGE_KEY = 'amare_watch_progress_merged_v1'; // eski tek seferlik birleşme bayrağı (yalnız temizlik için)
 
 function loadAll() {
   try { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
@@ -109,40 +109,80 @@ async function syncToFirestore() {
   }
 }
 
-// İlk login'de Firestore'dan localStorage'a merge (cross-device load)
+// Firestore'dan localStorage'a merge (cross-device load) — newer-wins.
+// 21 Eki 2026: eskiden cihaz başına BİR KEZ birleşiyordu (mergeKey). OneTeam uygulaması artık eğitimleri kendi
+// ekranında oynatıyor ve izleme kaydını AYNI belgeye yazıyor (users/{uid}/meta/watch_progress, yalnız o videonun
+// anahtarı) — tek seferlik birleşme uygulamada izleneni sitede hiç göstermezdi. Artık her açılışta birleşir; aynı
+// sekmede 60 sn'de bir'den sık değil (her sayfa geçişinde Firestore okuması olmasın).
+let sonBirlesme = 0;
 export async function syncFromFirestoreOnce() {
   try {
     const user = auth?.currentUser;
     if (!user || user.isAnonymous) return;
-    // Bu user için ilk merge yapıldı mı?
-    const mergeKey = `${FIRESTORE_MERGE_KEY}_${user.uid}`;
-    if (localStorage.getItem(mergeKey)) return;
+    if (Date.now() - sonBirlesme < 60_000) return;
+    sonBirlesme = Date.now();
 
     const ref = doc(db, `users/${user.uid}/meta/watch_progress`);
     const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      localStorage.setItem(mergeKey, '1');
-      return;
-    }
+    if (!snap.exists()) return;
     const remote = snap.data().data || {};
     const local = loadAll();
     // Newer-wins merge — lastSeen üzerinden
-    const merged = { ...remote };
-    for (const [id, p] of Object.entries(local)) {
-      const r = remote[id];
-      if (!r || (p.lastSeen || 0) > (r.lastSeen || 0)) merged[id] = p;
+    const merged = { ...local };
+    let degisti = false;
+    for (const [id, r] of Object.entries(remote)) {
+      const p = local[id];
+      if (!r || typeof r !== 'object') continue;
+      if (!p || (r.lastSeen || 0) > (p.lastSeen || 0)) { merged[id] = r; degisti = true; }
     }
+    if (!degisti) return;
     saveAll(merged);
-    localStorage.setItem(mergeKey, '1');
     window.dispatchEvent(new Event('amare-watch-progress-changed'));
   } catch (e) {
     console.warn('[watchProgress] firestore merge hata:', e.message);
   }
 }
 
-// Logout'ta sync flag temizle — bir dahaki login'de yeniden merge etsin
+// Logout'ta sync bekçisini sıfırla — bir dahaki login'de hemen birleşsin
 export function resetFirestoreSyncFlag(uid) {
-  if (uid) localStorage.removeItem(`${FIRESTORE_MERGE_KEY}_${uid}`);
+  sonBirlesme = 0;
+  if (uid) { try { localStorage.removeItem(`${FIRESTORE_MERGE_KEY}_${uid}`); } catch {} }
+}
+
+// ─── FAVORİLER (21 Eki 2026) ──────────────────────────────────────────────
+// Eskiden yalnız bu cihazda (localStorage amare_video_favoriler). Artık hesapta da: users/{uid}/meta/favoriler
+// { ids: [...], guncellemeTarihi } — OneTeam uygulamasının "Kaydet"i aynı belgeye yazıyor. Kural: girişliyken HESAP
+// esastır (açılışta yereli hesabınkiyle değiştir); hesapta belge yoksa ve cihazda favori varsa cihazınkini yükle
+// (ilk geçiş). Değiştirince listenin tamamı yazılır (son yazan kazanır).
+const FAV_KEY = 'amare_video_favoriler';
+export async function favorileriHesaptanAl() {
+  try {
+    const user = auth?.currentUser;
+    if (!user || user.isAnonymous) return null;
+    const ref = doc(db, `users/${user.uid}/meta/favoriler`);
+    const snap = await getDoc(ref);
+    let yerel = [];
+    try { yerel = JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch {}
+    if (!snap.exists()) {
+      if (yerel.length) await setDoc(ref, { ids: yerel.map(String).slice(0, 200), guncellemeTarihi: serverTimestamp() });
+      return null;
+    }
+    const ids = (snap.data().ids || []).map(String);
+    localStorage.setItem(FAV_KEY, JSON.stringify(ids));
+    return ids;
+  } catch (e) {
+    console.warn('[watchProgress] favori okuma hata:', e.message);
+    return null;
+  }
+}
+export async function favorileriHesabaYaz(idler) {
+  try {
+    const user = auth?.currentUser;
+    if (!user || user.isAnonymous) return;
+    await setDoc(doc(db, `users/${user.uid}/meta/favoriler`), { ids: [...idler].map(String).slice(0, 200), guncellemeTarihi: serverTimestamp() });
+  } catch (e) {
+    console.warn('[watchProgress] favori yazma hata:', e.message);
+  }
 }
 
 export function removeProgress(videoId) {

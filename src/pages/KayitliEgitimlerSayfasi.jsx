@@ -24,7 +24,7 @@ import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
-import { useWatchProgress } from '../utils/watchProgress';
+import { useWatchProgress, favorileriHesaptanAl, favorileriHesabaYaz } from '../utils/watchProgress';
 
 // ─── Sabitler ────────────────────────────────────────────────────────────
 const VARSAYILAN_KATEGORILER = [
@@ -207,6 +207,13 @@ const KayitliEgitimlerSayfasi = () => {
   const [girisModalAcik, setGirisModalAcik] = useState(false);
 
   const [favoriler, setFavoriler] = useState(() => loadSet(FAV_KEY));
+  // Favoriler hesapta da (21 Eki 2026): OneTeam uygulamasının "Kaydet"i aynı listeye yazıyor. Girişliyken hesap esas.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let iptal = false;
+    favorileriHesaptanAl().then((ids) => { if (!iptal && ids) setFavoriler(new Set(ids)); });
+    return () => { iptal = true; };
+  }, [isAuthenticated]);
   const [gecmis, setGecmis] = useState(() => new Set(loadList(HIST_KEY)));
   const [gosterilen, setGosterilen] = useState(PAGE_SIZE);
   const [yardimAcik, setYardimAcik] = useState(false);
@@ -634,6 +641,7 @@ const KayitliEgitimlerSayfasi = () => {
         toast('💗 Favoriye eklendi', { type: 'success' });
       }
       saveSet(FAV_KEY, next);
+      favorileriHesabaYaz(next);
       return next;
     });
   };
@@ -739,6 +747,7 @@ const KayitliEgitimlerSayfasi = () => {
           if (next.has(oynatilan.id)) { next.delete(oynatilan.id); toast('Favoriden çıkarıldı', { type: 'info' }); }
           else { next.add(oynatilan.id); toast('💗 Favoriye eklendi', { type: 'success' }); }
           saveSet(FAV_KEY, next);
+          favorileriHesabaYaz(next);
           return next;
         });
       }
