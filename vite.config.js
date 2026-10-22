@@ -33,6 +33,12 @@ export default defineConfig({
         // Code splitting — vendor + büyük kütüphaneleri ayır
         // İlk yüklemede sadece çekirdek kod indirilir, kullanıcı detaya gittikçe diğer chunk'lar yüklenir
         manualChunks(id) {
+          // Vite'ın kendi preload yardımcısı: yönlendirilmezse Rollup onu ilk
+          // dinamik chunk'a koyuyor ve o chunk'ın tamamı statik bağımlılık
+          // hâline geliyordu (pdf-vendor, 190KB, ilk açılışta).
+          if (id.includes('vite/preload-helper') || id.includes('vite/modulepreload')) {
+            return 'react-vendor';
+          }
           if (id.includes('node_modules')) {
             // React core — her sayfada gerekli
             if (id.includes('react/') || id.includes('react-dom') || id.includes('react-router')) {
