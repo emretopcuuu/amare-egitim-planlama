@@ -653,6 +653,118 @@ html {
   /* Dekor mor/petrol blur'ları sakinleşiyor. */
   html[data-gomulu] .bg-purple-500\/20 { background-color: rgba(123,163,196,.16) !important; }
 
+  /* ── 4) AÇIK TEMA (uygulama açık temadayken) ──────────────────────────
+     Uygulama prefers-color-scheme ile açık temaya dönüyor ama takvim koyu
+     kalıyordu: beyaz kabuğun içinde koyu bir ada. Takvimin bütün yüzeyleri
+     koyu zemine göre kurulu olduğu için (şeffaf beyaz katmanlar, beyaz metin)
+     her aile tek tek eşleniyor. Hedef, uygulamanın kendi değişkenleri. */
+  @media (prefers-color-scheme: light) {
+    /* Zeminler */
+    html[data-gomulu] body,
+    html[data-gomulu] .bg-zemin,
+    html[data-gomulu] .bg-zemin-koyu,
+    html[data-gomulu] .bg-purple-950 { background-color: #f2f4f7 !important; }
+    html[data-gomulu] .bg-zemin-yuzey,
+    html[data-gomulu] .bg-purple-900 { background-color: #ffffff !important; }
+    html[data-gomulu] .bg-purple-800 { background-color: #f6f8fa !important; }
+
+    /* Kart yüzeyleri: koyu temada "beyazın %4'ü" olan katman, açık temada
+       gerçek beyaz karta dönüyor; çerçevesi onu zeminden ayırıyor. */
+    html[data-gomulu] .bg-white\/\[0\.04\],
+    html[data-gomulu] .bg-white\/\[0\.08\],
+    html[data-gomulu] .bg-white\/\[0\.09\],
+    html[data-gomulu] .bg-white\/\[0\.10\] { background-color: #ffffff !important; }
+    html[data-gomulu] .bg-white\/\[0\.06\] { background-color: #f6f8fa !important; }
+
+    /* Geri kalan şeffaf beyaz katmanlar açık zeminde görünmez; koyu alfaya
+       çevriliyor ki aynı "hafif vurgulu yüzey" işlevini görsünler. */
+    html[data-gomulu] .bg-white\/5  { background-color: rgba(16,24,40,.04) !important; }
+    html[data-gomulu] .bg-white\/10 { background-color: rgba(16,24,40,.06) !important; }
+    html[data-gomulu] .bg-white\/15 { background-color: rgba(16,24,40,.09) !important; }
+    html[data-gomulu] .bg-white\/20 { background-color: rgba(16,24,40,.12) !important; }
+    html[data-gomulu] .bg-white\/25,
+    html[data-gomulu] .bg-white\/30 { background-color: rgba(16,24,40,.14) !important; }
+
+    /* Çerçeveler */
+    html[data-gomulu] .border-white\/10,
+    html[data-gomulu] .border-white\/15 { border-color: #e4e7ec !important; }
+    html[data-gomulu] .border-white\/20,
+    html[data-gomulu] .border-white\/25,
+    html[data-gomulu] .border-white\/35 { border-color: #d3d8e0 !important; }
+    html[data-gomulu] .divide-white\/10 > * + * { border-color: #e4e7ec !important; }
+
+    /* Metin: beyaz aile koyu mürekkebe, mor aile sönük griye. */
+    html[data-gomulu] .text-white,
+    html[data-gomulu] .text-white\/95,
+    html[data-gomulu] .text-white\/90 { color: #101828 !important; }
+    html[data-gomulu] .text-white\/80,
+    html[data-gomulu] .text-white\/75 { color: #344054 !important; }
+    html[data-gomulu] .text-white\/70,
+    html[data-gomulu] .text-white\/60,
+    html[data-gomulu] .text-white\/40 { color: #55607a !important; }
+    html[data-gomulu] .text-purple-200 { color: #475467 !important; }
+    html[data-gomulu] .text-purple-300,
+    html[data-gomulu] .text-purple-300\/80,
+    html[data-gomulu] .text-purple-300\/70,
+    html[data-gomulu] .text-purple-500 { color: #667085 !important; }
+
+    /* Altın METİN açık zeminde okunmaz (#e3a63a beyaz üstünde ~1.9:1).
+       Aynı altının koyu tonu kullanılıyor; rozet ZEMİNİ altın kalmaya
+       devam ediyor, yalnız metin olarak kullanıldığı yerler koyuyor. */
+    html[data-gomulu] .text-amber-300,
+    html[data-gomulu] .text-amber-200,
+    html[data-gomulu] .text-amber-100 { color: #8a6410 !important; }
+
+    /* Altın zeminler: uygulamanın altını. Üzerindeki metin zaten koyu. */
+    html[data-gomulu] .bg-amber-400,
+    html[data-gomulu] .bg-amber-300 { background-color: #e8a317 !important; }
+    html[data-gomulu] .bg-amber-500,
+    html[data-gomulu] .bg-amber-600 { background-color: #c98f2c !important; }
+    html[data-gomulu] .bg-amber-400\/10,
+    html[data-gomulu] .bg-amber-400\/15 { background-color: rgba(232,163,23,.16) !important; }
+    html[data-gomulu] .border-amber-400\/30,
+    html[data-gomulu] .border-amber-400\/40,
+    html[data-gomulu] .border-amber-300\/50 { border-color: rgba(232,163,23,.55) !important; }
+
+    /* Durum renkleri uygulamanınkiyle hizalanıyor. */
+    html[data-gomulu] .text-red-400,
+    html[data-gomulu] .text-red-500 { color: #b42318 !important; }
+
+    /* Dekor blur'u açık zeminde kirli leke bırakıyordu. */
+    html[data-gomulu] .bg-purple-500\/20 { background-color: rgba(91,127,158,.10) !important; }
+
+    /* Alfa'lı zemin varyantları: `bg-zemin-yuzey/95` gibi sınıflar ayrı
+       seçicidir, yukarıdaki kurallar onlara uğramıyordu (ölçümde yapışkan
+       gün bandı koyu kalmıştı: koyu altın metin koyu zeminde, 2,59:1). */
+    html[data-gomulu] .bg-zemin\/92 { background-color: rgba(242,244,247,.94) !important; }
+    html[data-gomulu] .bg-zemin-yuzey\/95 { background-color: rgba(255,255,255,.95) !important; }
+    html[data-gomulu] .bg-zemin-koyu\/15 { background-color: rgba(16,24,40,.08) !important; }
+
+    /* Hero kartı .hero-mesh ile çiziliyor (Tailwind gradyanı değil, CSS'te
+       tanımlı radial+linear katmanları). Açık temada beyaz sayfanın ortasında
+       koyu bir ada bırakıyordu; aynı dokunun açık karşılığına çevriliyor. */
+    html[data-gomulu] .hero-mesh {
+      background:
+        radial-gradient(at 20% 30%, rgba(232,163,23,.10) 0%, transparent 50%),
+        radial-gradient(at 80% 70%, rgba(91,127,158,.10) 0%, transparent 50%),
+        linear-gradient(135deg, #ffffff 0%, #f6f8fa 100%) !important;
+    }
+
+    /* Hero kartlarının gradyanı: koyu petrol yerine beyaz kart. İçindeki
+       metinler zaten koyuya çevriliyor, afiş görsel olarak koyu kalıyor. */
+    html[data-gomulu] .from-purple-800.via-indigo-800.to-purple-950,
+    html[data-gomulu] .from-indigo-800.via-purple-700.to-violet-800,
+    html[data-gomulu] .from-violet-800.via-fuchsia-800.to-purple-800 {
+      background-image: linear-gradient(to bottom right, #ffffff 0%, #f6f8fa 100%) !important;
+    }
+
+    /* Afiş ve avatarların arkasındaki koyu kutular: açık temada çerçeve
+       rengine iniyor ki beyaz kartın içinde delik gibi durmasınlar. */
+    html[data-gomulu] .bg-black\/20,
+    html[data-gomulu] .bg-black\/30 { background-color: #eef0f4 !important; }
+  }
+
+
   /* ── Bottom sheet slide-in ────────────────────────────────── */
   .animate-slide-up {
     animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
