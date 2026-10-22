@@ -1,48 +1,54 @@
-// /profil — Tek scroll, 4 blok.
-// Anonim kullanıcı → "Üye Girişi" CTA placeholder
-// Login kullanıcı → Hero + Üyelik / Onboarding / Favoriler / Aktivite
+// /profil — Eğitim sayfası. Tek scroll, sekme yok.
+//
+// 2026-10-23 SADELEŞTİRME: sayfa artık yalnız eğitimle ilgili.
+// Kaldırılanlar ve nedenleri:
+//  - XP / seviye / günlük seri / rozet / haftalık görev / kolektif hedef:
+//    oyunlaştırma katmanı. Eğitim takvimine giren iş ortağı burada "kaçıncı
+//    seviyedeyim" değil "nerede kaldım" sorusunun cevabını arıyor.
+//  - Amare üyelik bilgileri (telefon/e-posta/Amare ID/kayıt tarihi), Marka
+//    Ortaklığı süresi, rütbe rozeti, yıldönümü, Ekibim, Sponsorum: bu veriler
+//    One Team uygulamasından yönetiliyor, takvim onları göstermiyor.
+//    YAN ETKİ: "Amare ID bağlı değil" ve "Profil verisi yüklenemedi" hata
+//    kutuları da kalktı — kaynakları bu bağımlılıktı.
+//  - Hakkımda / bio / onboarding cevapları / tanıtım editörü, Günün İlhamı,
+//    Bana Özel Aha, Yıllık Özet kartı, "Eğitmen olmak ister misin" CTA'sı.
+//  - Onboarding zorunlu kapısı: oneteamglobal.ai onboarding'ini bitirmeyen
+//    kişi eskiden kendi izleme geçmişini DE göremiyordu. Eğitim sayfasını
+//    Amare hunisine kilitlemenin anlamı yok.
+//
+// Kalan: eğitim yolu (rütbeye göre müfredat), yarım kalan videolar,
+// favoriler, izleme istatistiği, hatırlatmalar + abonelikler.
+//
+// NOT: profil-veri çağrısı kaldı ama tek şey için — kullanıcının rütbesi,
+// çünkü "Eğitim Yolum" müfredatı ona göre diziliyor. Çağrı düşerse sayfa
+// hata göstermez, yalnız o blok görünmez. Kaldırılan bileşenler
+// (XPHalka/XPBar/HaftalikGorevler/KolektifHedef/BugununIlhami/BanaOzelAha)
+// dosya olarak duruyor; geri istenirse yerinde.
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, LogIn, LogOut, Phone, Mail, Hash, CalendarDays, Award,
-  MessageCircle, Heart, Video, Bell, Clock, ChevronRight, Loader2,
-  RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User, X,
-  Briefcase, Cake, Flame, AlertTriangle, Users, Timer, Target, Hourglass,
-  CheckCircle2, TrendingUp as TrendIcon, Zap, Medal, Crown, Star,
-  Share2, Download, Layers, Calculator, ExternalLink, Save,
+  ArrowLeft, LogIn, LogOut, Heart, Video, Bell, Clock, ChevronRight,
+  Loader2, RefreshCw, Trophy, RotateCw, PlayCircle, GraduationCap,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
-import { getDocs, doc, getDoc, onSnapshot, setDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { useTranslation } from '../context/LanguageContext';
 import { useToast } from '../components/Toast';
 import UyeGirisModal from '../components/UyeGirisModal';
 import EgitmenAnalyticsKart from '../components/EgitmenAnalyticsKart';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import ProfilAvatar from '../components/ProfilAvatar';
 import { egitmenFotosuBul } from '../utils/egitmenFotoMatch';
-import { maskPhone, normalizePhoneForWa } from '../utils/mask';
 import { useTakipEgitmenler } from '../utils/takip';
-import { parseFunnelAnswers, parseProfileAnswers } from '../utils/onboardingLabels';
-import { useWatchProgress, getTotalWatchedSeconds, getWeeklyWatchedSeconds, getCompletedCount, getWatchedSecondsSince, getWatchedIdsSince } from '../utils/watchProgress';
-import { updateStreak } from '../utils/streak';
-import { hesaplaXP, seviyeHesapla, haftalikGorevler, gorevXPHesapla, yeniTamamlananlar, haftaAnahtari, haftaBasiMs } from '../utils/xp';
-import XPHalka from '../components/XPHalka';
-import XPBar from '../components/XPBar';
-import HaftalikGorevler from '../components/HaftalikGorevler';
-import KolektifHedef from '../components/KolektifHedef';
+import { useWatchProgress, getTotalWatchedSeconds, getCompletedCount } from '../utils/watchProgress';
 import { useCountUp } from '../utils/useCountUp';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
-import { RotateCw } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { webPushDestekli, webPushIzinDurumu, webPushKaydolu, webPushIptal } from '../utils/webPush';
 import BultenModal from '../components/BultenModal';
 import EgitimYolumBlok from '../components/EgitimYolumBlok';
-import BugununIlhami from '../components/BugununIlhami';
-import BanaOzelAha from '../components/BanaOzelAha';
 
 const PROFIL_CACHE_KEY = 'amare_profil_v1';
 const PROFIL_CACHE_TTL = 5 * 60 * 1000; // 5dk
@@ -62,27 +68,26 @@ function saveProfilCache(amareId, data) {
   } catch {}
 }
 
-function formatTarih(iso) {
-  if (!iso) return '—';
-  try {
-    return new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch { return iso; }
+// İzleme süresini insan diline çevir: 1 saatin altında dakika göster, yoksa
+// 40 dakika izlemiş yeni kullanıcı ekranda "0 sa" görüyor.
+function izlemeGoster(saniye) {
+  if (!saniye || saniye < 60) return { value: 0, suffix: 'dk' };
+  if (saniye < 3600) return { value: Math.floor(saniye / 60), suffix: 'dk' };
+  return { value: Math.floor(saniye / 3600), suffix: 'sa' };
 }
 
 const Profil = () => {
-  useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, Marka Ortaklığı bilgilerin');
+  useDocumentTitle('Eğitimlerim', 'Eğitim yolun, yarım kalan videolar, favorilerin ve hatırlatmaların');
   const navigate = useNavigate();
-  // 2026-06-09: Geri butonu daima ana takvime — navigate(-1) bazen yanlış/beklenmedik
-  // sayfaya gidiyordu (login redirect, dış sekme). Sabit hedef = öngörülebilir.
+  // Geri butonu daima ana takvime — navigate(-1) bazen yanlış sayfaya gidiyordu.
   const geri = () => navigate('/takvim');
   const { toast } = useToast();
   const { currentUser, uid, isAnonymous, isAuthenticated, displayName, email, ready } = useAuth();
   const { konusmacilar } = useData();
-  const { t } = useTranslation();
   const { takipSet } = useTakipEgitmenler();
   const watchProgress = useWatchProgress();
 
-  // URL'den ?giris=1 parametresi varsa modal otomatik açılsın (davet linkleri için)
+  // URL'de ?giris=1 varsa modal otomatik açılsın (davet linkleri için)
   const [girisModalAcik, setGirisModalAcik] = useState(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
@@ -90,45 +95,20 @@ const Profil = () => {
   });
   const [profilVerisi, setProfilVerisi] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(false);
-  const [hata, setHata] = useState('');
   const [userDoc, setUserDoc] = useState(null);
   const [abonelikler, setAbonelikler] = useState({ bulten: false, bultenDocId: null, push: false, takip: 0 });
   const [bultenModalAcik, setBultenModalAcik] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [hatirlatmalar, setHatirlatmalar] = useState([]);
   const [videoFav, setVideoFav] = useState(new Set());
-  const [yarimKalan, setYarimKalan] = useState([]); // [{videoId, pct, t, baslik, thumbnailUrl}]
+  const [yarimKalan, setYarimKalan] = useState([]);     // [{id, pct, t, baslik, thumbnailUrl}]
   const [favVideoMeta, setFavVideoMeta] = useState([]); // [{id, baslik, thumbnailUrl, egitmenAdlari}]
-  const [streak, setStreak] = useState({ current: 0, longest: 0, total: 0 });
-  // Görev puanı kaydı (users/{uid}/meta/gorev_xp) — null = henüz okunmadı; okunmadan yazılmaz (23 Eki 2026)
-  const [gorevKaydi, setGorevKaydi] = useState(null);
-  const [haftalikEgitmen, setHaftalikEgitmen] = useState(0);
-  const [streakAciklamaAcik, setStreakAciklamaAcik] = useState(false);
-  const [wrappedAcik, setWrappedAcik] = useState(false);
-  const [tanitimAcik, setTanitimAcik] = useState(false); // uygulama içi tanıtım editörü
-  const [tanitimMetni, setTanitimMetni] = useState('');
-  const [tanitimKaydediliyor, setTanitimKaydediliyor] = useState(false);
-  const [waModalAcik, setWaModalAcik] = useState(false);
 
-  // Sekmeli dashboard — aktif tab (3 sekme: Yolculuk / Eğitim / Profil)
-  // 'yolculuk' | 'egitim' | 'profil'
-  const [aktifTab, setAktifTab] = useState('yolculuk');
-
-  // Onboarding bypass — gate'i manuel atlatma (FERDİ vakası fix)
-  const [bypassBusy, setBypassBusy] = useState(false);
-  const [bypassHata, setBypassHata] = useState('');
-
-  // İzleme istatistikleri (re-compute on watchProgress.version change)
+  // İzleme istatistikleri (watchProgress.version değişince yeniden hesaplanır)
   const totalWatched = useMemo(() => getTotalWatchedSeconds(), [watchProgress.version]);
-  const weeklyWatched = useMemo(() => getWeeklyWatchedSeconds(), [watchProgress.version]);
   const completedCount = useMemo(() => getCompletedCount(), [watchProgress.version]);
-  // Haftalık görevler TAKVİM haftasına bağlı (Pazartesi 00:00 TR): görev puanı haftada bir kez yazıldığı için kayan
-  // "son 7 gün" penceresi aynı izlemeyi iki haftaya saydırırdı.
-  const gorevHafta = haftaAnahtari();
-  const gorevHaftaBas = haftaBasiMs();
-  const buHaftaSaniye = useMemo(() => getWatchedSecondsSince(gorevHaftaBas), [watchProgress.version, gorevHaftaBas]);
 
-  // Pull-to-refresh callback'i ref'te tut — profilVerisiFetch tanımı sonradan
+  // Pull-to-refresh callback'i ref'te tut — fetch tanımı sonradan
   const fetchRef = useRef(null);
   const { pullY, refreshing } = usePullToRefresh(async () => {
     if (fetchRef.current) await fetchRef.current(true);
@@ -142,59 +122,7 @@ const Profil = () => {
     } catch {}
   }, []);
 
-  // Streak'i güncelle — sayfa açılışında (login değilse de localStorage'a yazar)
-  useEffect(() => {
-    if (!ready || isAnonymous) return;
-    updateStreak(uid, isAnonymous)
-      .then(s => setStreak(s))
-      .catch(e => console.warn('[profil] streak:', e.message));
-  }, [ready, uid, isAnonymous]);
-
-  // Yıldönümü konfeti — bugün ise (gunFarki === 0) ve daha önce tetiklenmediyse
-  const yildonumuKonfetiAttiRef = useRef(false);
-  useEffect(() => {
-    if (yildonumuKonfetiAttiRef.current) return;
-    if (!profilVerisi || !profilVerisi.amare?.register_date) return;
-    const reg = new Date(profilVerisi.amare.register_date);
-    const now = new Date();
-    if (reg.getMonth() === now.getMonth() && reg.getDate() === now.getDate() && reg.getFullYear() !== now.getFullYear()) {
-      yildonumuKonfetiAttiRef.current = true;
-      setTimeout(() => {
-        const duration = 3000;
-        const end = Date.now() + duration;
-        (function frame() {
-          confetti({
-            particleCount: 4,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#FBB034', '#FFDD00', '#FF6B35', '#A855F7'],
-          });
-          confetti({
-            particleCount: 4,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#FBB034', '#FFDD00', '#FF6B35', '#A855F7'],
-          });
-          if (Date.now() < end) requestAnimationFrame(frame);
-        })();
-      }, 800);
-    }
-  }, [profilVerisi]);
-
-  // Yıldönümü banner'a tıklayınca da konfeti
-  const yildonumuKutla = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#FBB034', '#FFDD00', '#FF6B35', '#A855F7'],
-    });
-  };
-
-  // Yarım kalan eğitimler (watch progress) + favori video meta'sını Firestore'dan çek
-  // watchProgress.version değiştiğinde tekrar fetch — kullanıcı bir video izledikten sonra geri dönerse güncel olur
+  // Yarım kalan eğitimler + favori video meta'sı
   useEffect(() => {
     let progressMap = {};
     try { progressMap = JSON.parse(localStorage.getItem('amare_watch_progress_v1') || '{}'); } catch {}
@@ -252,26 +180,19 @@ const Profil = () => {
     return () => unsub();
   }, [uid, isAnonymous]);
 
-  // Profil-veri backend çağrısı
+  // Profil-veri çağrısı — SADECE rütbe için (Eğitim Yolum müfredatı).
+  // Düşerse sessiz: kullanıcıya hata kutusu gösterilmez, o blok görünmez.
   const profilVerisiFetch = async (force = false) => {
     if (!currentUser || isAnonymous) return;
     const amareId = userDoc?.amareId;
-    if (!amareId) {
-      // userDoc henüz yüklenmediyse sessizce bekle, ama uzun bekleme için hata göster
-      if (userDoc !== null) {
-        setHata('Amare ID bağlı değil. Yeniden giriş yap veya sponsorundan kontrol iste.');
-      }
-      return;
-    }
+    if (!amareId) return;
 
-    // Cache
     if (!force) {
       const cached = loadProfilCache(amareId);
       if (cached) { setProfilVerisi(cached); return; }
     }
 
     setYukleniyor(true);
-    setHata('');
     try {
       const idToken = await currentUser.getIdToken();
       const res = await fetch('/.netlify/functions/profil-veri', {
@@ -279,58 +200,28 @@ const Profil = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        setHata(data.error || data.hint || `Profil verisi yüklenemedi (${res.status})`);
-        setProfilVerisi(null);
-      } else {
-        setProfilVerisi(data);
-        saveProfilCache(amareId, data);
+        console.warn('[profil] profil-veri:', data.error || res.status);
+        return;
       }
+      setProfilVerisi(data);
+      saveProfilCache(amareId, data);
     } catch (err) {
-      console.error('[profil] fetch hata:', err);
-      setHata(err.message || 'Bağlantı hatası');
+      console.warn('[profil] profil-veri fetch:', err.message);
     } finally {
       setYukleniyor(false);
     }
   };
 
-  // fetchRef'i güncel tut (pull-to-refresh'in çağıracağı son fonksiyon)
   useEffect(() => { fetchRef.current = profilVerisiFetch; });
 
   useEffect(() => {
-    if (userDoc?.amareId) {
-      profilVerisiFetch();
-    } else if (userDoc !== null && !isAnonymous) {
-      // userDoc yüklendi ama amareId yok → açık hata göster
-      setHata('Amare ID bağlı değil. Çıkış yapıp magic link ile tekrar gir, sponsorundan kontrol iste.');
-    }
+    if (userDoc?.amareId) profilVerisiFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userDoc?.amareId, userDoc, isAnonymous]);
-
-  // Rank takip — login kullanıcı için anında kontrol (background, async)
-  // Eğer rank değişmişse Firestore'da egitim_durumu güncellenir
-  useEffect(() => {
-    if (!currentUser || isAnonymous || !userDoc?.amareId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const idToken = await currentUser.getIdToken();
-        await fetch(`/.netlify/functions/rank-takip?uid=${encodeURIComponent(uid)}`, {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
-        // Sessiz arka plan işlemi — hata loglanır ama UI etkilenmez
-      } catch (e) {
-        if (!cancelled) console.warn('[rank-takip] arka plan:', e.message);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [currentUser, isAnonymous, uid, userDoc?.amareId]);
+  }, [userDoc?.amareId]);
 
   // Bülten + hatırlatmalar — abonelik-durumu.mjs üzerinden (admin SDK).
-  // 2026-07-02: bulten_aboneleri/hatirlatmalar rules'ı "read/list/delete: isAdmin()"
-  // oldu (spam koruması) ama bu sayfa doğrudan client SDK ile kendi email'iyle
-  // okuyordu -> her normal kullanıcı "Missing or insufficient permissions"
-  // alıyordu (Sentry NODE-Q). Artık admin-yetkili serverless function'dan geçiyor.
-  // Web push: Notification.permission ile kontrol (browser tabanlı, email değil)
+  // Client SDK ile doğrudan okumak "Missing or insufficient permissions" veriyordu
+  // (bulten_aboneleri/hatirlatmalar rules'ı admin-only, spam koruması).
   useEffect(() => {
     if (!email || !currentUser) return;
     (async () => {
@@ -355,10 +246,8 @@ const Profil = () => {
     })();
   }, [email, currentUser, takipSet.size]);
 
-  // Bülten toggle
   const toggleBulten = async () => {
     if (abonelikler.bulten) {
-      // Aboneliği iptal et
       if (!window.confirm('Haftalık bülten aboneliğini iptal etmek istediğinden emin misin?')) return;
       try {
         const idToken = await currentUser.getIdToken();
@@ -376,7 +265,6 @@ const Profil = () => {
     }
   };
 
-  // Web push toggle
   const togglePush = async () => {
     if (pushBusy) return;
     setPushBusy(true);
@@ -395,10 +283,8 @@ const Profil = () => {
     }
   };
 
-  // Bülten modal kapandığında durumu refresh et
   const handleBultenClose = () => {
     setBultenModalAcik(false);
-    // abonelik-durumu.mjs ile yeniden sorgu (admin SDK — 2026-07-02 NODE-Q fix)
     if (email && currentUser) {
       currentUser.getIdToken()
         .then(idToken => fetch('/.netlify/functions/abonelik-durumu', {
@@ -413,205 +299,15 @@ const Profil = () => {
     }
   };
 
-  // ─── Hook'lar her render'da AYNI SIRADA çağrılmalı — early return'lerden ÖNCE ───
-  // Avatar foto kaynağı (3 fallback)
+  // ─── Hook'lar early return'lerden ÖNCE bitmeli ───
   const fullName = profilVerisi?.amare?.full_name || profilVerisi?.member?.full_name || userDoc?.displayName || displayName || '';
   const userFoto = userDoc?.fotoURL || null;
   const egitmenFoto = useMemo(() => egitmenFotosuBul(fullName, konusmacilar), [fullName, konusmacilar]);
   const finalFoto = userFoto || egitmenFoto || null;
+  const izleme = useMemo(() => izlemeGoster(totalWatched), [totalWatched]);
 
-  // Career data parse
-  const careerData = useMemo(() => {
-    const cd = profilVerisi?.member?.career_data;
-    if (!cd) return null;
-    if (typeof cd === 'string') { try { return JSON.parse(cd); } catch { return null; } }
-    return cd;
-  }, [profilVerisi]);
+  // ─── Conditional render'lar ───
 
-  const funnelCevaplari = useMemo(
-    () => parseFunnelAnswers(profilVerisi?.progress?.funnel_answers),
-    [profilVerisi]
-  );
-
-  // Profile soruları (yaş, meslek, heyecanlandıran, tanıtım) — bio_data'dan parse
-  const profileCevaplari = useMemo(
-    () => parseProfileAnswers(profilVerisi?.member?.bio_data),
-    [profilVerisi]
-  );
-
-  // Rank rengini hesapla (Faz 4c)
-  const rankGradient = useMemo(() => {
-    const r = (profilVerisi?.amare?.rank || '').toLowerCase();
-    if (r.includes('presidential')) return { bgClass: 'bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600' };
-    if (r.includes('crown'))        return { bgClass: 'bg-gradient-to-br from-purple-500 via-fuchsia-600 to-pink-600' };
-    if (r.includes('diamond'))      return { bgClass: 'bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600' };
-    if (r.includes('gold'))         return { bgClass: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600' };
-    if (r.includes('platinum'))     return { bgClass: 'bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500' };
-    if (r.includes('leader') || r.includes('executive')) return { bgClass: 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600' };
-    return { bgClass: 'bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900' };
-  }, [profilVerisi?.amare?.rank]);
-
-  // Achievement rozetleri — milestone bazlı, motivasyon
-  const rozetler = useMemo(() => {
-    const uyelikYil = profilVerisi?.uyelikSuresi?.yil || 0;
-    const all = [
-      { key: 'ilk_video', icon: '🎓', label: 'İlk Adım', desc: 'İlk eğitimini izledin', kazanildi: completedCount >= 1 },
-      { key: 'egitim_asigi', icon: '📚', label: 'Eğitim Aşığı', desc: '10+ eğitim tamamladı', kazanildi: completedCount >= 10 },
-      { key: 'usta', icon: '🏆', label: 'Eğitim Ustası', desc: '50+ eğitim tamamladı', kazanildi: completedCount >= 50 },
-      { key: 'sosyal', icon: '❤️', label: 'Sosyal Takipçi', desc: '5+ eğitmen takip ediyor', kazanildi: takipSet.size >= 5 },
-      { key: 'streak_3', icon: '🔥', label: 'Tutkulu', desc: '3 gün üst üste', kazanildi: (streak.longest || 0) >= 3 },
-      { key: 'streak_7', icon: '⚡', label: 'Disiplinli', desc: '7 gün üst üste', kazanildi: (streak.longest || 0) >= 7 },
-      { key: 'streak_30', icon: '🌟', label: 'Efsane', desc: '30 gün üst üste', kazanildi: (streak.longest || 0) >= 30 },
-      { key: 'yil_1', icon: '🎉', label: '1. Yıl', desc: 'One Team yolculuğun 1 yaşında', kazanildi: uyelikYil >= 1 },
-      { key: 'yil_5', icon: '💎', label: 'Sadık Marka Ortağı', desc: '5+ yıl One Team Marka Ortağı', kazanildi: uyelikYil >= 5 },
-      { key: 'yil_10', icon: '👑', label: 'Veteran', desc: '10+ yıl One Team Marka Ortağı', kazanildi: uyelikYil >= 10 },
-      { key: 'saat_10', icon: '⏱️', label: 'Adanmış', desc: '10+ saat eğitim izledi', kazanildi: totalWatched >= 10 * 3600 },
-      { key: 'saat_50', icon: '🚀', label: 'Sıçrama', desc: '50+ saat eğitim izledi', kazanildi: totalWatched >= 50 * 3600 },
-    ];
-    return {
-      kazanilan: all.filter(r => r.kazanildi),
-      kazanilmamis: all.filter(r => !r.kazanildi).slice(0, 3), // sıradaki 3 hedefi göster
-      toplam: all.length,
-    };
-  }, [completedCount, takipSet.size, streak.longest, profilVerisi?.uyelikSuresi?.yil, totalWatched]);
-
-  // ─── XP + Seviye (mevcut verilerden deterministik) — McGonigal FIX #2/#8 ───
-  const xpToplam = useMemo(() => hesaplaXP({
-    tamamlanan: completedCount,
-    izlemeSaniye: totalWatched,
-    streakRekoru: streak.longest || 0,
-    davetAktif: profilVerisi?.davetAktifSayisi || 0, // backend verirse; yoksa 0
-    uyelikYili: profilVerisi?.uyelikSuresi?.yil || 0,
-    rozetSayisi: rozetler.kazanilan.length,
-    takipSayisi: takipSet.size,
-    gorevXP: gorevXPHesapla(gorevKaydi),
-  }), [completedCount, totalWatched, streak.longest, profilVerisi?.davetAktifSayisi, profilVerisi?.uyelikSuresi?.yil, rozetler.kazanilan.length, takipSet.size, gorevKaydi]);
-  const seviyeBilgi = useMemo(() => seviyeHesapla(xpToplam), [xpToplam]);
-
-  // Profil tamamlama yüzdesi — engagement nudge için
-  // Her check'in bir action'ı var: tıklayınca ilgili akış başlar
-  const profilTamamlama = useMemo(() => {
-    const amareIdStr = encodeURIComponent(profilVerisi?.amareId || '');
-    const returnUrl = encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil');
-    const onboardingUrl = `https://oneteamglobal.ai/?amid=${amareIdStr}&update=1&return=${returnUrl}`;
-
-    // Fotoğraf kontrolü — birden çok kaynaktan kabul
-    const fotoVar = !!(
-      userDoc?.fotoURL ||
-      profilVerisi?.amare?.foto_url ||
-      profilVerisi?.amare?.fotoURL ||
-      profilVerisi?.member?.foto_url ||
-      currentUser?.photoURL
-    );
-    // Bio/tanıtım kontrolü — birden çok kaynaktan kabul
-    const bioVar = !!(
-      profilVerisi?.member?.bio_data?.tanitim ||
-      (profilVerisi?.member?.bio && profilVerisi.member.bio.trim().length > 10) ||
-      userDoc?.tanitim
-    );
-
-    const checks = [
-      { key: 'avatar', label: 'Profil fotosu', done: fotoVar, weight: 20,
-        action: () => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          setTimeout(() => window.dispatchEvent(new Event('amare-open-avatar-picker')), 500);
-        }
-      },
-      { key: 'bio', label: 'Tanıtım metni', done: bioVar, weight: 25,
-        action: () => {
-          setTanitimMetni(userDoc?.tanitim || profilVerisi?.member?.bio_data?.tanitim || profilVerisi?.member?.bio || '');
-          setTanitimAcik(true);
-        }
-      },
-      { key: 'onboarding', label: 'Onboarding cevapları', done: !!profilVerisi?.onboardingTamamlandi, weight: 25,
-        action: () => { window.location.href = onboardingUrl; }
-      },
-      { key: 'fav_egitmen', label: 'En az 1 takip eğitmen', done: takipSet.size > 0, weight: 10,
-        action: () => navigate('/konusmacilar')
-      },
-      { key: 'fav_video', label: 'En az 1 favori eğitim', done: videoFav.size > 0, weight: 10,
-        action: () => navigate('/kayitli-egitimler')
-      },
-      { key: 'video_izle', label: 'En az 1 video izle', done: completedCount > 0 || totalWatched > 60, weight: 10,
-        action: () => navigate('/kayitli-egitimler')
-      },
-    ];
-    const pct = checks.reduce((sum, c) => sum + (c.done ? c.weight : 0), 0);
-    const eksik = checks.filter(c => !c.done);
-    return { pct, eksik, checks };
-  }, [userDoc?.fotoURL, profilVerisi, takipSet.size, videoFav.size, completedCount, totalWatched, navigate]);
-
-  // ─── GÖREV PUANI (23 Eki 2026; Emre: "görev puanı haftada bir kez gerçekten eklensin") ───────────────────────
-  // Eskiden kart "✓ +150 XP" diyordu ama puan toplama girmiyordu. Tamamlanan görev kişinin KENDİ kaydına hafta
-  // anahtarıyla bir kez yazılır (Firestore kuralı: users/{uid}/meta yalnız sahibine açık); toplam XP o kayıttan büyür.
-  // Görev ancak bu ekran açıkken yazılır — kart bunu söylüyor (xp_gorev_not).
-  const gorevVeri = useMemo(() => ({
-    haftalikSaat: buHaftaSaniye / 3600,
-    haftalikEgitmenSayisi: haftalikEgitmen,
-    streakGun: streak.current || 0,
-    profilTamamlama: profilTamamlama.pct || 0,
-  }), [buHaftaSaniye, haftalikEgitmen, streak.current, profilTamamlama.pct]);
-
-  useEffect(() => {
-    if (!uid || isAnonymous) { setGorevKaydi(null); return; }
-    let iptal = false;
-    getDoc(doc(db, 'users', uid, 'meta', 'gorev_xp'))
-      .then(sn => { if (!iptal) setGorevKaydi(sn.exists() ? sn.data() : {}); })
-      .catch(e => console.warn('[profil] gorev_xp:', e.message));
-    return () => { iptal = true; };
-  }, [uid, isAnonymous]);
-
-  // "3 farklı eğitmenden eğitim al": bu hafta ≥1 dk izlenen videoların eğitmenleri (eskiden sayı sabit 0'dı — görev
-  // hiç tamamlanamıyordu). Video belgesi kayitli_egitimler'den (herkese açık okuma), en çok 30 video.
-  useEffect(() => {
-    const ids = getWatchedIdsSince(gorevHaftaBas).slice(0, 30);
-    if (!ids.length) { setHaftalikEgitmen(0); return; }
-    let iptal = false;
-    Promise.allSettled(ids.map(id => getDoc(doc(db, 'kayitli_egitimler', id)))).then(sonuc => {
-      const adlar = new Set();
-      sonuc.forEach(r => {
-        if (r.status === 'fulfilled' && r.value.exists()) {
-          (r.value.data().egitmenAdlari || []).forEach(a => { const k = String(a || '').trim().toLocaleLowerCase('tr'); if (k) adlar.add(k); });
-        }
-      });
-      if (!iptal) setHaftalikEgitmen(adlar.size);
-    });
-    return () => { iptal = true; };
-  }, [watchProgress.version, gorevHaftaBas]);
-
-  useEffect(() => {
-    if (!gorevKaydi || !uid || isAnonymous) return;
-    const { haftalik, tekSefer } = yeniTamamlananlar(haftalikGorevler(gorevVeri), gorevKaydi, gorevHafta);
-    if (!haftalik.length && !tekSefer.length) return;
-    // Önce ekran (aynı görev ikinci kez yazılmasın diye), sonra kayıt; yazılamazsa bir sonraki açılışta yeniden denenir.
-    const yeni = { ...gorevKaydi, haftalar: { ...(gorevKaydi.haftalar || {}) } };
-    yeni.haftalar[gorevHafta] = [...new Set([...(yeni.haftalar[gorevHafta] || []), ...haftalik])];
-    tekSefer.forEach(k => { yeni[k] = true; });
-    setGorevKaydi(yeni);
-    const yaz = { guncel: serverTimestamp() };
-    if (haftalik.length) yaz.haftalar = { [gorevHafta]: arrayUnion(...haftalik) };
-    tekSefer.forEach(k => { yaz[k] = true; });
-    setDoc(doc(db, 'users', uid, 'meta', 'gorev_xp'), yaz, { merge: true })
-      .catch(e => console.warn('[profil] gorev_xp yaz:', e.message));
-  }, [gorevKaydi, gorevVeri, gorevHafta, uid, isAnonymous]);
-
-  // Üyelik yıldönümü hesapla (Faz 4e)
-  const yildonumu = useMemo(() => {
-    const regDate = profilVerisi?.amare?.register_date;
-    if (!regDate) return null;
-    const reg = new Date(regDate);
-    const now = new Date();
-    const thisYear = new Date(now.getFullYear(), reg.getMonth(), reg.getDate());
-    const diffDays = Math.round((thisYear - now) / (1000 * 60 * 60 * 24));
-    if (diffDays >= -3 && diffDays <= 7) {
-      return { gunFarki: diffDays, yil: now.getFullYear() - reg.getFullYear() };
-    }
-    return null;
-  }, [profilVerisi?.amare?.register_date]);
-
-  // ─── Bütün hook'lar bitti — şimdi conditional render'lar ───
-
-  // Loading state — auth henüz hazır değilse
   if (!ready) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
@@ -632,11 +328,11 @@ const Profil = () => {
         <div className="max-w-md mx-auto mt-12 px-4">
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 text-center shadow-2xl">
             <div className="w-20 h-20 rounded-full bg-amber-400/20 border border-amber-300/40 flex items-center justify-center mx-auto mb-6">
-              <LogIn className="w-9 h-9 text-amber-300" />
+              <GraduationCap className="w-9 h-9 text-amber-300" />
             </div>
-            <h1 className="text-2xl font-light text-white mb-2 tracking-tight">Profilini gör</h1>
+            <h1 className="text-2xl font-light text-white mb-2 tracking-tight">Eğitimlerin burada</h1>
             <p className="text-purple-200 text-sm mb-8 leading-relaxed">
-              Favoriler, kurduğun hatırlatmalar, onboarding ilerlemen ve Marka Ortaklığı bilgilerin burada görünür.
+              Giriş yap: eğitim yolun, yarım kalan videolar, favorilerin ve kurduğun hatırlatmalar tek sayfada.
             </p>
             <button onClick={() => setGirisModalAcik(true)}
               className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3.5 rounded-xl shadow-lg spring-tap inline-flex items-center justify-center gap-2 mb-3">
@@ -652,110 +348,9 @@ const Profil = () => {
     );
   }
 
-  // Login state — full profile
-  const a = profilVerisi?.amare;
-  const m = profilVerisi?.member;
-  const u = profilVerisi?.uyelikSuresi;
-  const sponsorAd = a?.sponsor_full_name;
-  const sponsorTel = a?.sponsor_phone;
-  const sponsorWa = normalizePhoneForWa(sponsorTel);
-  const onboardingTamamlandi = profilVerisi?.onboardingTamamlandi;
-
-  // ─── Faz 3: Onboarding zorunlu gate ───
-  // Profil verisi yüklendi VE onboarding tamamlanmadı → büyük CTA göster
-  if (profilVerisi && !onboardingTamamlandi) {
-    const returnUrl = encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil');
-    const onboardingUrl = `https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi.amareId)}&return=${returnUrl}`;
-    return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
-        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
-          <button onClick={geri} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-            <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
-          </button>
-          <button onClick={() => signOut(auth).then(() => navigate('/takvim'))}
-            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition spring-tap" title="Çıkış yap">
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="max-w-3xl mx-auto px-4 pt-10 pb-6 text-center">
-          <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={false} />
-          {a?.rank && (
-            <div className="mt-6 mb-2 flex items-center justify-center gap-2.5">
-              <div className="h-px w-8 bg-amber-400/40" />
-              <span className="text-amber-300 text-[11px] uppercase tracking-[0.3em] font-bold">{a.rank}</span>
-              <div className="h-px w-8 bg-amber-400/40" />
-            </div>
-          )}
-          <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight">{fullName || 'Hoş geldin'}</h1>
-        </div>
-
-        <div className="max-w-md mx-auto px-4">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-7 text-center shadow-2xl">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-400/20 border border-amber-300/40 mb-5">
-              <Sparkles className="w-6 h-6 text-amber-300" />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Önce seni tanıyalım</h2>
-            <p className="text-purple-200 text-sm leading-relaxed mb-6">
-              5 dakikalık bir onboarding ile profilini tamamla. Sana özel kariyer planı, eğitim önerileri ve sponsor takip sistemi açılacak.
-            </p>
-
-            <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-6 text-left space-y-2">
-              {[
-                'Kişiselleştirilmiş eğitim takvimi',
-                'Sponsor ve ekip iletişimi',
-                'Hedef takibi + kariyer yol haritası',
-                'Yıllık ilerlemeni gör',
-              ].map((line, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-purple-100">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300 mt-0.5 flex-shrink-0" />
-                  <span>{line}</span>
-                </div>
-              ))}
-            </div>
-
-            <a href={onboardingUrl}
-              className="block w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3.5 rounded-xl shadow-lg transition-all spring-tap text-base">
-              Profilini Tamamla →
-            </a>
-            <p className="text-purple-200/70 text-xs mt-3">5 dakika sürer</p>
-
-            {/* Bypass: zaten tamamladıysan devam et */}
-            <div className="mt-6 pt-5 border-t border-white/10">
-              <p className="text-purple-200/80 text-xs mb-2">Onboarding'i zaten tamamladıysan:</p>
-              <button
-                disabled={bypassBusy}
-                onClick={async () => {
-                  setBypassBusy(true);
-                  setBypassHata('');
-                  try {
-                    const token = await auth.currentUser.getIdToken();
-                    const res = await fetch('/.netlify/functions/profil-bypass-onboarding', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Bypass başarısız');
-                    // Cache temizle + sayfayı yenile
-                    try { localStorage.removeItem(PROFIL_CACHE_KEY + '_' + profilVerisi.amareId); } catch {}
-                    window.location.reload();
-                  } catch (e) {
-                    setBypassHata(e.message);
-                    setBypassBusy(false);
-                  }
-                }}
-                className="block w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-2.5 rounded-xl transition-all spring-tap text-sm disabled:opacity-50">
-                {bypassBusy ? 'Açılıyor...' : 'Profili Tamamladım, Devam Et'}
-              </button>
-              {bypassHata && (
-                <p className="text-rose-300 text-xs mt-2">✗ {bypassHata}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const rank = profilVerisi?.amare?.rank;
+  // Hiç eğitim izi var mı? Yoksa boş durum + çıkış yolu göster.
+  const hicIzYok = yarimKalan.length === 0 && videoFav.size === 0 && takipSet.size === 0 && totalWatched < 60;
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
@@ -769,18 +364,12 @@ const Profil = () => {
         </div>
       )}
 
-      {/* Header — takvim sayfasıyla aynı stil */}
+      {/* Header */}
       <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
         <button onClick={geri} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
         </button>
         <div className="flex items-center gap-2">
-          <button onClick={() => setWrappedAcik(true)}
-            className="bg-amber-400/15 hover:bg-amber-400/30 border border-amber-300/40 text-amber-200 px-3 py-2 rounded-xl transition spring-tap inline-flex items-center gap-1.5 text-xs font-bold"
-            title="Yıllık özet paylaş">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Özet</span>
-          </button>
           <button onClick={() => profilVerisiFetch(true)} disabled={yukleniyor}
             className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition disabled:opacity-50 spring-tap"
             title="Yenile">
@@ -794,457 +383,74 @@ const Profil = () => {
         </div>
       </div>
 
-      {/* HERO — sade, premium */}
-      <div className="max-w-3xl mx-auto px-4 pt-10 pb-8 text-center">
-        <XPHalka xp={xpToplam} boyut={148}>
-          <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={true} />
-        </XPHalka>
-
-        {/* Rank — kicker tarzı, ad'dan önce */}
-        {a?.rank && (
-          <div className="mt-6 mb-2 flex items-center justify-center gap-2.5">
-            <div className="h-px w-8 bg-amber-400/40" />
-            <span className="text-amber-300 text-[11px] uppercase tracking-[0.3em] font-bold">{a.rank}</span>
-            <div className="h-px w-8 bg-amber-400/40" />
-          </div>
-        )}
-
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-          {fullName || 'Profilim'}
+      {/* HERO — avatar + ad. Rütbe rozeti, XP halkası, seviye ve seri kalktı. */}
+      <div className="max-w-3xl mx-auto px-4 pt-8 pb-7 text-center">
+        <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={true} />
+        <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+          {fullName || 'Eğitimlerim'}
         </h1>
-
-        {u && (
-          <p className="mt-2 text-purple-200 text-sm">
-            One Team Marka Ortağı · {u.yil > 0 ? `${u.yil} yıl ${u.ay} ay` : `${u.toplamAy} ay`}
-          </p>
-        )}
-
-        {/* XP ilerleme çubuğu — seviye + sonraki seviyeye kalan */}
-        <XPBar xp={xpToplam} />
-
-        {/* Streak chip — hero altında, animated flame */}
-        {streak.current > 0 && (
-          <button onClick={() => setStreakAciklamaAcik(true)}
-            className="mt-4 inline-flex items-center gap-2 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-400/40 px-3.5 py-1.5 rounded-full transition spring-tap group">
-            <Flame className={`w-4 h-4 text-orange-400 ${streak.current >= 3 ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform`} fill={streak.current >= 7 ? '#fb923c' : 'none'} />
-            <span className="text-orange-200 text-sm font-bold">{streak.current} gün üst üste</span>
-            {streak.longest > streak.current && (
-              <span className="text-orange-300/60 text-[10px] font-semibold border-l border-orange-400/30 pl-2">rekor {streak.longest}</span>
-            )}
-          </button>
-        )}
-
-        {hata && (
-          <p className="text-red-300 text-xs mt-4 bg-red-500/10 border border-red-400/30 rounded-lg px-3 py-2 inline-block">
-            {hata}
-          </p>
-        )}
+        <p className="mt-1.5 text-purple-200 text-sm">Eğitim yolculuğun</p>
       </div>
 
-      {/* STATS ROW — oyunlaşma odaklı 4 stat (XP/saat/tamamlanan/rozet), sticky */}
-      <div className="max-w-3xl mx-auto px-4 mt-2 sticky top-2 z-30">
-        <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-4 divide-x divide-white/10 shadow-2xl overflow-hidden">
-          <StatCell label="Toplam XP" value={xpToplam} highlight={xpToplam > 0} delay={0}
-            tooltip={`Seviye ${seviyeBilgi.seviye} · ${t('xp_kusak_' + seviyeBilgi.kusak)} — eğitim, izleme, streak ve üyelikten kazandığın XP`} />
-          <StatCell label="İzleme" suffix="sa" value={Math.floor(totalWatched / 3600) || 0}
-            highlight={totalWatched > 0} delay={100}
-            tooltip="Toplam izlediğin video saati"
-            scrollToId="section-aktivite" />
-          <StatCell label="Tamamlanan" value={completedCount} delay={200}
-            tooltip="Tamamen izlediğin video sayısı"
-            scrollToId="section-aktivite" />
-          <StatCell label="Rozet" value={rozetler.kazanilan.length} delay={300}
-            highlight={rozetler.kazanilan.length > 0}
-            tooltip={`${rozetler.kazanilan.length}/${rozetler.toplam} rozet kazandın`}
-            scrollToId="section-rozetler" />
+      {/* İZLEME ÖZETİ — 3 sayı, hepsi eğitim. XP ve rozet sayacı kalktı. */}
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl grid grid-cols-3 divide-x divide-white/10 shadow-xl overflow-hidden">
+          <StatCell label="İzleme" value={izleme.value} suffix={izleme.suffix}
+            highlight={totalWatched > 0} delay={0}
+            tooltip="Toplam izlediğin eğitim süresi" />
+          <StatCell label="Tamamlanan" value={completedCount} delay={100}
+            highlight={completedCount > 0}
+            tooltip="Sonuna kadar izlediğin eğitim sayısı"
+            scrollToId="section-favoriler" />
+          <StatCell label="Favori" value={videoFav.size + takipSet.size} delay={200}
+            tooltip="Favori eğitimler + takip ettiğin eğitmenler"
+            scrollToId="section-favoriler" />
         </div>
       </div>
 
-      {/* Skeleton — profilVerisi henüz yokken shimmer kartlar */}
-      {!profilVerisi && !hata && (
-        <div className="max-w-3xl mx-auto px-4 mt-8 space-y-4">
-          {[120, 160, 100, 140].map((h, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 skeleton-shimmer"
-              style={{ height: `${h}px`, animationDelay: `${i * 100}ms` }} />
-          ))}
-          {/* 5sn sonra hâlâ veri yoksa "Sorun mu var?" diyalogu */}
-          <div className="text-center pt-4">
-            <p className="text-purple-200/60 text-xs">Profil verisi yükleniyor…</p>
-            <button onClick={() => profilVerisiFetch(true)}
-              className="mt-3 inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-xs font-bold underline">
-              <RotateCw className="w-3 h-3" /> 10sn'den uzun sürerse — yenile
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
 
-      {/* Profil veri çekme HATA göster — kullanıcı sessiz başarısızlıktan kurtulsun */}
-      {hata && !profilVerisi && (
-        <div className="max-w-3xl mx-auto px-4 mt-8">
-          <div className="bg-rose-500/15 border border-rose-400/40 rounded-2xl p-5 text-center">
-            <div className="text-rose-200 text-sm font-semibold mb-2">⚠️ Profil verisi yüklenemedi</div>
-            <p className="text-white/80 text-xs leading-relaxed mb-3">{hata}</p>
-            <p className="text-white/50 text-[11px] mb-3">
-              Yardım: önce sayfayı yenile. Çözülmezse çıkış yapıp tekrar gir.
+        {/* ═══ BOŞ DURUM — hiç eğitim izi yoksa çıkış yolu ver ═══ */}
+        {hicIzYok && (
+          <section className="bg-gradient-to-br from-amber-400/15 via-purple-600/10 to-amber-400/15 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5 shadow-xl text-center stagger-fade" >
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/20 border border-amber-300/40 mb-3">
+              <GraduationCap className="w-6 h-6 text-amber-300" />
+            </div>
+            <h3 className="text-white font-bold text-base mb-1">Henüz başlamadın</h3>
+            <p className="text-purple-200 text-xs mb-4 leading-relaxed">
+              İlk eğitimini izle; nerede kaldığın, favorilerin ve ilerlemen bu sayfada birikir.
             </p>
-            <div className="flex gap-2 justify-center">
-              <button onClick={() => profilVerisiFetch(true)}
-                className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold text-xs px-4 py-2 rounded-lg spring-tap inline-flex items-center gap-1.5">
-                <RotateCw className="w-3 h-3" /> Yenile
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button onClick={() => navigate('/kayitli-egitimler')}
+                className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg spring-tap inline-flex items-center gap-2">
+                Kayıtlı eğitimler <ChevronRight className="w-4 h-4" />
               </button>
-              <button onClick={() => window.location.reload()}
-                className="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg spring-tap">
-                Sayfayı yenile
+              <button onClick={() => navigate('/takvim')}
+                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-5 py-2.5 rounded-xl text-sm spring-tap inline-flex items-center gap-2">
+                Yaklaşan eğitimler
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sekmeli dashboard tab bar — yatay scroll mobilde */}
-      <div className="max-w-4xl mx-auto px-4 mt-6 mb-4 sticky top-2 z-30">
-        <div className="bg-purple-900/70 backdrop-blur-xl border border-white/15 rounded-2xl p-1.5 shadow-2xl">
-          <div className="flex gap-1 overflow-x-auto scrollbar-none">
-            {[
-              { kod: 'yolculuk', label: 'Yolculuk', icon: Sparkles, renk: 'amber' },
-              { kod: 'egitim', label: 'Eğitim', icon: Trophy, renk: 'purple' },
-              { kod: 'profil', label: 'Profil', icon: User, renk: 'emerald' },
-            ].map(t => {
-              const aktif = aktifTab === t.kod;
-              const Icon = t.icon;
-              const renkAktif = {
-                amber:   'bg-amber-400 text-purple-900',
-                purple:  'bg-purple-400 text-purple-900',
-                sky:     'bg-sky-400 text-purple-900',
-                emerald: 'bg-emerald-400 text-purple-900',
-                rose:    'bg-rose-400 text-purple-900',
-              }[t.renk];
-              return (
-                <button key={t.kod} onClick={() => setAktifTab(t.kod)}
-                  className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold spring-tap transition-all whitespace-nowrap min-w-fit ${
-                    aktif ? `${renkAktif} shadow-lg` : 'text-white/70 hover:text-white hover:bg-white/10'
-                  }`}>
-                  <Icon className="w-4 h-4" />
-                  <span>{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 space-y-6">
-
-        {/* ═══ ÜYELİK — Hakkımda tab'ında ═══ */}
-        {aktifTab === 'profil' && (
-        <div id="section-uyelik" className="stagger-fade">
-          <SectionTitle icon={Hash}>Marka Ortaklığı</SectionTitle>
-          <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
-            <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
-            <InfoRow icon={Mail} label="E-posta" value={a?.email || email || '—'} />
-            <InfoRow icon={Hash} label="Amare ID" value={profilVerisi?.amareId || userDoc?.amareId || '—'} />
-            <InfoRow icon={CalendarDays} label="Kayıt tarihi" value={formatTarih(a?.register_date)} />
-          </div>
-        </div>
-        )}
-
-        {/* ═══ YOLCULUK: Haftalık görevler — McGonigal FIX #1 ═══ */}
-        {aktifTab === 'yolculuk' && (
-          <HaftalikGorevler
-            veri={gorevVeri}
-            kayit={gorevKaydi}
-            hafta={gorevHafta}
-            onProfilTamamla={() => {
-              const el = document.getElementById('section-profil-tamamla');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}
-          />
-        )}
-
-        {/* ═══ YOLCULUK: Kolektif epic hedef — McGonigal FIX #6 ═══ */}
-        {aktifTab === 'yolculuk' && (
-          <KolektifHedef kullaniciSaat={Math.floor(totalWatched / 3600)} />
-        )}
-
-        {/* Profil tamamlama banner — Yolculuk tab'ında */}
-        {aktifTab === 'yolculuk' && profilTamamlama.pct < 100 && profilTamamlama.eksik.length > 0 && (
-          <section id="section-profil-tamamla" className="bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <h3 className="text-white font-bold text-sm">Profilin %{profilTamamlama.pct} tamam</h3>
-              </div>
-              <span className="text-amber-200 text-xs font-semibold">%{100 - profilTamamlama.pct} kaldı</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500" style={{ width: `${profilTamamlama.pct}%` }} />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {profilTamamlama.eksik.map(e => (
-                <button key={e.key} onClick={e.action}
-                  className="text-amber-100 hover:text-white text-[11px] bg-white/5 hover:bg-amber-400/30 border border-amber-300/30 hover:border-amber-300/60 rounded-md px-2.5 py-1.5 transition-all spring-tap font-medium inline-flex items-center gap-1.5 group">
-                  <span className="text-amber-300 group-hover:text-white">◯</span>
-                  <span>{e.label}</span>
-                  <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
-              ))}
-            </div>
-            <p className="text-amber-200/60 text-[10px] mt-2.5">Tamamlamak için tıkla →</p>
           </section>
         )}
 
-        {/* Yıldönümü banner (Faz 4e) — tıklayınca konfeti */}
-        {yildonumu && (
-          <button onClick={yildonumuKutla}
-            className="w-full bg-gradient-to-r from-amber-400/20 via-amber-300/15 to-amber-400/20 backdrop-blur-md border border-amber-300/40 hover:border-amber-300/70 rounded-2xl p-4 text-center transition spring-tap">
-            <div className="text-2xl mb-1">🎉</div>
-            <div className="text-amber-100 font-bold text-sm">
-              {yildonumu.gunFarki === 0
-                ? `Bugün ${yildonumu.yil}. yılınız! Tebrikler!`
-                : yildonumu.gunFarki > 0
-                  ? `${yildonumu.gunFarki} gün sonra ${yildonumu.yil}. yılınız!`
-                  : `${Math.abs(yildonumu.gunFarki)} gün önce ${yildonumu.yil}. yılınızı kutladınız 🌟`
-              }
-            </div>
-            <div className="text-amber-200/80 text-xs mt-1">Tıkla — kutla 🎊</div>
-          </button>
-        )}
-
-        {/* ═══ EĞİTİM YOLUM — Eğitim tab'ında ═══ */}
-        {aktifTab === 'egitim' && a?.rank && (
-          <div id="section-egitim-yolum" className="stagger-fade" style={{ animationDelay: '150ms' }}>
+        {/* ═══ EĞİTİM YOLUM — rütbeye göre müfredat ═══ */}
+        {rank ? (
+          <div id="section-egitim-yolum" className="stagger-fade">
             <div className="flex items-center justify-between mb-3">
               <SectionTitle icon={Trophy}>Eğitim Yolum</SectionTitle>
               <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">Sana Özel</span>
             </div>
-            <EgitimYolumBlok
-              uid={uid}
-              isAnonymous={isAnonymous}
-              kullaniciRankString={a.rank}
-            />
+            <EgitimYolumBlok uid={uid} isAnonymous={isAnonymous} kullaniciRankString={rank} />
           </div>
-        )}
+        ) : yukleniyor ? (
+          <div className="rounded-2xl border border-white/10 skeleton-shimmer" style={{ height: '180px' }} />
+        ) : null}
 
-        {/* ═══ İLHAM WIDGETLERİ — Özet tab'ında (2 col grid) ═══ */}
-        {aktifTab === 'yolculuk' && (
-          <div className="stagger-fade grid sm:grid-cols-2 gap-3" style={{ animationDelay: '160ms' }}>
-            <BugununIlhami />
-            {!isAnonymous && <BanaOzelAha />}
-          </div>
-        )}
-
-        {/* ═══ EĞİTMEN ANALYTİCS ═══ — Aktivite tab'ında, eğitmenler için */}
-        {aktifTab === 'yolculuk' && userDoc?.egitmenCoreId && (
-          <div className="stagger-fade" style={{ animationDelay: '180ms' }}>
-            <EgitmenAnalyticsKart coreId={userDoc.egitmenCoreId} />
-          </div>
-        )}
-
-        {/* ═══ HAKKIMDA ═══ — Hakkımda tab'ında */}
-        {aktifTab === 'profil' && (m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
-          <div id="section-hakkimda" className="stagger-fade" style={{ animationDelay: '200ms' }}>
-            <div className="flex items-center justify-between gap-2 mb-4">
-              <SectionTitle icon={User}>Hakkımda</SectionTitle>
-              <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&update=1&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
-                className="text-purple-300 hover:text-amber-300 transition flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] whitespace-nowrap" title="Cevapları yeniden doldur">
-                <Edit3 className="w-3 h-3" /> Güncelle
-              </a>
-            </div>
-
-            {/* Tanıtım metni — büyük tırnak editorial style (glass) */}
-            {profileCevaplari.tanitim ? (
-              <div className="mb-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div className="absolute top-3 left-4 text-amber-300/30 text-8xl font-serif leading-none select-none">"</div>
-                <p className="relative text-white text-lg leading-relaxed italic pl-8 pt-4 font-light">
-                  {profileCevaplari.tanitim}
-                </p>
-                <div className="text-amber-300/70 text-[10px] font-bold uppercase tracking-[0.2em] mt-4 text-right">— Kendinden</div>
-              </div>
-            ) : m?.bio && (
-              <div className="mb-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
-                <p className="text-white/95 text-sm italic leading-relaxed">{m.bio}</p>
-              </div>
-            )}
-
-            {/* Glass chip grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {[
-                // Profile cevapları (yaş, meslek, heyecan)
-                ...profileCevaplari.chips.map(c => ({
-                  ...c,
-                  ...(c.key === 'yas' && { icon: Cake, renk: 'from-pink-500/20 to-rose-500/20 border-pink-400/30', iconColor: 'text-pink-300' }),
-                  ...(c.key === 'meslek' && { icon: Briefcase, renk: 'from-slate-500/20 to-gray-500/20 border-slate-400/30', iconColor: 'text-slate-300' }),
-                  ...(c.key === 'heyecan' && { icon: Flame, renk: 'from-orange-500/20 to-red-500/20 border-orange-400/30', iconColor: 'text-orange-300' }),
-                })),
-                // Funnel cevapları (motivasyon, endişe, çevre, saat)
-                ...funnelCevaplari.map(c => ({
-                  ...c,
-                  ...(c.key === 'motivasyon' && { icon: Sparkles, renk: 'from-purple-500/20 to-indigo-500/20 border-purple-400/30', iconColor: 'text-purple-300' }),
-                  ...(c.key === 'korku' && { icon: AlertTriangle, renk: 'from-yellow-500/20 to-amber-500/20 border-yellow-400/30', iconColor: 'text-yellow-300' }),
-                  ...(c.key === 'cevre' && { icon: Users, renk: 'from-pink-500/20 to-fuchsia-500/20 border-pink-400/30', iconColor: 'text-pink-300' }),
-                  ...(c.key === 'haftaSaat' && { icon: Timer, renk: 'from-blue-500/20 to-cyan-500/20 border-blue-400/30', iconColor: 'text-blue-300' }),
-                })),
-                // Kariyer (rank, süre, günlük çalışma)
-                ...(careerData?.rank ? [{ key: 'hedef', soru: 'Hedef', cevap: careerData.rank, icon: Target, renk: 'from-amber-400/25 to-orange-500/25 border-amber-300/40', iconColor: 'text-amber-300' }] : []),
-                ...(careerData?.time ? [{ key: 'sure', soru: 'Süre', cevap: careerData.time, icon: Hourglass, renk: 'from-cyan-500/20 to-teal-500/20 border-cyan-400/30', iconColor: 'text-cyan-300' }] : []),
-                ...(careerData?.hours ? [{ key: 'gunluk', soru: 'Günlük', cevap: careerData.hours, icon: Clock, renk: 'from-emerald-500/20 to-green-500/20 border-emerald-400/30', iconColor: 'text-emerald-300' }] : []),
-              ].map((q) => {
-                const Icon = q.icon || User;
-                return (
-                  <div key={q.key}
-                    className="group bg-white/10 backdrop-blur border border-white/20 hover:border-amber-300/50 rounded-xl px-3 py-3 chip-lift">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Icon className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
-                      <div className="text-purple-200/70 text-[9px] uppercase tracking-[0.15em] font-bold truncate">{q.soru}</div>
-                    </div>
-                    <div className="text-white font-semibold text-[13px] leading-tight line-clamp-2">{q.cevap}</div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Onboarding tamamlanma badge (A3) */}
-            {m?.onboarding_completed_at && (
-              <div className="mt-4 flex items-center justify-between text-[11px] px-1">
-                <div className="flex items-center gap-1.5 text-green-300">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span className="font-semibold">Profil tamamlandı</span>
-                </div>
-                <span className="text-purple-300/60">{formatTarih(m.onboarding_completed_at)}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ═══ HAFTALIK HEDEF — Aktivite tab'ında ═══ */}
-        {aktifTab === 'yolculuk' && funnelCevaplari.find(c => c.key === 'haftaSaat') && (() => {
-          const haftalikHedefRaw = funnelCevaplari.find(c => c.key === 'haftaSaat')?.cevap || '';
-          const haftalikHedefSaat = parseInt(haftalikHedefRaw.match(/\d+/)?.[0] || '5', 10);
-          const gercekSaat = weeklyWatched / 3600;
-          const yuzde = haftalikHedefSaat > 0 ? Math.min(100, (gercekSaat / haftalikHedefSaat) * 100) : 0;
-          const renkBg = yuzde >= 75 ? 'bg-green-500' : yuzde >= 40 ? 'bg-amber-400' : 'bg-rose-400';
-          return (
-            <div className="md:col-span-1">
-              <SectionTitle icon={Target}>Bu Hafta</SectionTitle>
-              <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
-                <div className="flex items-baseline justify-between mb-3">
-                  <div>
-                    <div className="text-purple-200 text-xs uppercase tracking-wider">Hedefin</div>
-                    <div className="text-white font-light text-2xl mt-0.5">{haftalikHedefRaw}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-purple-200 text-xs uppercase tracking-wider">Gerçekleşen</div>
-                    <div className={`font-light text-2xl mt-0.5 ${yuzde >= 75 ? 'text-green-300' : yuzde >= 40 ? 'text-amber-300' : 'text-rose-300'}`}>
-                      {gercekSaat.toFixed(1)} saat
-                    </div>
-                  </div>
-                </div>
-                <div className="h-2.5 bg-black/30 rounded-full overflow-hidden">
-                  <div className={`h-full ${renkBg} transition-all duration-500 shadow-lg`} style={{ width: `${yuzde}%` }} />
-                </div>
-                <p className="text-purple-200/70 text-xs mt-2 text-center">
-                  {yuzde >= 100 ? '🎉 Hedefi aştın!' : yuzde >= 75 ? '🔥 Çok yakın, devam!' : yuzde >= 40 ? '💪 Yolundasın' : yuzde > 0 ? '⏱️ Başlangıç iyi, hızlan' : '🚀 Bu hafta hiç izlemedin'}
-                </p>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* ═══ ROZETLERİM ═══ — Yolculuk tab'ında */}
-        {aktifTab === 'yolculuk' && rozetler.kazanilan.length > 0 && (
-          <div id="section-rozetler">
-            <div className="flex items-center justify-between mb-4">
-              <SectionTitle icon={Medal}>Rozetlerim</SectionTitle>
-              <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">{rozetler.kazanilan.length}/{rozetler.toplam}</span>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                {rozetler.kazanilan.map(r => (
-                  <div key={r.key} className="text-center group">
-                    <div className="text-3xl mb-1 group-hover:scale-110 transition-transform" title={r.desc}>{r.icon}</div>
-                    <div className="text-white text-[10px] font-bold truncate">{r.label}</div>
-                  </div>
-                ))}
-              </div>
-              {/* Kazanılmamış (sıradaki) — kilitli */}
-              {rozetler.kazanilmamis.length > 0 && (
-                <>
-                  <div className="text-purple-300/60 text-[10px] uppercase tracking-[0.15em] font-bold mt-5 mb-3">Sıradaki</div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {rozetler.kazanilmamis.map(r => (
-                      <div key={r.key} className="text-center opacity-40 hover:opacity-70 transition-opacity">
-                        <div className="text-2xl mb-1 grayscale">{r.icon}</div>
-                        <div className="text-purple-200/80 text-[10px] font-semibold truncate">{r.label}</div>
-                        <div className="text-purple-300/50 text-[9px] mt-0.5 line-clamp-1">{r.desc}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ═══ EKİBİM CTA ═══ — Bağlantılar tab'ında */}
-        {aktifTab === 'profil' && profilVerisi?.amareId && (
-          <div className="stagger-fade" style={{ animationDelay: '350ms' }}>
-            <button onClick={() => navigate('/ekibim')}
-              className="w-full bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-emerald-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap text-left flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-300/40 flex items-center justify-center flex-shrink-0">
-                <Users className="w-6 h-6 text-emerald-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-white font-bold text-base">Ekibimi Gör</div>
-                <div className="text-emerald-200/80 text-xs mt-0.5">Altındaki Marka Ortaklarının progress, risk ve aktivite özeti</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition" />
-            </button>
-          </div>
-        )}
-
-        {/* ═══ SPONSOR — Profil tab'ında ═══ */}
-        {aktifTab === 'profil' && sponsorAd && (
-          <div id="section-baglantilar" className="stagger-fade space-y-4" style={{ animationDelay: '400ms' }}>
-            <SectionTitle icon={Users}>Sponsorum</SectionTitle>
-
-            {/* Sponsor kartı */}
-            {sponsorAd && (
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
-                <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-lg">
-                      {(sponsorAd || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-white font-bold text-sm truncate">{sponsorAd}</div>
-                      <div className="text-purple-200/70 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
-                    </div>
-                  </div>
-                  {sponsorWa && (
-                    <button onClick={() => setWaModalAcik(true)}
-                      className="bg-green-500 hover:bg-green-400 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg spring-tap">
-                      <MessageCircle className="w-3.5 h-3.5" /> İletişime geç
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ═══ AKTİVİTE ═══ — Eğitim tab'ında yarım kalan + aktivite tab'ında diğer */}
-        {aktifTab === 'yolculuk' && (yarimKalan.length > 0 || takipSet.size > 0 || videoFav.size > 0 || hatirlatmalar.length > 0) && (
-          <div id="section-aktivite" className="stagger-fade" style={{ animationDelay: '500ms' }}>
-            <SectionTitle icon={Bell}>Aktivite</SectionTitle>
-          </div>
-        )}
-
-        {/* Yarım kalan eğitimler — Eğitim tab'ında (devam et) */}
-        {aktifTab === 'egitim' && yarimKalan.length > 0 && (
-          <section id="section-yarim-kalan" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '550ms' }}>
+        {/* ═══ DEVAM ET — YARIM KALDI ═══ */}
+        {yarimKalan.length > 0 && (
+          <section id="section-yarim-kalan" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '100ms' }}>
             <div className="flex items-center gap-2 mb-3">
-              <Video className="w-4 h-4 text-amber-300" />
+              <PlayCircle className="w-4 h-4 text-amber-300" />
               <h2 className="text-white font-bold text-sm">Devam Et — Yarım Kaldı</h2>
             </div>
             <div className="space-y-2">
@@ -1276,9 +482,8 @@ const Profil = () => {
           </section>
         )}
 
-        {/* Favorilerim — Eğitim tab'ında */}
-        {aktifTab === 'egitim' && (
-        <section id="section-favoriler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '600ms' }}>
+        {/* ═══ FAVORİLERİM ═══ */}
+        <section id="section-favoriler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '150ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-pink-400" />
             <h2 className="text-white font-bold text-sm">Favorilerim</h2>
@@ -1296,11 +501,14 @@ const Profil = () => {
                 <span>Tümünü gör</span> <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
-              <p className="text-purple-300/60 text-xs italic">Henüz takip ettiğin eğitmen yok</p>
+              <button onClick={() => navigate('/konusmacilar')}
+                className="w-full bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl px-3 py-2 text-purple-200 text-xs font-semibold flex items-center justify-between transition spring-tap">
+                <span>Henüz takip ettiğin eğitmen yok — eğitmenlere bak</span> <ChevronRight className="w-4 h-4" />
+              </button>
             )}
           </div>
 
-          {/* Video favorileri — preview grid (Faz 4b) */}
+          {/* Video favorileri */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-purple-200 text-sm">Favori kayıtlı eğitimler</span>
@@ -1340,32 +548,38 @@ const Profil = () => {
                 <span>Tümünü gör</span> <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
-              <p className="text-purple-300/60 text-xs italic">Henüz favori eğitimin yok</p>
+              <button onClick={() => navigate('/kayitli-egitimler')}
+                className="w-full bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl px-3 py-2 text-purple-200 text-xs font-semibold flex items-center justify-between transition spring-tap">
+                <span>Henüz favori eğitimin yok — kayıtlı eğitimlere bak</span> <ChevronRight className="w-4 h-4" />
+              </button>
             )}
           </div>
         </section>
+
+        {/* ═══ EĞİTMEN ANALİTİĞİ — yalnız eğitmen hesapları ═══ */}
+        {userDoc?.egitmenCoreId && (
+          <div className="stagger-fade" style={{ animationDelay: '200ms' }}>
+            <EgitmenAnalyticsKart coreId={userDoc.egitmenCoreId} />
+          </div>
         )}
 
-        {/* Abonelikler + hatırlatmalar — Aktivite tab'ında */}
-        {aktifTab === 'yolculuk' && (
-        <section id="section-abonelikler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '650ms' }}>
+        {/* ═══ ABONELİKLER + HATIRLATMALAR ═══ */}
+        <section id="section-abonelikler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '250ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Bell className="w-4 h-4 text-blue-300" />
             <h2 className="text-white font-bold text-sm">Abonelikler & Hatırlatmalar</h2>
           </div>
 
-          {/* Abonelikler — toggle aktif (Faz 4d) */}
           <div className="space-y-2 mb-4">
             <AbonelikChip aktif={abonelikler.bulten} label="Haftalık bülten" onClick={toggleBulten}
               actionLabel={abonelikler.bulten ? 'İptal' : 'Abone ol'} />
             <AbonelikChip aktif={abonelikler.push} label="Web push bildirimi" onClick={togglePush}
               busy={pushBusy}
               actionLabel={abonelikler.push ? 'Kapat' : 'Aç'} />
-            <AbonelikChip aktif={abonelikler.takip > 0} label={`Konuşmacı takip (${abonelikler.takip})`} onClick={() => navigate('/konusmacilar?fav=1')}
+            <AbonelikChip aktif={abonelikler.takip > 0} label={`Eğitmen takip (${abonelikler.takip})`} onClick={() => navigate('/konusmacilar?fav=1')}
               actionLabel="Yönet" />
           </div>
 
-          {/* Hatırlatmalar */}
           <div className="pt-3 border-t border-white/10">
             <div className="flex items-center justify-between mb-2">
               <span className="text-purple-200 text-sm flex items-center gap-1.5">
@@ -1380,13 +594,11 @@ const Profil = () => {
                 {hatirlatmalar
                   .slice()
                   .sort((a, b) => {
-                    // En yakın gelecek tarih önce
                     const ta = a.gonderilecekZaman?.seconds || 0;
                     const tb = b.gonderilecekZaman?.seconds || 0;
                     return tb - ta;
                   })
                   .slice(0, 5).map(h => {
-                  // Tarih+saat formatla
                   let zamanStr = '';
                   if (h.tarih) {
                     zamanStr = h.tarih + (h.saat ? ' · ' + h.saat : '');
@@ -1426,24 +638,7 @@ const Profil = () => {
             )}
           </div>
         </section>
-        )}
 
-        {/* ═══ EĞİTMEN BAŞVURUSU CTA — Hakkımda tab'ında, son kart ═══ */}
-        {aktifTab === 'profil' && (
-        <section className="bg-gradient-to-br from-amber-400/15 via-purple-600/10 to-amber-400/15 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5 shadow-xl text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/20 border border-amber-300/40 mb-3">
-            <Users className="w-6 h-6 text-amber-300" />
-          </div>
-          <h3 className="text-white font-bold text-base mb-1">Eğitmen olmak ister misin?</h3>
-          <p className="text-purple-200 text-xs mb-4 leading-relaxed">
-            Bilgi birikimini paylaş, eğitim takvimimizde yer al.
-          </p>
-          <button onClick={() => navigate('/egitmen-basvuru')}
-            className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-6 py-2.5 rounded-xl text-sm shadow-lg spring-tap inline-flex items-center gap-2">
-            Başvur <ChevronRight className="w-4 h-4" />
-          </button>
-        </section>
-        )}
       </div>
 
       {/* iPhone home indicator için ekstra padding */}
@@ -1451,133 +646,11 @@ const Profil = () => {
 
       <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
       {bultenModalAcik && <BultenModal onClose={handleBultenClose} />}
-
-      {/* Seri açıklama modal */}
-      {streakAciklamaAcik && (
-        <SimpleModal onClose={() => setStreakAciklamaAcik(false)} title="Günlük Serin 🔥">
-          <div className="text-center py-4">
-            <Flame className="w-16 h-16 text-orange-400 mx-auto mb-3" fill="#fb923c" />
-            <div className="text-white text-3xl font-light mb-1">{streak.current} gün</div>
-            <p className="text-purple-200 text-sm">Üst üste site açtın</p>
-            <div className="mt-6 grid grid-cols-2 gap-3 text-left">
-              <div className="bg-white/5 rounded-lg p-3">
-                <div className="text-purple-300/70 text-[10px] uppercase">Rekor</div>
-                <div className="text-amber-300 font-bold text-lg">{streak.longest} gün</div>
-              </div>
-              <div className="bg-white/5 rounded-lg p-3">
-                <div className="text-purple-300/70 text-[10px] uppercase">Toplam Giriş</div>
-                <div className="text-white font-bold text-lg">{streak.total} gün</div>
-              </div>
-            </div>
-            <p className="text-purple-200/80 text-xs mt-5 leading-relaxed">
-              Her gün giriş yaparak serini büyütebilirsin. 1 gün atlarsan sıfırlanır 😔
-              {streak.current >= 7 && (<><br/><span className="text-amber-300 font-semibold">⚡ Disiplin rozeti kazandın!</span></>)}
-            </p>
-          </div>
-        </SimpleModal>
-      )}
-
-      {/* Sponsor WhatsApp template modal */}
-      {waModalAcik && sponsorWa && (
-        <SimpleModal onClose={() => setWaModalAcik(false)} title={`${sponsorAd}'a Mesaj Yaz`}>
-          <div className="space-y-2 mt-2">
-            <p className="text-purple-200 text-sm mb-4">Hızlı bir başlangıç için bir şablon seç:</p>
-            {[
-              { ikon: '👋', baslik: 'Merhaba', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, nasılsın? Sana selam etmek istedim.` },
-              { ikon: '📞', baslik: 'Görüşme İste', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, müsait olduğun bir zaman görüşmek isterim. Ne zaman uygun olursun?` },
-              { ikon: '❓', baslik: 'Soru Sor', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, eğitimle ilgili bir sorum var. Konuşmak için müsait misin?` },
-              { ikon: '🎓', baslik: 'Eğitim Önerisi', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, başlamam için hangi eğitimleri önerirsin?` },
-              { ikon: '✍️', baslik: 'Boş Mesaj', mesaj: '' },
-            ].map(t => (
-              <a key={t.baslik}
-                href={`https://wa.me/${sponsorWa}${t.mesaj ? '?text=' + encodeURIComponent(t.mesaj) : ''}`}
-                target="_blank" rel="noopener noreferrer"
-                onClick={() => setWaModalAcik(false)}
-                className="block bg-white/5 hover:bg-white/15 border border-white/10 hover:border-green-400/40 rounded-xl px-4 py-3 transition spring-tap">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{t.ikon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white font-bold text-sm">{t.baslik}</div>
-                    {t.mesaj && <div className="text-purple-200/70 text-xs mt-0.5 line-clamp-2">"{t.mesaj}"</div>}
-                  </div>
-                  <MessageCircle className="w-4 h-4 text-green-400" />
-                </div>
-              </a>
-            ))}
-          </div>
-        </SimpleModal>
-      )}
-
-      {/* Yıllık Wrapped kartı modal */}
-      {wrappedAcik && (
-        <WrappedKart
-          onClose={() => setWrappedAcik(false)}
-          fullName={fullName}
-          rank={a?.rank}
-          totalWatched={totalWatched}
-          completedCount={completedCount}
-          favCount={takipSet.size + videoFav.size}
-          streakLongest={streak.longest}
-          uyelikYil={profilVerisi?.uyelikSuresi?.yil || 0}
-        />
-      )}
-
-      {/* Uygulama içi Tanıtım editörü — dış onboarding'e çıkmadan (kaldığın yerden devam sorunu çözüldü) */}
-      {tanitimAcik && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => !tanitimKaydediliyor && setTanitimAcik(false)}>
-          <div className="bg-gradient-to-br from-purple-900 to-indigo-950 border border-white/15 rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10">
-              <div>
-                <h2 className="text-white font-extrabold text-lg inline-flex items-center gap-2"><Sparkles className="w-5 h-5 text-amber-300" />Tanıtım Metni</h2>
-                <p className="text-purple-200/70 text-xs mt-0.5">Kendini birkaç cümleyle anlat — profilinde görünür.</p>
-              </div>
-              <button onClick={() => setTanitimAcik(false)} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-4 sm:p-5">
-              <textarea value={tanitimMetni} onChange={e => setTanitimMetni(e.target.value.slice(0, 500))} rows={5} autoFocus
-                placeholder="Örn: 12 yıldır One Team yolculuğunda; sağlıklı yaşam ve girişimcilik tutkunu..."
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-amber-400/60 resize-none" />
-              <div className="text-right text-purple-300/50 text-[10px] mt-1">{tanitimMetni.length}/500</div>
-            </div>
-            <div className="p-4 border-t border-white/10 flex gap-2">
-              <button onClick={() => setTanitimAcik(false)} disabled={tanitimKaydediliyor} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50">İptal</button>
-              <button disabled={tanitimKaydediliyor || !tanitimMetni.trim() || !uid}
-                onClick={async () => {
-                  setTanitimKaydediliyor(true);
-                  try {
-                    await setDoc(doc(db, 'users', uid), { tanitim: tanitimMetni.trim(), tanitimGuncelleme: serverTimestamp() }, { merge: true });
-                    setTanitimAcik(false);
-                  } catch (e) { console.warn('[tanitim] kaydedilemedi:', e?.message); }
-                  finally { setTanitimKaydediliyor(false); }
-                }}
-                className="flex-[2] bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3 rounded-xl text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50">
-                {tanitimKaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{tanitimKaydediliyor ? 'Kaydediliyor…' : 'Kaydet'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-// Helpers — Amare brand: purple/glass + amber accent
-const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-    <Icon className="w-4 h-4 text-amber-300/80 flex-shrink-0" />
-    <span className="text-purple-200/80 text-xs flex-shrink-0">{label}</span>
-    <span className="text-white font-semibold text-sm truncate ml-auto">{value}</span>
-  </div>
-);
-
-const Stat = ({ label, value }) => (
-  <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-    <div className="text-purple-300/70 text-[10px] uppercase tracking-wider">{label}</div>
-    <div className="text-white font-bold text-sm mt-0.5">{value}</div>
-  </div>
-);
-
-// Count-up'lı + tıklanabilir StatCell (scroll anchor için)
+// Count-up'lı + tıklanabilir sayaç hücresi
 const StatCell = ({ label, value, highlight = false, scrollToId = null, delay = 0, suffix = '', tooltip = null }) => {
   const numValue = typeof value === 'number' ? value : parseInt(String(value).replace(/\D/g, ''), 10) || 0;
   const isNumeric = typeof value === 'number' || /^\d+/.test(String(value));
@@ -1620,84 +693,6 @@ const SectionTitle = ({ children, icon: Icon }) => (
     {Icon && <Icon className="w-3 h-3 text-amber-300" />}
     <h3 className="text-amber-300 text-[11px] font-bold uppercase tracking-[0.25em]">{children}</h3>
     <div className="flex-1 h-px bg-gradient-to-r from-amber-300/30 to-transparent" />
-  </div>
-);
-
-// Brand uyumlu basit modal — overlay + glass kart
-// Mobile uyumu: iOS Safari'de scroll çalışsın diye max-h + overflow-y-auto
-const SimpleModal = ({ onClose, title, children }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
-    <div className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 relative my-auto max-h-[90dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-      <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition z-10">
-        <X className="w-4 h-4" />
-      </button>
-      {title && <h3 className="text-white text-lg font-bold mb-2 pr-8">{title}</h3>}
-      {children}
-    </div>
-  </div>
-);
-
-// Yıllık Wrapped paylaşılabilir kart — Spotify Wrapped tarzı
-const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, favCount, streakLongest, uyelikYil }) => {
-  const yil = new Date().getFullYear();
-  const saat = Math.floor(totalWatched / 3600);
-
-  const handleShare = async () => {
-    const text = `🎉 ${yil} One Team Yıllık Özetim\n\n${fullName}\n${rank || ''}\n\n⏱️ ${saat} saat eğitim\n📚 ${completedCount} eğitim tamamlandı\n❤️ ${favCount} favori\n🔥 ${streakLongest} gün rekor seri\n💎 ${uyelikYil}+ yıl Marka Ortağı\n\negitimtakvimi.oneteamglobal.ai`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'One Team Yıllık Özetim', text }); }
-      catch {}
-    } else {
-      navigator.clipboard.writeText(text);
-      toast('Panoya kopyalandı', { type: 'success' });
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 relative overflow-hidden text-center my-auto max-h-[90dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition z-10">
-          <X className="w-4 h-4" />
-        </button>
-        {/* Bg deko */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-
-        <div className="relative">
-          <div className="text-white/80 text-xs uppercase tracking-[0.3em] font-bold mb-1">{yil}</div>
-          <h2 className="text-white text-3xl font-extrabold mb-1">One Team</h2>
-          <div className="text-white/90 text-2xl font-light italic mb-6">Yıllık Özetim</div>
-
-          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5 space-y-3 text-left mb-5">
-            <div className="flex items-center justify-between border-b border-white/20 pb-2">
-              <div>
-                <div className="text-white font-bold text-base">{fullName}</div>
-                {rank && <div className="text-white/80 text-xs uppercase tracking-wider">{rank}</div>}
-              </div>
-              <Trophy className="w-6 h-6 text-white/80" />
-            </div>
-            <WrappedRow label="Toplam Saat" value={`${saat}h`} />
-            <WrappedRow label="Tamamlanan Eğitim" value={completedCount} />
-            <WrappedRow label="Favori" value={favCount} />
-            <WrappedRow label="Rekor Seri" value={`${streakLongest} gün`} />
-            <WrappedRow label="Marka Ortaklığı" value={`${uyelikYil}+ yıl`} />
-          </div>
-
-          <button onClick={handleShare}
-            className="w-full bg-white hover:bg-white/95 text-orange-700 font-bold py-3 rounded-xl shadow-xl spring-tap inline-flex items-center justify-center gap-2">
-            <Share2 className="w-4 h-4" /> Paylaş
-          </button>
-          <p className="text-white/70 text-[10px] mt-3 tracking-wider">egitimtakvimi.oneteamglobal.ai</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const WrappedRow = ({ label, value }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-white/80 text-sm">{label}</span>
-    <span className="text-white font-bold text-base">{value}</span>
   </div>
 );
 

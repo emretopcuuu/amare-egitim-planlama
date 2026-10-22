@@ -635,6 +635,14 @@ html {
   html[data-gomulu] .bg-purple-900 { background-color: #161b23 !important; }
   html[data-gomulu] .bg-purple-800 { background-color: #1d232d !important; }
 
+  /* Sayfa kok gradyani (from-purple-900 via-purple-800 to-indigo-900) duzlesiyor:
+     takvimin petrolu ile uygulamanin gece laciverti yan yana ton tutmuyordu.
+     Uc sinif birden isteniyor -> yalniz sayfa zeminleri, modaller degil. */
+  html[data-gomulu] .from-purple-900.via-purple-800.to-indigo-900 {
+    background-image: none !important;
+    background-color: #0d1117 !important;
+  }
+
   /* Çerçeve çizgileri uygulamanınkiyle aynı: takvimin saç teli beyazı
      uygulamanın --line'ından daha soluk kalıyordu. */
   html[data-gomulu] .border-white\/10 { border-color: #262d38 !important; }
@@ -667,6 +675,12 @@ html {
     html[data-gomulu] .bg-zemin-yuzey,
     html[data-gomulu] .bg-purple-900 { background-color: #ffffff !important; }
     html[data-gomulu] .bg-purple-800 { background-color: #f6f8fa !important; }
+
+    /* Aynı gradyan açık temada: yoksa beyaz kabuğun içinde koyu ada kalıyor. */
+    html[data-gomulu] .from-purple-900.via-purple-800.to-indigo-900 {
+      background-image: none !important;
+      background-color: #f2f4f7 !important;
+    }
 
     /* Kart yüzeyleri: koyu temada "beyazın %4'ü" olan katman, açık temada
        gerçek beyaz karta dönüyor; çerçevesi onu zeminden ayırıyor. */
@@ -714,6 +728,16 @@ html {
     html[data-gomulu] .text-amber-300,
     html[data-gomulu] .text-amber-200,
     html[data-gomulu] .text-amber-100 { color: #8a6410 !important; }
+
+    /* Alfa'lı varyantlar ayrı sınıftır (yukarıdaki kural onlara uğramaz).
+       Attribute seçici hepsini birden yakalar — kod tabanında 20'den fazla
+       varyant var ve her yeni /xx kendiliğinden kapsanır.
+       Ölçülen: #8a6410 üzerinde #f2f4f7 → 4,96:1 · #55607a → 5,78:1 */
+    html[data-gomulu] [class*="text-amber-300/"],
+    html[data-gomulu] [class*="text-amber-200/"],
+    html[data-gomulu] [class*="text-amber-100/"] { color: #8a6410 !important; }
+    html[data-gomulu] [class*="text-purple-200/"],
+    html[data-gomulu] [class*="text-purple-300/"] { color: #55607a !important; }
 
     /* Altın zeminler: uygulamanın altını. Üzerindeki metin zaten koyu. */
     html[data-gomulu] .bg-amber-400,
