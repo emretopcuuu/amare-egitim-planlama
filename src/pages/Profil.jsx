@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
-import { getDocs, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getDocs, doc, getDoc, onSnapshot, setDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -27,9 +27,9 @@ import { egitmenFotosuBul } from '../utils/egitmenFotoMatch';
 import { maskPhone, normalizePhoneForWa } from '../utils/mask';
 import { useTakipEgitmenler } from '../utils/takip';
 import { parseFunnelAnswers, parseProfileAnswers } from '../utils/onboardingLabels';
-import { useWatchProgress, getTotalWatchedSeconds, getWeeklyWatchedSeconds, getCompletedCount } from '../utils/watchProgress';
+import { useWatchProgress, getTotalWatchedSeconds, getWeeklyWatchedSeconds, getCompletedCount, getWatchedSecondsSince, getWatchedIdsSince } from '../utils/watchProgress';
 import { updateStreak } from '../utils/streak';
-import { hesaplaXP, seviyeHesapla } from '../utils/xp';
+import { hesaplaXP, seviyeHesapla, haftalikGorevler, gorevXPHesapla, yeniTamamlananlar, haftaAnahtari, haftaBasiMs } from '../utils/xp';
 import XPHalka from '../components/XPHalka';
 import XPBar from '../components/XPBar';
 import HaftalikGorevler from '../components/HaftalikGorevler';
@@ -100,6 +100,9 @@ const Profil = () => {
   const [yarimKalan, setYarimKalan] = useState([]); // [{videoId, pct, t, baslik, thumbnailUrl}]
   const [favVideoMeta, setFavVideoMeta] = useState([]); // [{id, baslik, thumbnailUrl, egitmenAdlari}]
   const [streak, setStreak] = useState({ current: 0, longest: 0, total: 0 });
+  // Görev puanı kaydı (users/{uid}/meta/gorev_xp) — null = henüz okunmadı; okunmadan yazılmaz (23 Eki 2026)
+  const [gorevKaydi, setGorevKaydi] = useState(null);
+  const [haftalikEgitmen, setHaftalikEgitmen] = useState(0);
   const [streakAciklamaAcik, setStreakAciklamaAcik] = useState(false);
   const [wrappedAcik, setWrappedAcik] = useState(false);
   const [tanitimAcik, setTanitimAcik] = useState(false); // uygulama içi tanıtım editörü
@@ -119,6 +122,11 @@ const Profil = () => {
   const totalWatched = useMemo(() => getTotalWatchedSeconds(), [watchProgress.version]);
   const weeklyWatched = useMemo(() => getWeeklyWatchedSeconds(), [watchProgress.version]);
   const completedCount = useMemo(() => getCompletedCount(), [watchProgress.version]);
+  // Haftalık görevler TAKVİM haftasına bağlı (Pazartesi 00:00 TR): görev puanı haftada bir kez yazıldığı için kayan
+  // "son 7 gün" penceresi aynı izlemeyi iki haftaya saydırırdı.
+  const gorevHafta = haftaAnahtari();
+  const gorevHaftaBas = haftaBasiMs();
+  const buHaftaSaniye = useMemo(() => getWatchedSecondsSince(gorevHaftaBas), [watchProgress.version, gorevHaftaBas]);
 
   // Pull-to-refresh callback'i ref'te tut — profilVerisiFetch tanımı sonradan
   const fetchRef = useRef(null);
@@ -476,7 +484,8 @@ const Profil = () => {
     uyelikYili: profilVerisi?.uyelikSuresi?.yil || 0,
     rozetSayisi: rozetler.kazanilan.length,
     takipSayisi: takipSet.size,
-  }), [completedCount, totalWatched, streak.longest, profilVerisi?.davetAktifSayisi, profilVerisi?.uyelikSuresi?.yil, rozetler.kazanilan.length, takipSet.size]);
+    gorevXP: gorevXPHesapla(gorevKaydi),
+  }), [completedCount, totalWatched, streak.longest, profilVerisi?.davetAktifSayisi, profilVerisi?.uyelikSuresi?.yil, rozetler.kazanilan.length, takipSet.size, gorevKaydi]);
   const seviyeBilgi = useMemo(() => seviyeHesapla(xpToplam), [xpToplam]);
 
   // Profil tamamlama yüzdesi — engagement nudge için
@@ -531,6 +540,60 @@ const Profil = () => {
     const eksik = checks.filter(c => !c.done);
     return { pct, eksik, checks };
   }, [userDoc?.fotoURL, profilVerisi, takipSet.size, videoFav.size, completedCount, totalWatched, navigate]);
+
+  // ─── GÖREV PUANI (23 Eki 2026; Emre: "görev puanı haftada bir kez gerçekten eklensin") ───────────────────────
+  // Eskiden kart "✓ +150 XP" diyordu ama puan toplama girmiyordu. Tamamlanan görev kişinin KENDİ kaydına hafta
+  // anahtarıyla bir kez yazılır (Firestore kuralı: users/{uid}/meta yalnız sahibine açık); toplam XP o kayıttan büyür.
+  // Görev ancak bu ekran açıkken yazılır — kart bunu söylüyor (xp_gorev_not).
+  const gorevVeri = useMemo(() => ({
+    haftalikSaat: buHaftaSaniye / 3600,
+    haftalikEgitmenSayisi: haftalikEgitmen,
+    streakGun: streak.current || 0,
+    profilTamamlama: profilTamamlama.pct || 0,
+  }), [buHaftaSaniye, haftalikEgitmen, streak.current, profilTamamlama.pct]);
+
+  useEffect(() => {
+    if (!uid || isAnonymous) { setGorevKaydi(null); return; }
+    let iptal = false;
+    getDoc(doc(db, 'users', uid, 'meta', 'gorev_xp'))
+      .then(sn => { if (!iptal) setGorevKaydi(sn.exists() ? sn.data() : {}); })
+      .catch(e => console.warn('[profil] gorev_xp:', e.message));
+    return () => { iptal = true; };
+  }, [uid, isAnonymous]);
+
+  // "3 farklı eğitmenden eğitim al": bu hafta ≥1 dk izlenen videoların eğitmenleri (eskiden sayı sabit 0'dı — görev
+  // hiç tamamlanamıyordu). Video belgesi kayitli_egitimler'den (herkese açık okuma), en çok 30 video.
+  useEffect(() => {
+    const ids = getWatchedIdsSince(gorevHaftaBas).slice(0, 30);
+    if (!ids.length) { setHaftalikEgitmen(0); return; }
+    let iptal = false;
+    Promise.allSettled(ids.map(id => getDoc(doc(db, 'kayitli_egitimler', id)))).then(sonuc => {
+      const adlar = new Set();
+      sonuc.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.exists()) {
+          (r.value.data().egitmenAdlari || []).forEach(a => { const k = String(a || '').trim().toLocaleLowerCase('tr'); if (k) adlar.add(k); });
+        }
+      });
+      if (!iptal) setHaftalikEgitmen(adlar.size);
+    });
+    return () => { iptal = true; };
+  }, [watchProgress.version, gorevHaftaBas]);
+
+  useEffect(() => {
+    if (!gorevKaydi || !uid || isAnonymous) return;
+    const { haftalik, tekSefer } = yeniTamamlananlar(haftalikGorevler(gorevVeri), gorevKaydi, gorevHafta);
+    if (!haftalik.length && !tekSefer.length) return;
+    // Önce ekran (aynı görev ikinci kez yazılmasın diye), sonra kayıt; yazılamazsa bir sonraki açılışta yeniden denenir.
+    const yeni = { ...gorevKaydi, haftalar: { ...(gorevKaydi.haftalar || {}) } };
+    yeni.haftalar[gorevHafta] = [...new Set([...(yeni.haftalar[gorevHafta] || []), ...haftalik])];
+    tekSefer.forEach(k => { yeni[k] = true; });
+    setGorevKaydi(yeni);
+    const yaz = { guncel: serverTimestamp() };
+    if (haftalik.length) yaz.haftalar = { [gorevHafta]: arrayUnion(...haftalik) };
+    tekSefer.forEach(k => { yaz[k] = true; });
+    setDoc(doc(db, 'users', uid, 'meta', 'gorev_xp'), yaz, { merge: true })
+      .catch(e => console.warn('[profil] gorev_xp yaz:', e.message));
+  }, [gorevKaydi, gorevVeri, gorevHafta, uid, isAnonymous]);
 
   // Üyelik yıldönümü hesapla (Faz 4e)
   const yildonumu = useMemo(() => {
@@ -782,7 +845,7 @@ const Profil = () => {
       <div className="max-w-3xl mx-auto px-4 mt-2 sticky top-2 z-30">
         <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-4 divide-x divide-white/10 shadow-2xl overflow-hidden">
           <StatCell label="Toplam XP" value={xpToplam} highlight={xpToplam > 0} delay={0}
-            tooltip={`Seviye ${seviyeBilgi.seviye} · ${seviyeBilgi.kusak} — eğitim, izleme, streak ve üyelikten kazandığın XP`} />
+            tooltip={`Seviye ${seviyeBilgi.seviye} · ${t('xp_kusak_' + seviyeBilgi.kusak)} — eğitim, izleme, streak ve üyelikten kazandığın XP`} />
           <StatCell label="İzleme" suffix="sa" value={Math.floor(totalWatched / 3600) || 0}
             highlight={totalWatched > 0} delay={100}
             tooltip="Toplam izlediğin video saati"
@@ -888,12 +951,9 @@ const Profil = () => {
         {/* ═══ YOLCULUK: Haftalık görevler — McGonigal FIX #1 ═══ */}
         {aktifTab === 'yolculuk' && (
           <HaftalikGorevler
-            veri={{
-              haftalikSaat: weeklyWatched / 3600,
-              haftalikEgitmenSayisi: 0, // ileride watchProgress eğitmen takibi eklenince
-              streakGun: streak.current || 0,
-              profilTamamlama: profilTamamlama.pct || 0,
-            }}
+            veri={gorevVeri}
+            kayit={gorevKaydi}
+            hafta={gorevHafta}
             onProfilTamamla={() => {
               const el = document.getElementById('section-profil-tamamla');
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });

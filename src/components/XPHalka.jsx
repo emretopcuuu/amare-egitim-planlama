@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { seviyeHesapla, seviyeRenk } from '../utils/xp';
+import { useTranslation } from '../context/LanguageContext';
 
 /**
  * @param {object} props
@@ -17,6 +18,7 @@ import { seviyeHesapla, seviyeRenk } from '../utils/xp';
  * @param {number} [props.boyut=140] - halka dış çapı (px)
  */
 const XPHalka = ({ xp = 0, children, boyut = 140 }) => {
+  const { t } = useTranslation();
   const sv = seviyeHesapla(xp);
   const renk = seviyeRenk(sv.kusak);
 
@@ -58,7 +60,7 @@ const XPHalka = ({ xp = 0, children, boyut = 140 }) => {
             style={{ background: renk.rozet, color: renk.rozetBg }}
           >
             SV {sv.seviye}
-            <span className="opacity-80 font-bold">· {sv.kusak}</span>
+            <span className="opacity-80 font-bold">· {t('xp_kusak_' + sv.kusak)}</span>
           </span>
         </div>
       </div>

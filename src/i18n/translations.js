@@ -1,6 +1,20 @@
 const translations = {
   // ─── COMMON ────────────────────────────────────────────────────────────────
   tr: {
+    // XP + haftalık görevler (23 Eki 2026) — kademe adları Amare basamağına benzemesin
+    xp_kusak_baslangic: "Başlangıç",
+    xp_kusak_gelisim: "Gelişim",
+    xp_kusak_ustalik: "Ustalık",
+    xp_not_amare: "Uygulama içi gelişim puanı — Amare puanını ya da kariyerini etkilemez.",
+    xp_gorev_not: "Tamamlanan görevin puanı toplamına eklenir; her görev haftada bir kez sayılır.",
+    xp_gorevler_baslik: "Bu Haftanın Görevleri",
+    xp_gorev_tamam_sayisi: "{n}/{m} tamam",
+    xp_gorev_cesitlilik: "3 farklı eğitmenden eğitim al",
+    xp_gorev_streak5: "5 gün üst üste giriş yap",
+    xp_gorev_haftalik3saat: "Bu hafta 3 saat eğitim izle",
+    xp_gorev_profil: "Profilini %100 tamamla",
+    xp_max: "Maksimum seviye 👑",
+    xp_sonraki: "Sonraki seviyeye {xp} XP",
     // Mobil alt navigasyon (BottomNav)
     nav_home: 'Anasayfa',
     nav_calendar: 'Takvim',
@@ -373,6 +387,20 @@ const translations = {
 
   // ─── ENGLISH ────────────────────────────────────────────────────────────────
   en: {
+    // XP + haftalık görevler (23 Eki 2026) — kademe adları Amare basamağına benzemesin
+    xp_kusak_baslangic: "Starter",
+    xp_kusak_gelisim: "Growth",
+    xp_kusak_ustalik: "Mastery",
+    xp_not_amare: "In-app growth points — they don't affect your Amare points or career.",
+    xp_gorev_not: "Points from completed tasks are added to your total; each task counts once a week.",
+    xp_gorevler_baslik: "This Week's Tasks",
+    xp_gorev_tamam_sayisi: "{n}/{m} done",
+    xp_gorev_cesitlilik: "Learn from 3 different trainers",
+    xp_gorev_streak5: "Log in 5 days in a row",
+    xp_gorev_haftalik3saat: "Watch 3 hours of training this week",
+    xp_gorev_profil: "Complete your profile to 100%",
+    xp_max: "Max level 👑",
+    xp_sonraki: "{xp} XP to next level",
     // Mobile bottom navigation (BottomNav)
     nav_home: 'Home',
     nav_calendar: 'Calendar',
@@ -735,6 +763,20 @@ const translations = {
 
   // ─── GERMAN ─────────────────────────────────────────────────────────────────
   de: {
+    // XP + haftalık görevler (23 Eki 2026) — kademe adları Amare basamağına benzemesin
+    xp_kusak_baslangic: "Einstieg",
+    xp_kusak_gelisim: "Wachstum",
+    xp_kusak_ustalik: "Meisterschaft",
+    xp_not_amare: "Punkte für deine Entwicklung in der App – sie beeinflussen weder deine Amare-Punkte noch deine Karriere.",
+    xp_gorev_not: "Punkte erledigter Aufgaben zählen zu deiner Summe; jede Aufgabe zählt einmal pro Woche.",
+    xp_gorevler_baslik: "Aufgaben dieser Woche",
+    xp_gorev_tamam_sayisi: "{n}/{m} erledigt",
+    xp_gorev_cesitlilik: "Lerne von 3 verschiedenen Trainern",
+    xp_gorev_streak5: "Melde dich 5 Tage in Folge an",
+    xp_gorev_haftalik3saat: "Schau diese Woche 3 Stunden Training",
+    xp_gorev_profil: "Vervollständige dein Profil auf 100 %",
+    xp_max: "Höchstes Level 👑",
+    xp_sonraki: "Noch {xp} XP bis zum nächsten Level",
     // Mobile untere Navigation (BottomNav)
     nav_home: 'Start',
     nav_calendar: 'Kalender',
@@ -1096,6 +1138,20 @@ const translations = {
   },
 
   nl: {
+    // XP + haftalık görevler (23 Eki 2026) — kademe adları Amare basamağına benzemesin
+    xp_kusak_baslangic: "Starter",
+    xp_kusak_gelisim: "Groei",
+    xp_kusak_ustalik: "Meesterschap",
+    xp_not_amare: "Groeipunten in de app — ze hebben geen invloed op je Amare-punten of carrière.",
+    xp_gorev_not: "Punten van voltooide taken tellen mee in je totaal; elke taak telt één keer per week.",
+    xp_gorevler_baslik: "Taken van deze week",
+    xp_gorev_tamam_sayisi: "{n}/{m} klaar",
+    xp_gorev_cesitlilik: "Leer van 3 verschillende trainers",
+    xp_gorev_streak5: "Log 5 dagen op rij in",
+    xp_gorev_haftalik3saat: "Kijk deze week 3 uur training",
+    xp_gorev_profil: "Maak je profiel 100% compleet",
+    xp_max: "Hoogste niveau 👑",
+    xp_sonraki: "Nog {xp} XP tot het volgende niveau",
     // Mobiele onderste navigatie (BottomNav)
     nav_home: 'Home',
     nav_calendar: 'Agenda',

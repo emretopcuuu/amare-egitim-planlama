@@ -33,6 +33,7 @@ export const XP_AGIRLIK = {
  * @param {number} v.uyelikYili   - tam üyelik yılı
  * @param {number} v.rozetSayisi  - kazanılan rozet sayısı
  * @param {number} v.takipSayisi  - takip edilen eğitmen sayısı
+ * @param {number} v.gorevXP      - tamamlanmış görevlerin kalıcı puanı (gorevXPHesapla; 23 Eki 2026)
  * @returns {number} toplam XP (tam sayı)
  */
 export function hesaplaXP(v = {}) {
@@ -44,17 +45,20 @@ export function hesaplaXP(v = {}) {
     (v.davetAktif || 0) * XP_AGIRLIK.davetAktif +
     (v.uyelikYili || 0) * XP_AGIRLIK.uyelikYili +
     (v.rozetSayisi || 0) * XP_AGIRLIK.rozet +
-    (v.takipSayisi || 0) * XP_AGIRLIK.takipEgitmen;
+    (v.takipSayisi || 0) * XP_AGIRLIK.takipEgitmen +
+    (v.gorevXP || 0);
   return Math.max(0, Math.round(xp));
 }
 
 // ─── Seviye sistemi ─────────────────────────────────────────────────────────
-// 3 kuşak: BP (1-10), Leader (11-20), Diamond (21-30)
+// 3 kuşak: Başlangıç (1-10), Gelişim (11-20), Ustalık (21-30). Ekranda ad t('xp_kusak_<ad>') ile yazılır.
+// 🔴 23 Eki 2026 (Emre): adlar eskiden "BP / Leader / Diamond"du — Amare basamağı sanıldı ("SV 7 · BP"; Ahmet Dursun
+// "XP'ler neyi ifade ediyor?" diye sordu). XP uygulama içi gelişim puanıdır, Amare kariyerine adlar bile benzemesin.
 // Her kuşakta seviye başına gereken XP artar — ilerledikçe daha zor (flow)
 const KUSAK = [
-  { ad: 'BP',      minSv: 1,  maxSv: 10, svBasinaXP: 500 },
-  { ad: 'Leader',  minSv: 11, maxSv: 20, svBasinaXP: 750 },
-  { ad: 'Diamond', minSv: 21, maxSv: 30, svBasinaXP: 1000 },
+  { ad: 'baslangic', minSv: 1,  maxSv: 10, svBasinaXP: 500 },
+  { ad: 'gelisim',   minSv: 11, maxSv: 20, svBasinaXP: 750 },
+  { ad: 'ustalik',   minSv: 21, maxSv: 30, svBasinaXP: 1000 },
 ];
 
 // Sv N'e ulaşmak için gereken KÜMÜLATİF XP (Sv 1 = 0 XP)
@@ -105,6 +109,64 @@ export function seviyeHesapla(xp) {
   };
 }
 
+// ─── Görev puanı (23 Eki 2026; Emre: "görev puanı haftada bir kez gerçekten eklensin") ───────────────
+// Eskiden görev kartı "✓ +150 XP" diyordu ama puan toplama HİÇ girmiyordu (hesaplaXP görevleri içermiyordu).
+// Artık tamamlanan görev kişinin kendi kaydına (users/{uid}/meta/gorev_xp) hafta anahtarıyla BİR KEZ yazılır;
+// toplam o kayıttan büyür. "profil" tek seferliktir (her hafta +100 vermez). Hafta = Pazartesi 00:00 TR.
+export const GOREV_XP = { cesitlilik: 150, streak5: 200, haftalik3saat: 120, profil: 100 };
+export const GOREV_TEK_SEFER = ['profil'];
+const TR_MS = 3 * 3600 * 1000;               // Türkiye UTC+3 (2016'dan beri yaz saati yok)
+
+/** O anın TR takvim haftasının başı (Pazartesi 00:00 TR), ms. */
+export function haftaBasiMs(an = Date.now()) {
+  const d = new Date(an + TR_MS);
+  const gun = (d.getUTCDay() + 6) % 7;        // Pazartesi = 0
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - gun) - TR_MS;
+}
+
+/** ISO hafta anahtarı (TR saatiyle), ör. "2026-W43". */
+export function haftaAnahtari(an = Date.now()) {
+  const d = new Date(an + TR_MS);
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  t.setUTCDate(t.getUTCDate() + 3 - ((t.getUTCDay() + 6) % 7));        // haftanın Perşembe'si
+  const yil = t.getUTCFullYear();
+  const ilk = new Date(Date.UTC(yil, 0, 4));
+  const no = 1 + Math.round(((t - ilk) / 86400000 - 3 + ((ilk.getUTCDay() + 6) % 7)) / 7);
+  return `${yil}-W${String(no).padStart(2, '0')}`;
+}
+
+/** Kayıttan görev XP'si: her hafta her görev bir kez, tek seferlik görev bir kez. Bilinmeyen anahtar sayılmaz. */
+export function gorevXPHesapla(kayit) {
+  if (!kayit) return 0;
+  let xp = 0;
+  for (const anahtarlar of Object.values(kayit.haftalar || {})) {
+    for (const k of new Set(Array.isArray(anahtarlar) ? anahtarlar : [])) {
+      if (!GOREV_TEK_SEFER.includes(k) && GOREV_XP[k]) xp += GOREV_XP[k];
+    }
+  }
+  for (const k of GOREV_TEK_SEFER) if (kayit[k] === true) xp += GOREV_XP[k];
+  return xp;
+}
+
+/** Bu hafta tamamlanıp henüz kayda geçmemiş görevler: { haftalik: [anahtar], tekSefer: [anahtar] }. */
+export function yeniTamamlananlar(gorevler, kayit, hafta) {
+  const bu = new Set((kayit && kayit.haftalar && kayit.haftalar[hafta]) || []);
+  const haftalik = [], tekSefer = [];
+  for (const g of gorevler || []) {
+    if (!g.tamam) continue;
+    if (GOREV_TEK_SEFER.includes(g.key)) { if (!(kayit && kayit[g.key] === true)) tekSefer.push(g.key); }
+    else if (!bu.has(g.key)) haftalik.push(g.key);
+  }
+  return { haftalik, tekSefer };
+}
+
+/** Görev kartının "sayıldı" bilgisi: bu hafta kayda geçti mi (tek seferlikte hiç geçti mi). */
+export function gorevSayildiMi(key, kayit, hafta) {
+  if (!kayit) return false;
+  if (GOREV_TEK_SEFER.includes(key)) return kayit[key] === true;
+  return ((kayit.haftalar && kayit.haftalar[hafta]) || []).includes(key);
+}
+
 // ─── Haftalık görev kuralları ──────────────────────────────────────────────
 // Otomatik üretilir — mevcut haftalık veriden hesaplanır, admin yönetimi gerekmez.
 // Her görev: { key, baslik, hedef, mevcut (fn), xp, ikon }
@@ -112,7 +174,7 @@ export function seviyeHesapla(xp) {
 /**
  * Haftalık görevleri hesapla.
  * @param {object} h - haftalık veriler
- * @param {number} h.haftalikSaat   - bu hafta izleme saati
+ * @param {number} h.haftalikSaat   - bu hafta (Pazartesi'den beri, TR) izleme saati
  * @param {number} h.haftalikEgitmenSayisi - bu hafta farklı eğitmen sayısı
  * @param {number} h.streakGun      - mevcut streak günü
  * @param {number} h.profilTamamlama - 0-100 profil tamamlama yüzdesi
@@ -122,35 +184,35 @@ export function haftalikGorevler(h = {}) {
   const ham = [
     {
       key: 'cesitlilik',
-      baslik: '3 farklı eğitmenden eğitim al',
+      baslik: 'xp_gorev_cesitlilik',
       ikon: 'users',
       mevcut: h.haftalikEgitmenSayisi || 0,
       hedef: 3,
-      xp: 150,
+      xp: GOREV_XP.cesitlilik,
     },
     {
       key: 'streak5',
-      baslik: '5 gün üst üste giriş yap',
+      baslik: 'xp_gorev_streak5',
       ikon: 'flame',
       mevcut: Math.min(h.streakGun || 0, 5),
       hedef: 5,
-      xp: 200,
+      xp: GOREV_XP.streak5,
     },
     {
       key: 'haftalik3saat',
-      baslik: 'Bu hafta 3 saat eğitim izle',
+      baslik: 'xp_gorev_haftalik3saat',
       ikon: 'clock',
       mevcut: Math.min(Math.round((h.haftalikSaat || 0) * 10) / 10, 3),
       hedef: 3,
-      xp: 120,
+      xp: GOREV_XP.haftalik3saat,
     },
     {
       key: 'profil',
-      baslik: 'Profilini %100 tamamla',
+      baslik: 'xp_gorev_profil',
       ikon: 'user-check',
       mevcut: h.profilTamamlama || 0,
       hedef: 100,
-      xp: 100,
+      xp: GOREV_XP.profil,
     },
   ];
   return ham.map(g => {
@@ -164,8 +226,8 @@ export function haftalikGorevler(h = {}) {
  */
 export function seviyeRenk(kusak) {
   switch (kusak) {
-    case 'Diamond': return { ring: '#22d3ee', rozet: '#0e7490', rozetBg: '#cffafe' }; // turkuaz
-    case 'Leader':  return { ring: '#a78bfa', rozet: '#5b21b6', rozetBg: '#ede9fe' }; // mor
+    case 'ustalik': return { ring: '#22d3ee', rozet: '#0e7490', rozetBg: '#cffafe' }; // turkuaz
+    case 'gelisim': return { ring: '#a78bfa', rozet: '#5b21b6', rozetBg: '#ede9fe' }; // mor
     default:        return { ring: '#fbbf24', rozet: '#854f0b', rozetBg: '#fef3c7' }; // altın
   }
 }

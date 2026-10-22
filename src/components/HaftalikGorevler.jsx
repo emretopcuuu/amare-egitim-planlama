@@ -7,11 +7,14 @@
 
 import React from 'react';
 import { Users, Flame, Clock, UserCheck, Check, Target } from 'lucide-react';
-import { haftalikGorevler } from '../utils/xp';
+import { haftalikGorevler, gorevSayildiMi } from '../utils/xp';
+import { useTranslation } from '../context/LanguageContext';
 
 const IKON = { users: Users, flame: Flame, clock: Clock, 'user-check': UserCheck };
 
-const HaftalikGorevler = ({ veri = {}, onProfilTamamla }) => {
+// kayit/hafta (23 Eki 2026): görev puanı kişinin kaydına haftada bir kez yazılır (Profil); kart "sayıldı"yı oradan bilir.
+const HaftalikGorevler = ({ veri = {}, kayit = null, hafta = '', onProfilTamamla }) => {
+  const { t } = useTranslation();
   const gorevler = haftalikGorevler(veri);
   const tamamSayisi = gorevler.filter(g => g.tamam).length;
 
@@ -20,12 +23,13 @@ const HaftalikGorevler = ({ veri = {}, onProfilTamamla }) => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-amber-300" />
-          <h3 className="text-white font-bold text-sm">Bu Haftanın Görevleri</h3>
+          <h3 className="text-white font-bold text-sm">{t('xp_gorevler_baslik')}</h3>
         </div>
         <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">
-          {tamamSayisi}/{gorevler.length} tamam
+          {t('xp_gorev_tamam_sayisi').replace('{n}', tamamSayisi).replace('{m}', gorevler.length)}
         </span>
       </div>
+      <p className="text-white/50 text-[11px] -mt-1 mb-3">{t('xp_gorev_not')}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {gorevler.map(g => {
@@ -54,7 +58,7 @@ const HaftalikGorevler = ({ veri = {}, onProfilTamamla }) => {
                     : <Icon className="w-5 h-5 text-amber-300" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-[13px] font-semibold leading-snug">{g.baslik}</p>
+                  <p className="text-white text-[13px] font-semibold leading-snug">{t(g.baslik)}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                       <div
@@ -71,7 +75,7 @@ const HaftalikGorevler = ({ veri = {}, onProfilTamamla }) => {
               <div className={`absolute top-3 right-3 text-[11px] font-bold ${
                 g.tamam ? 'text-emerald-300' : 'text-amber-300/80'
               }`}>
-                {g.tamam ? '✓ +' + g.xp : '+' + g.xp} XP
+                {g.tamam && gorevSayildiMi(g.key, kayit, hafta) ? '✓ +' + g.xp : '+' + g.xp} XP
               </div>
             </div>
           );
