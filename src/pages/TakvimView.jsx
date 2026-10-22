@@ -1725,7 +1725,7 @@ const TakvimView = () => {
                 ) : (
                   <div className="flex items-center gap-1">
                     <button onClick={() => navigate('/profil')}
-                      title="Profilim"
+                      title="Eğitimim"
                       className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/15 text-purple-200 px-3 py-2 rounded-xl text-[13px] font-semibold transition spring-tap">
                       <div className="w-2 h-2 rounded-full bg-amber-400" />
                       <span className="hidden sm:inline">{displayName?.split(' ')[0] || email?.split('@')[0] || 'Marka Ortağı'}</span>

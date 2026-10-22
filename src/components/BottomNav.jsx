@@ -1,7 +1,7 @@
 // Mobile alt navigasyon — md:hidden ile sadece küçük ekranlarda
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, Users, Video, UserCircle } from 'lucide-react';
+import { Home, Calendar, Users, Video, GraduationCap } from 'lucide-react';
 import { preloadRoute } from '../utils/useRoutePreload';
 import { useTranslation } from '../context/LanguageContext';
 import { gomuluMu } from '../utils/gomulu';
@@ -13,7 +13,7 @@ const ITEMS = [
   { to: '/takvim',            labelKey: 'nav_calendar', Icon: Calendar,   tourId: 'nav-takvim' },
   { to: '/konusmacilar',      labelKey: 'nav_trainers', Icon: Users,      tourId: 'nav-egitmenler' },
   { to: '/kayitli-egitimler', labelKey: 'nav_recorded', Icon: Video,      tourId: 'nav-kayitli' },
-  { to: '/profil',            labelKey: 'nav_profile',  Icon: UserCircle, tourId: 'nav-profil' },
+  { to: '/profil',            labelKey: 'nav_profile',  Icon: GraduationCap, tourId: 'nav-profil' },
 ];
 
 const BottomNav = () => {

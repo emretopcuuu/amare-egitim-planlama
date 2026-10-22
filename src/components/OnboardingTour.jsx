@@ -46,8 +46,8 @@ const ADIMLAR = [
     renk: 'emerald',
     baslik: 'Eğitim Yolun',
     ozet: 'Kariyere özel curriculum',
-    metin: 'Profilinde rank\'ına özel 3 zorunlu + öneri video bekliyor. Tamamladıkça otomatik bir sonraki rank açılır. Streak, rozet, hatırlatma — hepsi takipte.',
-    cta: { label: 'Profilime git', path: '/profil' },
+    metin: 'Eğitimim sayfanda rütbene özel 3 zorunlu + öneri video bekliyor. Tamamladıkça bir sonraki rütbe açılır. Yarım kalanlar, favorilerin ve hatırlatmaların da orada.',
+    cta: { label: 'Eğitimime git', path: '/profil' },
   },
   {
     icon: Users,

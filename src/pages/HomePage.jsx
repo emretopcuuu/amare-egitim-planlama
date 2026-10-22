@@ -224,7 +224,7 @@ const HomePage = () => {
             {currentUser ? (
               <button onClick={() => navigate('/profil')}
                 className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap max-w-[200px] sm:max-w-[260px]"
-                title="Profilime git">
+                title="Eğitimime git">
                 <User className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">
                   {profilAdi || t('hp_profilim')}
