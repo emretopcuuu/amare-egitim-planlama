@@ -229,6 +229,26 @@ export function getWeeklyWatchedSeconds() {
   return total;
 }
 
+// Belli bir andan (ör. Pazartesi 00:00 TR) beri izlenen süre — haftalık görevler takvim haftasına bağlı (23 Eki 2026).
+// Kural getWeeklyWatchedSeconds'ın aynısı; yalnız pencere "son 7 gün" yerine verilen andan beri.
+export function getWatchedSecondsSince(basMs) {
+  const all = loadAll();
+  let total = 0;
+  for (const p of Object.values(all)) {
+    if (!p || !p.lastSeen || p.lastSeen < basMs) continue;
+    total += (p.pct >= COMPLETED_PCT) ? (p.duration || 0) : (p.t || 0);
+  }
+  return total;
+}
+
+// Belli bir andan beri en az 1 dakika izlenen videoların kimlikleri (eğitmen çeşitliliği görevi için).
+export function getWatchedIdsSince(basMs, enAzSn = 60) {
+  const all = loadAll();
+  return Object.entries(all)
+    .filter(([, p]) => p && p.lastSeen >= basMs && ((p.t || 0) >= enAzSn || p.pct >= COMPLETED_PCT))
+    .map(([id]) => id);
+}
+
 // Tamamlanmış video sayısı
 export function getCompletedCount() {
   const all = loadAll();
