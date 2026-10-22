@@ -58,7 +58,9 @@ export const makeCoreId = (ad) => {
   s = s.replace(/\s+(İLE|ILE|VE|SÖYLEŞİ|SÖYLEŞI|SOYLESI|ile|ve|söyleşi)\.{0,3}\s*$/gi, '').trim();
   return s ? makeSafeId(s) : makeSafeId(clean);
 };
-import * as XLSX from 'xlsx';
+// xlsx burada STATİK import EDİLMEZ: yalnız admin Excel yüklemesinde
+// gerekiyor ama DataContext uygulamanın kökünde, yani 132KB herkese
+// her ziyarette iniyordu. exceldenTakvimYukle içinde dinamik yükleniyor.
 
 const DataContext = createContext();
 
@@ -622,6 +624,8 @@ export const DataProvider = ({ children }) => {
   // Excel'den takvim yükle
   const exceldenTakvimYukle = async (file) => {
     try {
+      // Excel kütüphanesi ancak gerçekten dosya yüklenirken iniyor.
+      const XLSX = await import('xlsx');
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];

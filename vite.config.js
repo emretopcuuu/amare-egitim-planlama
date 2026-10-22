@@ -20,6 +20,14 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: sentryPlugins.length > 0, // Sentry varsa source map üret + upload et
     chunkSizeWarningLimit: 1000,
+    // PDF ve Excel paketleri DİNAMİK import ediliyor ama Vite onları yine de
+    // index.html'e modulepreload olarak koyuyordu; "tembel" olmalarına rağmen
+    // ilk açılışta iniyorlardı (ölçüldü: 322KB, kullanılmadan). Ön yükleme
+    // listesinden çıkarıldılar — gerçekten gerektiğinde iniyorlar.
+    modulePreload: {
+      resolveDependencies: (_url, deps) =>
+        deps.filter((d) => !/pdf-vendor|xlsx-vendor/.test(d)),
+    },
     rollupOptions: {
       output: {
         // Code splitting — vendor + büyük kütüphaneleri ayır

@@ -605,22 +605,53 @@ html {
   /* Üst pay: uygulamanın başlığı hemen üstte duruyor, sayfanın kendi 24px'lik
      payı iki başlık arasında boş şerit bırakıyordu. */
   html[data-gomulu] [data-kabuk="ustpay"] { padding-top: .5rem; }
+
+  /* 2b) Sayfa başlığı: uygulamanın kendi başlık çubuğu zaten "Eğitim Takvimi"
+         yazıyor; aynı başlığı ikinci kez basmak ekranda iki başlık üretiyordu
+         (Emre, 22 Eki, ekran görüntüsüyle). Başlık gidiyor, altındaki sayaç
+         ("77 eğitim") bilgi taşıdığı için kalıyor ve üste çekiliyor. */
+  html[data-gomulu] [data-kabuk="baslik"] { display: none !important; }
+  html[data-gomulu] [data-kabuk="sayac"] { margin-top: 0; }
   /* Misafirken bar tamamen gitmiyor (giriş düğmesi kalıyor, bkz. #884) —
      o tek düğme koca bir satır kaplamasın: satır sıkışıyor ve düğme küçülüyor. */
   html[data-gomulu] [data-kabuk="ustpay"] > div > div:first-child { margin-bottom: 0 }
   html[data-gomulu] [data-kabuk="ustpay"] button { padding-top: .35rem; padding-bottom: .35rem }
 
-  /* 3) ZEMİN: takvimin moru yerine uygulamanın gece laciverti. İki marka
-        yan yana çarpışıyordu; altın vurgular zaten ortak, çarpışan tek şey
-        mordu. Kartların kendi yüzeyleri de aynı aileye çekiliyor. */
-  html[data-gomulu] .from-purple-900.via-purple-800.to-indigo-900,
-  html[data-gomulu] .from-purple-950.via-purple-900.to-indigo-950 {
-    background-image: linear-gradient(160deg, #09191F 0%, #12303B 100%) !important;
-  }
-  html[data-gomulu] .bg-purple-950 { background-color: #0B1F27 !important; }
-  html[data-gomulu] .bg-purple-900 { background-color: #12303B !important; }
-  /* Dekor mor blur'ları sakinleşiyor: lacivert üstünde mor leke olarak kalıyorlardı. */
-  html[data-gomulu] .bg-purple-500\/20 { background-color: rgba(91,127,158,.18) !important; }
+  /* 3) RENKLER: takvimin kendi petrolü yerine UYGULAMANIN tonları.
+        Uygulamanın paleti (oneteamai-automation/cloudflare/app/index.html):
+          koyu  --bg #0d1117 · --surf #161b23 · --surf-2 #1d232d · --line #262d38
+          altın --gold #e3a63a (koyu) / #e8a317 (açık)
+        iframe kapsayıcısı .wgovde{background:var(--surf)} olduğu için takvimin
+        zemini uygulamanın yüzeyiyle aynı aileye giriyor.
+
+        🔴 Eski kurallar MOR palete göre yazılmıştı (from-purple-900 … gradyanları).
+        Palet Ekim 2026'da petrole dönünce o seçiciler hiçbir şeye eşleşmez oldu
+        ve blok sessizce işlevsiz kaldı. Artık güncel sınıflar hedefleniyor. */
+  html[data-gomulu] body,
+  html[data-gomulu] .bg-zemin { background-color: #0d1117 !important; }
+  html[data-gomulu] .bg-zemin-koyu { background-color: #0d1117 !important; }
+  html[data-gomulu] .bg-zemin-yuzey { background-color: #161b23 !important; }
+  html[data-gomulu] .bg-purple-950 { background-color: #0d1117 !important; }
+  html[data-gomulu] .bg-purple-900 { background-color: #161b23 !important; }
+  html[data-gomulu] .bg-purple-800 { background-color: #1d232d !important; }
+
+  /* Çerçeve çizgileri uygulamanınkiyle aynı: takvimin saç teli beyazı
+     uygulamanın --line'ından daha soluk kalıyordu. */
+  html[data-gomulu] .border-white\/10 { border-color: #262d38 !important; }
+  html[data-gomulu] .border-white\/15 { border-color: #333b48 !important; }
+
+  /* Altın: takvimin şampanyası (#C4A65C) ile uygulamanın altını (#e3a63a)
+     yan yana iki ayrı sarı gibi duruyordu. Gömülü modda tek altın kalıyor. */
+  html[data-gomulu] .bg-amber-400 { background-color: #e3a63a !important; }
+  html[data-gomulu] .bg-amber-500 { background-color: #c98f2c !important; }
+  html[data-gomulu] .text-amber-300,
+  html[data-gomulu] .text-amber-200 { color: #e3a63a !important; }
+  html[data-gomulu] .border-amber-400\/30,
+  html[data-gomulu] .border-amber-400\/40,
+  html[data-gomulu] .border-amber-300\/50 { border-color: rgba(227,166,58,.45) !important; }
+
+  /* Dekor mor/petrol blur'ları sakinleşiyor. */
+  html[data-gomulu] .bg-purple-500\/20 { background-color: rgba(123,163,196,.16) !important; }
 
   /* ── Bottom sheet slide-in ────────────────────────────────── */
   .animate-slide-up {

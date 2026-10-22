@@ -1740,8 +1740,8 @@ const TakvimView = () => {
                 )}
               </div>
             </div>
-            <h1 className="text-4xl md:text-4xl font-extrabold text-white mt-3">{t('cal_title')}</h1>
-            <p className="text-purple-200 mt-1">{filtrelenmis.length} {t('cal_trainings')}</p>
+            <h1 className="text-4xl md:text-4xl font-extrabold text-white mt-3" data-kabuk="baslik">{t('cal_title')}</h1>
+            <p className="text-purple-200 mt-1" data-kabuk="sayac">{filtrelenmis.length} {t('cal_trainings')}</p>
           </div>
         </div>
 
