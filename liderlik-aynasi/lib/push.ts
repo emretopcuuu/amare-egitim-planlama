@@ -18,6 +18,35 @@ function hazirla(): boolean {
   return true;
 }
 
+// [KAPATMA] GLOBAL BİLDİRİM ANAHTARI — settings.bildirim_kapali = "true" iken
+// katılımcılara HİÇBİR ŞEY gitmez: ne anlık push, ne gelen-kutusu kaydı.
+// 90 gün bitince gelen "AYNA kimseyi dürtmesin" talebi için TEK merkez: tik,
+// olaylar, akıllı dürtme, şahit "Dürt" düğmesi, puanlama, admin duyurusu —
+// 27 herkeseBildir + yüzlerce katilimciyaBildir çağrısı bu kapıdan geçer, yeni
+// bir çağrı eklense bile tek tek hatırlamaya gerek kalmaz. adminlereBildir bu
+// kapıdan MUAF: sistem sağlığı alarmları yöneticiye gitmeye devam eder.
+// Tik tek turda yüzlerce bildirim atabildiği için ayar 60 sn önbelleklenir.
+// Ayar okunamazsa mevcut davranışa (gönder) düşülür — prova kilidiyle tutarlı.
+let kapaliOnbellek: { deger: boolean; zaman: number } | null = null;
+
+async function bildirimKapaliMi(db: Db): Promise<boolean> {
+  const simdi = Date.now();
+  if (kapaliOnbellek && simdi - kapaliOnbellek.zaman < 60_000) return kapaliOnbellek.deger;
+  let deger = false;
+  try {
+    const { data } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", "bildirim_kapali")
+      .maybeSingle();
+    deger = data?.value === "true";
+  } catch {
+    deger = false;
+  }
+  kapaliOnbellek = { deger, zaman: simdi };
+  return deger;
+}
+
 type AboneSatiri = { id: string; endpoint: string; p256dh: string; auth: string };
 
 async function aboneyeGonder(
@@ -42,12 +71,14 @@ async function aboneyeGonder(
   }
 }
 
-export async function katilimciyaBildir(
+// Kapıdan geçmeyen ham gönderim — katilimciyaBildir (kapılı) ve
+// adminlereBildir (muaf) ikisi de bunu kullanır.
+async function bildirimGonderHam(
   db: Db,
   participantId: string,
   baslik: string,
   govde: string,
-  url = "/gorevler"
+  url: string
 ): Promise<void> {
   // 1) GELEN KUTUSU: push olsun olmasın her bildirim kalıcı saklanır (geçmiş +
   //    okunmamış sayısı + detay + bağlantı). Push gelmese de kişi buradan görür.
@@ -67,8 +98,20 @@ export async function katilimciyaBildir(
   await Promise.all(data.map((a) => aboneyeGonder(db, a, yuk)));
 }
 
+export async function katilimciyaBildir(
+  db: Db,
+  participantId: string,
+  baslik: string,
+  govde: string,
+  url = "/gorevler"
+): Promise<void> {
+  if (await bildirimKapaliMi(db)) return; // [KAPATMA] katılımcıya hiçbir şey gitmez
+  await bildirimGonderHam(db, participantId, baslik, govde, url);
+}
+
 // [ADMIN-UX6] Tüm adminlere push + gelen kutusu. zirveHazirlikUyar'daki elle
 // tekrarlanan kalıbın ortak hali — sistem sağlığı alarmları da bunu kullanır.
+// [KAPATMA] kapısından MUAF: anahtar kapalıyken de yöneticiye alarm gider.
 export async function adminlereBildir(
   db: Db,
   baslik: string,
@@ -77,7 +120,7 @@ export async function adminlereBildir(
 ): Promise<void> {
   const { data: adminler } = await db.from("participants").select("id").eq("role", "admin");
   for (const a of adminler ?? []) {
-    await katilimciyaBildir(db, a.id, baslik, govde, url).catch(() => {});
+    await bildirimGonderHam(db, a.id, baslik, govde, url).catch(() => {});
   }
 }
 
@@ -87,6 +130,7 @@ export async function herkeseBildir(
   govde: string,
   url = "/program"
 ): Promise<void> {
+  if (await bildirimKapaliMi(db)) return; // [KAPATMA] 150'lik yayınlar dahil hiçbir şey gitmez
   // GÜVENLİK KİLİDİ: prova aktifse "herkese" duyuru gerçek onboarding'deki
   // kişilere GİTMEZ — yalnız prova'nın tek sabitlendiği katılımcıya düşer.
   // Merkezi burada (tek yerde) çünkü tik.ts/kampRadyosu.ts'teki her
