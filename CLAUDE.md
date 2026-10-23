@@ -100,20 +100,38 @@ adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Kampın mevcut durumu (değişince güncelle)
 
-- **KAMP HENÜZ AÇILMADI — ONBOARDING DÖNEMİ.** Sıradaki kamp **17-19 Temmuz 2026**
-  (Sapanca), **~150 katılımcı**. Şu an katılımcılar gerçek onboarding aşamasında
-  (kod alma, değerler, pusula/hedef, ön farkındalık, ses ritüeli). Kilit kodu
-  `SAPANCA2026`. `settings.kamp_tarihi = 2026-07-17T10:00+03`.
-- **`ayna_baslangic` HENÜZ SET DEĞİL** → `kampGunu` null → `mod=kamp` görev
-  üretimi UYKUDA. tik her 5 dk çalışıyor ama yalnız onboarding dürtmesi/olaylar
-  için; insanlara kamp görevi DÜŞMÜYOR. Kamp, kullanıcı "kampı aç" deyince /
-  `ayna_baslangic` set edilince başlar (17 Temmuz).
-- **BUNUN ANLAMI:** `mod=kamp` görev motoru (ayna.ts/davranis.ts/tik.ts kamp
-  dalları) şu an güvenle geliştirilebilir — canlı bir kampı bozmaz; 17 Temmuz'da
-  devreye girer. Ama onboarding/olaylar hot-path'ine (her 5 dk çalışıyor) cerrahi
-  dokun. Yine de **kampı kullanıcı istemeden AÇMA** (bkz. çalışma kuralları).
-- Senaryoda bekleyen özel olaylar (kamp açılınca): Gün 2 21:00 sesli mektup
-  (`gun2_sesli_mektup_ac`), Gün 3 10:00 domino (`gun3_domino_ac`).
+- **KAMP YAPILDI (17-19 Tem 2026, Sapanca, 150 katılımcı) ve 90 GÜNLÜK YOLCULUK
+  BİTTİ (20 Tem – 18 Eki 2026).** 23 Eki 2026'da sistem KAPATILDI — kullanıcı
+  talebi: "daha fazla token harcama, AYNA'dan kimseye dürtme gitmesin".
+- **Kapatma anahtarları (hepsi `settings`, canlıda):**
+  - `gorev_uretimi_durduruldu = true` → tik 321. satırda erken döner: yeni görev,
+    senkron yayın, şahit eskalasyonu, radyo, karne, kayıp-radarı push'u YOK.
+    ⚠️ `ayna_aktif` BİLEREK `true` BIRAKILDI: `false` yapılırsa `onboardingHatirlat`
+    (olaylar cron, `lib/onboardingTakip.ts:143`) uyanır ve 150 kişiye
+    "onboarding'ini bitir" dürtmesi gider. Kapatmak için ayna_aktif'e DOKUNMA.
+  - `bildirim_kapali = true` → `lib/push.ts` merkezi kill-switch (PR #944):
+    `katilimciyaBildir` + `herkeseBildir` katılımcıya HİÇBİR ŞEY göndermez (ne
+    push ne gelen-kutusu kaydı; kullanıcı tetiklemeli şahit "Dürt", puanlama,
+    admin duyurusu dahil). `adminlereBildir` MUAF (sistem alarmları yöneticiye
+    gider). Ayar 60 sn önbelleklenir. WhatsApp göndericisi (`lib/whatsapp.ts`)
+    kapıya BAĞLI DEĞİL: otomasyonları zaten uykuda, yöneticinin elle gönderimi çalışır.
+  - `onboarding_wa_oto = false` (kamp öncesi otomatik WhatsApp hatırlatıcısı).
+  - `sistem_modu = yolculuk` olduğu gibi bırakıldı (UI'da mezuniyet ekranı
+    yolGun≥90 için gösterilsin; üretim zaten kapalı).
+- **Yeniden açmak için:** `bildirim_kapali=false` + `gorev_uretimi_durduruldu=false`.
+  Yeni kamp için `ayna_baslangic`/`yolculuk_baslangic` sıfırlanır (Yeni Kamp
+  admin aracı). Kullanıcı tetiklemeli AI yolları (koçu, "Yeni görev iste",
+  sesle yaz) kapatılmadı — bilinçli; aktif ~3 kişi için ihmal edilebilir maliyet.
+- **90 gün bilançosu:** 40 söz, 38 check-in yapan, 3 kişi 30+ gün, 392 check-in,
+  627 görüşme, 75 kayıt; tüm yolculuğun AI maliyeti ~$101 (gerçek model
+  fiyatlarıyla — not: `/admin/token` paneli bilinmeyen modeli Opus sayar,
+  rakamı şişirir). Analiz raporu (artifact): **"Aynanın 90 Günü"**. Kilit
+  bulgular: şahidin insan dürtmesi 24s'te %40 adım, otomatik hatırlatma %6
+  (3.334 gönderim); senkron yayın %2 (5.894 gönderim); söz kapısı 110 kişiyi
+  yolculuğun dışında bıraktı (58'i 3. gün oradaydı); 5 şahit = 3-4 şahide göre
+  2× devamlılık; 150'nin 109'u ilk haftada gitti.
+- Önceki "kamp henüz açılmadı / ayna_baslangic set değil / senaryoda bekleyen
+  olaylar" notları ARTIK GEÇERSİZ (orkestratörün 69 satırının hepsi ateşlendi).
 
 ## KAPANIŞ ZİNCİRİ PROJESİ (sürüyor — Emre'nin kapanış eğitimine bağlı)
 
