@@ -55,8 +55,8 @@ const I18N = {
     yurutmeBaslik: 'One Team Yönetim Kurulu',
     konseyBaslik: 'One Team Liderlik Konseyi',
     konseyAciklama: 'Diamond ve üstü liderlerin seçtiği 15 kişilik kurul. Görev süresi 1 yıl.',
-    konseyRozet: 'Kasım’da göreve başlıyor',
-    konseyNot: 'Diamond ve üstü liderler için',
+    konseyRozet: 'Seçildi · 1 Kasım’da göreve başlıyor',
+    konseyNot: 'Konsey üyelerini gör',
     yurutmeAciklama: 'OneTeam ekosistemini yönlendiren liderler',
     ke: 'Keşfet',
     copyright: '© 2026 Powered by OneTeam',
@@ -86,8 +86,8 @@ const I18N = {
     yurutmeBaslik: 'One Team Board',
     konseyBaslik: 'One Team Leadership Council',
     konseyAciklama: 'A 15-member council elected by Diamond and above leaders. One-year term.',
-    konseyRozet: 'Takes office in November',
-    konseyNot: 'For Diamond and above leaders',
+    konseyRozet: 'Elected · takes office on 1 November',
+    konseyNot: 'Meet the Council members',
     yurutmeAciklama: 'The leaders guiding the OneTeam ecosystem',
     ke: 'Explore',
     copyright: '© 2026 Powered by OneTeam',
@@ -117,8 +117,8 @@ const I18N = {
     yurutmeBaslik: 'One Team Vorstand',
     konseyBaslik: 'One Team Führungsrat',
     konseyAciklama: 'Ein 15-köpfiger Rat, gewählt von Diamond-Führungskräften und höher. Amtszeit 1 Jahr.',
-    konseyRozet: 'Tritt im November an',
-    konseyNot: 'Für Diamond-Führungskräfte und höher',
+    konseyRozet: 'Gewählt · Amtsantritt am 1. November',
+    konseyNot: 'Die Ratsmitglieder ansehen',
     yurutmeAciklama: 'Die Führungskräfte des OneTeam-Ökosystems',
     ke: 'Erkunden',
     copyright: '© 2026 Powered by OneTeam',
@@ -148,8 +148,8 @@ const I18N = {
     yurutmeBaslik: 'One Team Bestuur',
     konseyBaslik: 'One Team Leiderschapsraad',
     konseyAciklama: 'Een raad van 15 leden, gekozen door Diamond-leiders en hoger. Termijn 1 jaar.',
-    konseyRozet: 'Begint in november',
-    konseyNot: 'Voor Diamond-leiders en hoger',
+    konseyRozet: 'Gekozen · start op 1 november',
+    konseyNot: 'Bekijk de raadsleden',
     yurutmeAciklama: 'De leiders die het OneTeam-ecosysteem aansturen',
     ke: 'Verkennen',
     copyright: '© 2026 Powered by OneTeam',
@@ -510,13 +510,10 @@ const HakkimizdaSayfasi = () => {
               </div>
             </button>
 
-            {/* ONE TEAM LİDERLİK KONSEYİ — seçim sürüyor, Kasım'da göreve başlıyor.
-                Üyeler 25 Ekim'deki oylamadan önce belli olmadığı için kart şimdilik
-                bilgilendirme; platform Diamond ve üstüne açık olduğu için alt not var. */}
-            <a
-              href="https://yonetimkurulu.oneteamglobal.ai/"
-              target="_blank"
-              rel="noopener noreferrer"
+            {/* ONE TEAM LİDERLİK KONSEYİ — 27 Ekim 2026: seçim sonuçlandı (15 üye), 1 Kasım'da göreve başlıyor.
+                Kart artık Konsey üyeleri sayfasına gider (/liderlikkonseyi). */}
+            <button
+              onClick={() => navigate('/liderlikkonseyi')}
               className="group relative bg-gradient-to-br from-sky-400/[0.10] to-white/[0.03] hover:from-sky-400/[0.16] hover:to-white/[0.05] backdrop-blur-md border-2 border-sky-300/30 hover:border-sky-300/70 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-sky-500/25 overflow-hidden hover:-translate-y-1 flex flex-col"
             >
               <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-sky-400/10 group-hover:bg-sky-400/25 blur-3xl transition-colors pointer-events-none" />
@@ -538,7 +535,7 @@ const HakkimizdaSayfasi = () => {
                   <ArrowRight className="w-5 h-5 text-sky-200 transition-transform group-hover:translate-x-1.5" />
                 </div>
               </div>
-            </a>
+            </button>
 
             {/* KOMISYONLAR */}
             <button

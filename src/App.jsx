@@ -38,6 +38,7 @@ const KomisyonDetay = lazy(gecYukle(() => import('./pages/KomisyonDetay')));
 const HakkimizdaSayfasi = lazy(gecYukle(() => import('./pages/HakkimizdaSayfasi')));
 const EkipYonetimSayfasi = lazy(gecYukle(() => import('./pages/EkipYonetimSayfasi')));
 const YurutmekuruluSayfasi = lazy(gecYukle(() => import('./pages/YurutmekuruluSayfasi')));
+const LiderlikKonseyiSayfasi = lazy(gecYukle(() => import('./pages/LiderlikKonseyiSayfasi')));
 // Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
 const AdminLogin = lazy(gecYukle(() => import('./pages/AdminLogin')));
 const AdminPanel = lazy(gecYukle(() => import('./pages/AdminPanel')));
@@ -140,6 +141,7 @@ function AppRoutes() {
           <Route path="/hakkimizda" element={<HakkimizdaSayfasi />} />
           <Route path="/ekip-yonetim" element={<EkipYonetimSayfasi />} />
           <Route path="/yurutmekurulu" element={<YurutmekuruluSayfasi />} />
+          <Route path="/liderlikkonseyi" element={<LiderlikKonseyiSayfasi />} />
           <Route path="/admin-giris" element={<AdminLogin />} />
           <Route
             path="/admin"
