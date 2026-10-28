@@ -114,6 +114,7 @@ import { yuzOdak } from '../utils/yuzOdak';
 import { kategoriAl, kategoriOtomatikMi } from '../utils/kategoriTuret';
 import { Vurgula, sadelestir } from '../components/Vurgula';
 import { yerelKarsilik, trDisindaMi } from '../utils/saatDilimi';
+import { gomuluMu } from '../utils/gomulu';
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -1713,8 +1714,10 @@ const TakvimView = () => {
                 <button onClick={exportPDF} disabled={pdfYukleniyor} className="dokun-44 hidden md:flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-[13px] sm:text-[15px] spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
                 </button>
-                {/* Üye Girişi — pasif buton, isteyen tıklar */}
-                {!isAuthenticated ? (
+                {/* Üye Girişi — pasif buton, isteyen tıklar. 28 Eki 2026 (Emre: "uygulamadan girerken gerek yok gibi"): OneTeam
+                    uygulamasının içinde (gömülü mod) GÖSTERİLMEZ — kişi uygulamaya zaten girmiş; kabuğun giriş düğmesi utils/gomulu.js
+                    sözleşmesiyle gizli, bu düğme o kurala bağlı değildi. */}
+                {!isAuthenticated ? (gomuluMu() ? null : (
                   <button onClick={() => setGirisModalAcik(true)}
                     title="Marka Ortağı girişi yap (email/telefon/Amare ID)"
                     className="flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/40 border border-amber-300/40 text-amber-100 px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-[13px] sm:text-[15px] spring-tap">
@@ -1722,7 +1725,7 @@ const TakvimView = () => {
                     <span className="hidden sm:inline">{t('hp_giris')}</span>
                     <span className="sm:hidden">{t('hp_giris_kisa')}</span>
                   </button>
-                ) : (
+                )) : (
                   <div className="flex items-center gap-1">
                     <button onClick={() => navigate('/profil')}
                       title="Eğitimim"
