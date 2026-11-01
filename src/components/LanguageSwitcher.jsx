@@ -6,7 +6,7 @@
 // sarmalayıcılar menüyü kırpamaz (EventActions ile aynı desen).
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Globe } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import { gomuluMu } from '../utils/gomulu';
 
@@ -112,12 +112,15 @@ const LanguageSwitcher = ({ className = '' }) => {
         onClick={() => setAcik(a => !a)}
         aria-haspopup="listbox"
         aria-expanded={acik}
-        aria-label={`Dil: ${AD[lang]}`}
+        aria-label={`Language: ${AD[lang]}`}
+        translate="no"
         title={AD[lang]}
         className={`inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 rounded-full pl-1.5 pr-2 py-1 transition-[background-color,transform] duration-150 active:scale-[0.97] motion-reduce:transition-none ${className}`}
       >
+        {/* Küre + "Language" her dilde aynı: dili bilmeyen de tanısın (1 Kas 2026, Emre) */}
+        <Globe data-dil-isaret className="w-4 h-4 text-white" aria-hidden="true" />
+        <span className="text-[11px] font-bold text-white">Language</span>
         <Bayrak kod={lang} />
-        <span className="text-[11px] font-bold uppercase text-white tracking-wide">{lang}</span>
         <ChevronDown className={`w-3 h-3 text-white/60 transition-transform duration-200 motion-reduce:transition-none ${acik ? 'rotate-180' : ''}`} style={{ transitionTimingFunction: EASE }} />
       </button>
 
