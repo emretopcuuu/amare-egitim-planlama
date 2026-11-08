@@ -587,6 +587,7 @@ export const ayarCikar = (ek) => {
   if (has('2 sütun', 'iki sütun', 'ikili dizilim', 'ikili düzen')) a.duzen = 'iki';
   if (has('3 sütun', 'üç sütun', 'üçlü dizilim', 'üçlü düzen')) a.duzen = 'uc';
   if (has('4 sütun', 'dört sütun', 'dörtlü dizilim', 'dörtlü düzen')) a.duzen = 'dort';
+  if (has('5 sütun', 'beş sütun', 'beşli dizilim', 'beşli düzen')) a.duzen = 'bes';
   // konuşmacı arası boşluk
   if (has('sıkı aralık', 'sık aralık', 'dar aralık', 'sıkışık')) a.aralik = 'siki';
   if (has('geniş aralık', 'ferah', 'bol boşluk', 'aralıklı')) a.aralik = 'genis';
@@ -862,9 +863,9 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const fiziki = isFiziki(egitim);
 
   // ── Konuşmacı satır sayısını ÖNCEDEN hesapla → çok kişide afiş AŞAĞI uzar (kesilme yok) ──
-  const KONUSMACI_CAP = 24; // 12→24 (boy uzadığı için daha fazlası sığar)
+  const KONUSMACI_CAP = 30; // 12→24→30 (Kas 2026: 25 liderlik afiş; boy uzadığı için sığar)
   const liste = (egitmenler || []).slice(0, KONUSMACI_CAP);
-  const perMap = { iki: 2, uc: 3, dort: 4 };
+  const perMap = { iki: 2, uc: 3, dort: 4, bes: 5 };
   const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };
   const dergiDuzen = ayar.duzen === 'dergi' && liste.length > 1; // dergi kapağı: dev ana konuşmacı + altta 5'li şerit
   // ── SATIR PLANI (Eyl 2026 saha isteği): konuşmacı buyuk:true taşıyabilir
