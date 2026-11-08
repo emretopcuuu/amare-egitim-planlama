@@ -20,6 +20,7 @@ export const MARKA_VARYASYON = [
     { key: 'duzen-iki', label: '2\'li sütun', cmd: '2 sütun' },
     { key: 'duzen-uc', label: '3\'lü sütun', cmd: '3 sütun' },
     { key: 'duzen-dort', label: '4\'lü sütun', cmd: '4 sütun' },
+    { key: 'duzen-bes', label: '5\'li sütun', cmd: '5 sütun' },
     { key: 'duzen-dergi', label: 'Dergi kapağı', cmd: 'dergi düzeni' },
     { key: 'duzen-yay', label: 'Yay dizilim', cmd: 'yay düzeni' },
   ] },
