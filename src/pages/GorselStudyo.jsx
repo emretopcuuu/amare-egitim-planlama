@@ -44,11 +44,11 @@ const hpSaatMetni = (e) => {
 
 
 // Program afişinde anlamlı varyasyon grupları (foto düzeni/içerik vb. hariç)
-const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu', 'Avrupa'];
+const PROGRAM_GRUPLARI = ['Tema', 'Canlı renkler', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu', 'Avrupa'];
 
 // Grup başlık ikonları (göz hızlı tarar)
 const GRUP_IKON = {
-  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Aralık': '↔️', 'Tema': '🎨', 'Yazı tipi': '🔤',
+  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Aralık': '↔️', 'Tema': '🎨', 'Canlı renkler': '🌈', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
   'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋', 'Avrupa': '🇪🇺', 'Lüks': '✨', 'Arka plan sanatı': '🏞️',
 };
@@ -471,7 +471,12 @@ export default function GorselStudyo() {
   const markaCipToggle = (sec, grup) => {
     const next = { ...markaSecim };
     if (markaSecim[sec.key]) { delete next[sec.key]; }
-    else { if (grup?.tekil) grup.secenekler.forEach(s => { delete next[s.key]; }); next[sec.key] = true; }
+    else {
+      if (grup?.tekil) grup.secenekler.forEach(s => { delete next[s.key]; });
+      // Tema ve Canlı renkler tek renk seçimi: biri seçilince ötekindeki seçim düşer
+      if (grup?.renk) MARKA_VARYASYON.filter(g => g.renk).forEach(g => g.secenekler.forEach(s => { delete next[s.key]; }));
+      next[sec.key] = true;
+    }
     uygula(next);
   };
   const presetUygula = (keys) => {

@@ -369,6 +369,14 @@ const DERIN_GECISLER = {
   gumus: ['#0b0c0e', '#24272d', '#141619', '#08090b'],
   acik: ['#fbf7ee', '#f2e7d1', '#e9dcc0', '#efe6d2'],
   platin: ['#f6f7f9', '#e7e9ed', '#dcdfe4', '#eceef1'],
+  // Canlı renkler (8 Kas 2026, Gamze Bülent Çakmak)
+  canliMor: ['#2a0a52', '#6a1fc4', '#4a12a0', '#22063f'],
+  canliFusya: ['#3d0628', '#b8136f', '#7d0c4c', '#2b041c'],
+  canliKirmizi: ['#3a0505', '#c4161c', '#8a0f13', '#2a0303'],
+  canliTuruncu: ['#4a1a02', '#e0620b', '#a84506', '#361201'],
+  canliTurkuaz: ['#02303a', '#0a9fb5', '#067285', '#01222a'],
+  canliMavi: ['#061a4a', '#1f5fe0', '#1340a8', '#04123a'],
+  canliYesil: ['#063a16', '#16a34a', '#0e7a36', '#042a10'],
 };
 
 // Kariyer unvanından rütbe rozet bilgisi — yalnız Diamond ailesi rozet alır.
@@ -481,8 +489,20 @@ const paletZumrut = () => ({ ad: 'zumrut', bg1: '#0a261d', bg2: '#061a13', gold:
 // Gümüş/platin aksanlı temalar (altın yerine metalik gri)
 const paletGumus = () => ({ ad: 'gumus', bg1: '#1a1c20', bg2: '#0e1013', gold: '#cdd1d8', goldRGB: '205,209,216', goldKoyu: '#9aa0a8', pillText: '#1a1c20', metin: '#ffffff', alt: '#cfd3da', elmas: true, acik: false });
 const paletPlatin = () => ({ ad: 'platin', bg1: '#f3f4f6', bg2: '#e2e4e8', gold: '#8d929c', goldRGB: '141,146,156', goldKoyu: '#6b7079', pillText: '#1a1c20', metin: '#1f232a', alt: '#5b616b', elmas: false, acik: true });
+// Canlı renkler (8 Kas 2026, Gamze Bülent Çakmak: "canlı renkler kutucuğu, afiş için seçebilelim") — doygun zemin,
+// altın aksan ve beyaz yazı korunur (mevcut dekorla uyumlu); bg1 açık uç, bg2 koyu uç.
+const canli = (ad, bg1, bg2, alt, pillText) => () => ({ ad, bg1, bg2, gold: '#f2c75c', goldRGB: '242,199,92', goldKoyu: '#c99a2e', pillText, metin: '#ffffff', alt, elmas: true, acik: false });
+const CANLI_PALET = {
+  canliMor: canli('canliMor', '#6a1fc4', '#33087a', '#ece0ff', '#2a0a52'),
+  canliFusya: canli('canliFusya', '#c2187a', '#6e0a44', '#ffe0f0', '#3d0628'),
+  canliKirmizi: canli('canliKirmizi', '#cf1f26', '#7a0c10', '#ffe1e1', '#3a0505'),
+  canliTuruncu: canli('canliTuruncu', '#e8670e', '#8f3a03', '#fff0e2', '#4a1a02'),
+  canliTurkuaz: canli('canliTurkuaz', '#0aa3b8', '#04545f', '#dcf8fb', '#02303a'),
+  canliMavi: canli('canliMavi', '#2563eb', '#0e2f86', '#e1ebff', '#061a4a'),
+  canliYesil: canli('canliYesil', '#16a34a', '#08531f', '#e0f8e8', '#063a16'),
+};
 // İsimle palet getir (tema çipi / ek istek)
-export const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut, gumus: paletGumus, platin: paletPlatin }[ad] || null);
+export const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut, gumus: paletGumus, platin: paletPlatin, ...CANLI_PALET }[ad] || null);
 
 // Yazı tipi setleri — başlık / isim / gövde ayrı olabilir (isimlere şık font)
 const FONT_SETLERI = {
@@ -552,6 +572,10 @@ export const ayarCikar = (ek) => {
   if (has('krem tema', 'açık tema', 'beyaz tema', 'krem zemin')) a.tema = 'acik';
   if (has('gümüş tema', 'gümüş', 'gumus')) a.tema = 'gumus';
   if (has('platin tema', 'platin')) a.tema = 'platin';
+  // Canlı renkler — komut "canlı renk: X"; yukarıdaki kelimelerin hiçbirini içermez, sonda olduğu için önceliklidir.
+  const CANLI_KOMUT = { 'canlı renk: mor': 'canliMor', 'canlı renk: fuşya': 'canliFusya', 'canlı renk: kırmızı': 'canliKirmizi',
+    'canlı renk: turuncu': 'canliTuruncu', 'canlı renk: turkuaz': 'canliTurkuaz', 'canlı renk: mavi': 'canliMavi', 'canlı renk: yeşil': 'canliYesil' };
+  for (const [k, v] of Object.entries(CANLI_KOMUT)) if (t.includes(k)) a.tema = v;
   // foto şekli
   if (has('kare foto', 'köşeli foto', 'yuvarlak kare', 'kare çerçeve')) a.fotoSekil = 'kare';
   if (has('altıgen', 'altigen', 'petek')) a.fotoSekil = 'altigen';

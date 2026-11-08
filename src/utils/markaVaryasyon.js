@@ -29,7 +29,7 @@ export const MARKA_VARYASYON = [
     { key: 'aralik-genis', label: 'Geniş', cmd: 'geniş aralık' },
     { key: 'aralik-dahagenis', label: 'Daha Geniş', cmd: 'daha geniş aralık' },
   ] },
-  { grup: 'Tema', tekil: true, secenekler: [
+  { grup: 'Tema', tekil: true, renk: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
     { key: 'tema-mor', label: 'Mor', cmd: 'mor tema', renk: '#3a2b54' },
     { key: 'tema-lacivert', label: 'Lacivert', cmd: 'lacivert tema', renk: '#0c1730' },
@@ -38,6 +38,16 @@ export const MARKA_VARYASYON = [
     { key: 'tema-krem', label: 'Krem & altın', cmd: 'krem tema', renk: '#ece0c8' },
     { key: 'tema-gumus', label: 'Gümüş', cmd: 'gümüş tema', renk: '#1a1c20' },
     { key: 'tema-platin', label: 'Platin', cmd: 'platin tema', renk: '#e2e4e8' },
+  ] },
+  // Canlı renkler (8 Kas 2026, Gamze Bülent Çakmak). renk:true → Tema ile TEK seçim (biri seçilince öteki düşer).
+  { grup: 'Canlı renkler', tekil: true, renk: true, secenekler: [
+    { key: 'canli-mor', label: 'Mor', cmd: 'canlı renk: mor', renk: '#6a1fc4' },
+    { key: 'canli-fusya', label: 'Fuşya', cmd: 'canlı renk: fuşya', renk: '#c2187a' },
+    { key: 'canli-kirmizi', label: 'Kırmızı', cmd: 'canlı renk: kırmızı', renk: '#cf1f26' },
+    { key: 'canli-turuncu', label: 'Turuncu', cmd: 'canlı renk: turuncu', renk: '#e8670e' },
+    { key: 'canli-turkuaz', label: 'Turkuaz', cmd: 'canlı renk: turkuaz', renk: '#0aa3b8' },
+    { key: 'canli-mavi', label: 'Mavi', cmd: 'canlı renk: mavi', renk: '#2563eb' },
+    { key: 'canli-yesil', label: 'Yeşil', cmd: 'canlı renk: yeşil', renk: '#16a34a' },
   ] },
   { grup: 'Yazı tipi', tekil: true, secenekler: [
     { key: 'font-klasik', label: 'Klasik', cmd: 'klasik font' },
@@ -132,7 +142,7 @@ export const MARKA_PRESETLER = [
 
 // Tema kilitli yöntemlerde (marka-koyu/marka-acik) Tema grubu gizlenir
 export const markaGruplar = (aiModel) =>
-  aiModel === 'marka-afis' ? MARKA_VARYASYON : MARKA_VARYASYON.filter(g => g.grup !== 'Tema');
+  aiModel === 'marka-afis' ? MARKA_VARYASYON : MARKA_VARYASYON.filter(g => !g.renk);
 
 // Seçili çipleri ({key:true}) motor komut metnine çevirir
 export const markaEkIstek = (secim) =>
