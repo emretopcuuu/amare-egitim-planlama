@@ -1098,12 +1098,35 @@ export const DataProvider = ({ children }) => {
     const x = String(v ?? '').trim();
     return (!x || x === '.' || x === '-' || x === '--') ? '' : x;
   };
+  // Saat ayırıcısı: Excel'den bazen "21.00" / "21,00" geliyor (iki nokta değil).
+  // 10 Kas 2026'da yaşandı: Murat Zorluoğlu'nun 21.00 semineri takvim listesinde
+  // görünüyordu ama "SIRADAKİ EĞİTİM" kartına hiç düşmedi. Sebep: getCountdown
+  // (TakvimView) ve EgitimDetay saatin girilip girilmediğini `saat.includes(':')`
+  // ile anlıyor; nokta'lı saat "girilmemiş" sayılıp countdown null dönüyor,
+  // enYakinEgitimler filtresi de `cd` yoksa kaydı eliyor. Admin panel bu yolu
+  // kullanmadığı için orada sorunsuz görünüyordu — "admin'de var, sitede yok"
+  // şikâyetinin kaynağı tam olarak bu.
+  //
+  // İkinci ve daha sinsi etkisi: Number('21.30') === 21.3 olduğu için nokta'lı
+  // saatlerde DAKİKA sessizce kayboluyordu (21.30 → 21:00). Okuma anında
+  // çevrilince countdown, iCal, hatırlatma ve afiş üreticileri birden düzeliyor.
+  //
+  // Dar kalıp bilinçli: yalnız tam "H.MM"/"HH,MM" biçimi ve geçerli saat/dakika
+  // çevrilir. "45 dk" gibi süre metinleri veya serbest yazılar değişmez.
+  const saatAyirici = (v) => {
+    const x = String(v ?? '').trim();
+    const m = x.match(/^(\d{1,2})[.,](\d{2})$/);
+    if (!m) return x;
+    if (Number(m[1]) > 23 || Number(m[2]) > 59) return x;
+    return `${m[1]}:${m[2]}`;
+  };
+  const saatTemiz = (v) => saatAyirici(bosSaat(v));
   const baslikDuzelt = (v) => String(v ?? '')
     .replace(/\s+/g, ' ')
     .replace(/\s-(\S)/g, ' - $1')   // "CAPETOWN -TR&EU" → "CAPETOWN - TR&EU"
     .trim();
   const temizle = (e) => {
-    const saat = bosSaat(e.saat), bitis = bosSaat(e.bitisSaati), sure = bosSaat(e.sure);
+    const saat = saatTemiz(e.saat), bitis = saatTemiz(e.bitisSaati), sure = bosSaat(e.sure);
     const baslik = baslikDuzelt(e.egitim);
     if (saat === e.saat && bitis === e.bitisSaati && sure === e.sure && baslik === e.egitim) return e;
     return { ...e, saat, bitisSaati: bitis, sure, egitim: baslik };
