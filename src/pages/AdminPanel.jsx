@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import * as XLSX from 'xlsx';
@@ -96,7 +96,63 @@ const FormField = ({ label, required, children }) => (
   </div>
 );
 
+// İl → adres otomatik (saha isteği, 12 Kas 2026, Gamze): "Eğitim ekle kısmından tek tek adresi
+// kopyalayıp yazıyorum." Elle tablo tutmak yerine adresler takvimin GEÇMİŞİNDEN türetilir:
+// o ilde daha önce kullanılan mekânlar, en yeni önce. Yeni bir mekân bir kez girilince sonraki
+// seferlerde kendiliğinden önerilir. Online/Zoom ve "Diğer" için öneri yoktur.
+const trAnahtar = (t) => String(t || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+const tarihSayisi = (t) => { const p = String(t || '').split('.').map(Number); return p.length === 3 && !p.some(isNaN) ? p[2] * 10000 + p[1] * 100 + p[0] : 0; };
+const sehirAdresleri = (takvimListesi, sehir) => {
+  if (!sehir || sehir === 'Online' || sehir === 'Diğer') return [];
+  const adaylar = (takvimListesi || [])
+    .filter(e => e && e.sehir === sehir && String(e.yer || '').trim() && !/zoom/i.test(e.yer))
+    .sort((a, b) => tarihSayisi(b.tarih) - tarihSayisi(a.tarih));
+  const gorulen = new Set();
+  const sonuc = [];
+  for (const e of adaylar) {
+    // Aynı mekânın küçük yazım farkları tek öneri olsun: ilk 28 karakter (mekân adı) anahtar.
+    const k = trAnahtar(e.yer).slice(0, 28);
+    if (gorulen.has(k)) continue;
+    gorulen.add(k);
+    const yer = String(e.yer).trim();
+    sonuc.push({ yer, mekanAdi: e.mekanAdi || yer, acikAdres: e.acikAdres || yer });
+  }
+  return sonuc.slice(0, 5);
+};
+
 const EgitimFormAlanlari = ({ form, setForm }) => {
+  const { takvimHam } = useData();
+  // En son OTOMATİK doldurulan adres — kullanıcı kendi yazdığını asla ezmemek için.
+  const otoAdresRef = useRef('');
+  const adresOnerileri = useMemo(() => sehirAdresleri(takvimHam, form.sehir), [takvimHam, form.sehir]);
+  const adresUygula = (f, a) => ({ ...f, yer: a.yer, mekanAdi: a.mekanAdi, acikAdres: a.acikAdres });
+  // İl değişince: yer BOŞSA ya da önceki otomatik adresse yenisini koy; kullanıcının yazdığı kalır.
+  // İl değişince adres: kararı RENDER'daki `form` ile ver, ref'i güncelleyicinin DIŞINDA değiştir.
+  // (Önceki sürüm ref'i setForm güncelleyicisinin İÇİNDE değiştiriyordu; React dev kipinde
+  // güncelleyiciyi iki kez çalıştırdığı için ikinci çalışmada ref değişmiş oluyor, İzmir'e geçince
+  // Mersin adresi kalıyordu — 12 Kas 2026 testinde yakalandı.) Güncelleyiciler SAF.
+  const sehirDegisti = (yeniSehir) => {
+    const f = form;
+    // Ezilebilir olanlar: boş yer, önceki OTOMATİK adres, formun VARSAYILAN Zoom ID'si (BOŞ_FORM.yer).
+    // Yeni eğitim formu Zoom ID ile açılıyor; bunu "kullanıcı yazdı" saymak fiziki il seçilse bile
+    // adresin hiç gelmemesine yol açıyordu. Elle değiştirilmiş yer ASLA ezilmez.
+    const otomatikmi = !f.yer || f.yer === otoAdresRef.current || f.yer === BOŞ_FORM.yer;
+    if (!otomatikmi) { setForm(g => ({ ...g, sehir: yeniSehir })); return; }
+    const oneri = sehirAdresleri(takvimHam, yeniSehir)[0];
+    if (oneri) {
+      otoAdresRef.current = oneri.yer;
+      setForm(g => adresUygula({ ...g, sehir: yeniSehir }, oneri));
+      return;
+    }
+    // Öneri yok (Online/Diğer/geçmişsiz il): önceki otomatik adres kalmasın.
+    if (f.yer && f.yer === otoAdresRef.current) {
+      otoAdresRef.current = '';
+      const yer = yeniSehir === 'Online' ? BOŞ_FORM.yer : '';
+      setForm(g => ({ ...g, sehir: yeniSehir, yer, mekanAdi: '', acikAdres: '' }));
+      return;
+    }
+    setForm(g => ({ ...g, sehir: yeniSehir }));
+  };
   // Fiziki etkinlik mi? (online/Zoom değilse program detayları gösterilir)
   const fiziki = form.sehir && form.sehir !== 'Online'
     && !(form.yer || '').toLocaleUpperCase('tr-TR').includes('ZOOM');
@@ -142,9 +198,24 @@ const EgitimFormAlanlari = ({ form, setForm }) => {
     <FormField label="Yer / Platform">
       <input type="text" value={form.yer} onChange={e => setForm(f => ({ ...f, yer: e.target.value, mekanAdi: (!f.mekanAdi || f.mekanAdi === f.yer) ? e.target.value : f.mekanAdi, acikAdres: (!f.acikAdres || f.acikAdres === f.yer) ? e.target.value : f.acikAdres }))} className={inputCls} />
     </FormField>
+    {adresOnerileri.length > 0 && (
+      <div className="-mt-2 space-y-1.5">
+        <p className="text-[11px] text-gray-500">{form.sehir} için daha önce kullanılan adresler — dokununca doldurur:</p>
+        <div className="flex flex-wrap gap-1.5">
+          {adresOnerileri.map(a => (
+            <button type="button" key={a.yer}
+              onClick={() => { otoAdresRef.current = a.yer; setForm(f => adresUygula(f, a)); }}
+              title={a.yer}
+              className={`max-w-full truncate text-left text-[11px] px-2 py-1 rounded-lg border transition ${form.yer === a.yer ? 'border-purple-400 bg-purple-50 text-purple-800 font-semibold' : 'border-gray-200 text-gray-600 hover:border-purple-300 hover:bg-purple-50'}`}>
+              {a.yer.length > 64 ? a.yer.slice(0, 62) + '…' : a.yer}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
     <div className="grid grid-cols-2 gap-4">
       <FormField label="Şehir" required>
-        <select value={form.sehir} onChange={e => setForm(f => ({ ...f, sehir: e.target.value }))} className={inputCls} required>
+        <select value={form.sehir} onChange={e => sehirDegisti(e.target.value)} className={inputCls} required>
           <option value="">— Seçin —</option>
           <option value="Online">Online (Zoom)</option>
           <optgroup label="Türkiye">

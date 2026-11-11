@@ -8,6 +8,7 @@ import { isFiziki } from './egitmenEtiket';
 import { qrOlustur } from './qrOlustur';
 import { fotoYerlesim } from './fotoYerlesim';
 import { afisFontYukle } from './afisFontlari';
+import { girisKapanisMetni, YAS_UYARISI_METNI } from './trEk';
 
 const roundRect = (ctx, x, y, w, h, r) => {
   const rr = Math.min(r, w / 2, h / 2);
@@ -852,7 +853,7 @@ export const gorselOlusturMarkaAfis = async (params) => {
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
 };
 
-const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' }, grupBasliklari = [], kampModu = false }, ekstraH = 0) => {
+const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' }, grupBasliklari = [], kampModu = false, programKutulari = [], girisKapanis = '', yasUyarisi = false }, ekstraH = 0) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -933,7 +934,22 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const ROWS_FIT = 3;
   const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'cokgenis' ? 1.5 : ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
   // Alt not / uyarı satırları (Enter → alt satır; en fazla 6). 2'den fazlaysa afiş AŞAĞI uzasın → taşma yok, hep sığar.
-  const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
+  const serbestNotlar = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
+  // Vizyon Günü bilgi kutucukları (saha isteği, 12 Kas 2026, Gamze): "SEMİNER: 15:30-17:00"
+  // gibi konu + saat aralığı satırları (en fazla 3, boş olanlar çizilmez), ardından otomatik
+  // "Saat X'dan sonra salona giriş yapılamayacaktır." (kalın) ve en altta "18 yaşından küçükler
+  // katılamaz" (kalın DEĞİL, yarım satır boşlukla daha aşağıda). Hepsi aynı alt-not bloğunda
+  // olduğu için tuval yüksekliği ve footer payı mevcut mekanizmayla (satır sayısı) uzar.
+  const kutuSatirlari = (Array.isArray(programKutulari) ? programKutulari : []).slice(0, 3)
+    .map(k => [String(k?.konu || '').trim().toLocaleUpperCase('tr-TR'), String(k?.saat || '').trim()].filter(Boolean).join(': '))
+    .filter(Boolean);
+  const girisSatiri = girisKapanis ? girisKapanisMetni(girisKapanis) : null;
+  const notSatirlari = [
+    ...kutuSatirlari.map(t => ({ t, kalin: true })),
+    ...(girisSatiri ? [{ t: girisSatiri, kalin: true }] : []),
+    ...serbestNotlar.map(t => ({ t, kalin: true })),
+    ...(yasUyarisi ? [{ t: YAS_UYARISI_METNI, kalin: false, ayri: true }] : []),
+  ];
   const notExtra = Math.max(0, notSatirlari.length - 2) * Math.round(H * 0.045);
   const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow + notExtra;
   // ekstraH: ilk geçişte konuşmacı alanı dar kaldıysa ikinci geçişin uzatma payı
@@ -1321,10 +1337,17 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#8f1f1f' : '#ff9d9d') };
     const uyariRenk = altNotRenkMap[altNotRenk] || altNotRenkMap.kirmizi;
     const nlH = Math.round(W * 0.03);
-    ctx.font = `700 ${Math.round(W * 0.024)}px ${FF.govde}`;
-    notSatirlari.forEach((ln, i) => {
-      ctx.fillStyle = uyariRenk;
-      ctx.fillText(ln, adresCX, footerTop + Math.round(H * 0.032) + i * nlH, adresW);
+    // Satır satır: kalın uyarı satırları (700) + isteğe bağlı kalın olmayan alt satır (400).
+    // Kalın olmayan "ayrı" satır, üstündeki satırlarla arasında yarım satır boşlukla DAHA AŞAĞIDA durur.
+    let ny = footerTop + Math.round(H * 0.032);
+    notSatirlari.forEach((o, idx) => {
+      if (o.ayri && idx > 0) ny += Math.round(nlH * 0.55);
+      ctx.font = o.kalin
+        ? `700 ${Math.round(W * 0.024)}px ${FF.govde}`
+        : `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
+      ctx.fillStyle = o.kalin ? uyariRenk : (palet.alt || palet.metin);
+      ctx.fillText(o.t, adresCX, ny, adresW);
+      ny += nlH;
     });
   }
   // ── 2) ADRES (fiziki) / ZOOM (online) — EN ALTTA, amare logosunun hemen üstünde (boşlukla) ──

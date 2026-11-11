@@ -10,6 +10,7 @@ import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
+import { saatCoz, girisKapanisMetni } from '../utils/trEk';
 
 // ── Haftalık Program yardımcıları ──
 const HP_AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -159,6 +160,25 @@ export default function GorselStudyo() {
   const [ekIstek, setEkIstek] = useState('');
   const [altNot, setAltNot] = useState(''); // afiş altına serbest not/uyarı
   const [altNotRenk, setAltNotRenk] = useState('kirmizi'); // alt not yazı rengi (kirmizi/altin/beyaz)
+  // Vizyon Günü bilgi kutucukları (saha isteği, 12 Kas 2026, Gamze): afişte "SEMİNER: 15:30-17:00"
+  // gibi en fazla 3 satır (konu + saat aralığı, silinebilir) + otomatik "Saat X'dan sonra salona giriş
+  // yapılamayacaktır." (kalın) + otomatik "18 yaşından küçükler katılamaz." (kalın değil, daha aşağıda).
+  const [kutular, setKutular] = useState([]);                 // [{konu, saat}] en fazla 3
+  const [girisKapanisAcik, setGirisKapanisAcik] = useState(false);
+  const [girisKapanisSaat, setGirisKapanisSaat] = useState(''); // boş = otomatik (ilk kutucuğun başlangıcı)
+  const [yasUyarisi, setYasUyarisi] = useState(false);
+  const vizyonGunuMu = (e) => !!e && (e.kategori === 'Vizyon Günü'
+    || String(e.egitim || '').toLocaleUpperCase('tr-TR').includes('VİZYON GÜNÜ'));
+  // Otomatik giriş kapanış saati: ilk saati yazılmış kutucuğun BAŞLANGICI (15:30-17:00 → 15:30),
+  // yoksa eğitimin kendi saati. Elle yazılırsa o geçerli.
+  const otoGirisSaati = (() => {
+    for (const k of kutular) {
+      const m = String(k?.saat || '').match(/(\d{1,2})\s*[:.,]\s*(\d{2})/);
+      if (m) { const t = saatCoz(`${m[1]}:${m[2]}`); if (t) return t.metin; }
+    }
+    return saatCoz(egitim?.saat)?.metin || '';
+  })();
+  const girisSaatiEtkin = girisKapanisAcik ? (girisKapanisSaat.trim() || otoGirisSaati) : '';
   const [baslikOzel, setBaslikOzel] = useState(''); // özel başlık (boş = otomatik)
   const [vurguKelime, setVurguKelime] = useState(1); // iki renkli başlıkta vurgulu kelime sayısı
   const [vurguYon, setVurguYon] = useState('son');   // 'son' | 'bas'
@@ -224,6 +244,14 @@ export default function GorselStudyo() {
     })));
     /* eslint-disable-next-line */
   }, [egitimId, konusmacilar]);
+  // Vizyon Günü ise bilgi kutucukları + uyarılar otomatik açık gelir; diğerlerinde kapalı.
+  // Yalnız ETKİNLİK değişince çalışır (konuşmacı verisi geç gelince yazılanları silmesin).
+  useEffect(() => {
+    const vz = vizyonGunuMu(egitim);
+    setKutular(vz ? [{ konu: '', saat: '' }, { konu: '', saat: '' }, { konu: '', saat: '' }] : []);
+    setGirisKapanisAcik(vz); setGirisKapanisSaat(''); setYasUyarisi(vz);
+    /* eslint-disable-next-line */
+  }, [egitimId, egitim?.id]);
   // stil hafızası
   useEffect(() => { try { localStorage.setItem('markaSecim', JSON.stringify(markaSecim)); } catch {} }, [markaSecim]);
   // Hedef görsel yuvası — yöntem Program İçeriği'yse akıllı varsayılan "2. görsel"; kullanıcı elle değiştirebilir.
@@ -259,6 +287,7 @@ export default function GorselStudyo() {
           vurguKelime, vurguYon,
           ekIstek: ekIstek || '',
           altNot: altNot || '', altNotRenk,
+          kutular, girisKapanisAcik, girisKapanisSaat, yasUyarisi,
           grupModu, grupBaslik,
           // Kişilerin afişe özel ayarları (unvan zaten sisteme yazılıyor; 👑/bölük afişe özel)
           kisiler: speakers.map(k => ({ ad: k.ad, unvan: k.unvan || '', buyuk: !!k.buyuk, grup: k.grup || 1 })),
@@ -282,6 +311,11 @@ export default function GorselStudyo() {
       setEkIstek(taslak.ekIstek || '');
       setAltNot(taslak.altNot || '');
       if (taslak.altNotRenk) setAltNotRenk(taslak.altNotRenk);
+      // Bilgi kutucukları: eski taslaklarda bu alanlar yok — o durumda mevcut (otomatik) hâl kalır.
+      if (Array.isArray(taslak.kutular)) setKutular(taslak.kutular.slice(0, 3).map(x => ({ konu: x?.konu || '', saat: x?.saat || '' })));
+      if (typeof taslak.girisKapanisAcik === 'boolean') setGirisKapanisAcik(taslak.girisKapanisAcik);
+      if (typeof taslak.girisKapanisSaat === 'string') setGirisKapanisSaat(taslak.girisKapanisSaat);
+      if (typeof taslak.yasUyarisi === 'boolean') setYasUyarisi(taslak.yasUyarisi);
       setGrupModu(!!taslak.grupModu);
       if (Array.isArray(taslak.grupBaslik)) setGrupBaslik([0, 1, 2].map(i => taslak.grupBaslik[i] || ''));
       // Kişi ayarlarını isme göre bindir — fotoğraf/biyografi sistemden gelmeye devam eder,
@@ -556,7 +590,7 @@ export default function GorselStudyo() {
       ];
       const gorseller = await Promise.all(kombolar.map(async (k) => {
         const secim = Object.fromEntries(k.keys.map(x => [x, true]));
-        const res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: speakers.map(s => ({ ...s, grup: grupModu ? (s.grup || 1) : 1 })), format: 'portrait', ekPrompt: markaEkIstek(secim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
+        const res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: speakers.map(s => ({ ...s, grup: grupModu ? (s.grup || 1) : 1 })), format: 'portrait', ekPrompt: markaEkIstek(secim), stil: aktifMetot.stil, altNot, altNotRenk, programKutulari: kutular, girisKapanis: girisSaatiEtkin, yasUyarisi, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
         return { ad: k.ad, keys: k.keys, url: b64ToUrl(res.base64, res.mimeType) };
       }));
       setMasaDurum({ gorseller });
@@ -579,7 +613,7 @@ export default function GorselStudyo() {
       let res;
       if (markaModu) {
         const egitmenlerParam = speakers.map(s => ({ ...s, grup: grupModu ? (s.grup || 1) : 1 }));
-        res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: egitmenlerParam, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
+        res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: egitmenlerParam, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, altNotRenk, programKutulari: kutular, girisKapanis: girisSaatiEtkin, yasUyarisi, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: grupModu ? grupBaslik : [] });
       } else if (programModu) {
         const tur = afisTuru(egitim);
         const programSatirlari = programSatir.map(r => {
@@ -655,7 +689,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftalikModu ? JSON.stringify(haftaSon) : '']);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, JSON.stringify(kutular), girisSaatiEtkin, yasUyarisi, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftalikModu ? JSON.stringify(haftaSon) : '']);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -1185,6 +1219,61 @@ export default function GorselStudyo() {
                 <p className="text-[11px] text-gray-500 mt-2">Yüklediğin afiş sağda görünür. <b>Eğitime Bağla</b> ile bu eğitimin afişi olur — İndir/paylaş her yerde bunu kullanır.</p>
               </div>
             ) : null}
+
+            {/* Vizyon Günü bilgi kutucukları — konu + saat aralığı (en fazla 3, silinebilir) + otomatik uyarılar */}
+            {markaModu && (
+              <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-700">🕒 Program kutucukları</span>
+                  {kutular.length < 3 && (
+                    <button onClick={() => setKutular(prev => [...prev, { konu: '', saat: '' }])}
+                      className="text-[11px] text-amare-purple hover:underline flex items-center gap-0.5"><Plus className="w-3 h-3" /> kutucuk ekle</button>
+                  )}
+                </div>
+                {kutular.length === 0 && <div className="text-[11px] text-gray-400">Kutucuk yok. "+ kutucuk ekle" ile konu ve saat aralığı yaz (en fazla 3).</div>}
+                {kutular.map((k, i) => {
+                  const upd = (alan, val) => setKutular(prev => prev.map((x, idx) => idx === i ? { ...x, [alan]: val } : x));
+                  return (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <input value={k.konu} onChange={(e) => upd('konu', e.target.value)} maxLength={40}
+                        placeholder={['Seminer', 'Soru & Cevap', 'Özel Eğitim'][i] || 'Konu'}
+                        className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                      <input value={k.saat} onChange={(e) => upd('saat', e.target.value)} maxLength={20}
+                        placeholder={['15:30-17:00', '17:00-17:30', '12:00-13:00'][i] || '00:00-00:00'}
+                        className="w-32 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                      <button onClick={() => setKutular(prev => prev.filter((_, idx) => idx !== i))} title="Kutucuğu sil"
+                        className="p-0.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-gray-400">Boş bırakılan kutucuk afişe yazılmaz. Konu otomatik BÜYÜK harfe çevrilir.</p>
+
+                <div className="border-t border-gray-100 pt-2 space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input type="checkbox" checked={girisKapanisAcik} onChange={(e) => setGirisKapanisAcik(e.target.checked)} />
+                    Giriş kapanış uyarısı <span className="font-normal text-gray-400">(kalın)</span>
+                  </label>
+                  {girisKapanisAcik && (
+                    <div className="pl-6 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-500">Saat</span>
+                        <input value={girisKapanisSaat} onChange={(e) => setGirisKapanisSaat(e.target.value)} maxLength={5}
+                          placeholder={otoGirisSaati || '15:30'}
+                          className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                        <span className="text-[10px] text-gray-400">boş = otomatik{otoGirisSaati ? ` (${otoGirisSaati})` : ''}</span>
+                      </div>
+                      {girisSaatiEtkin && girisKapanisMetni(girisSaatiEtkin)
+                        ? <p className="text-[11px] text-gray-600 italic">{girisKapanisMetni(girisSaatiEtkin)}</p>
+                        : <p className="text-[11px] text-red-500">Saati SS:DD biçiminde yaz (örn. 15:30) — yoksa bu satır afişe yazılmaz.</p>}
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input type="checkbox" checked={yasUyarisi} onChange={(e) => setYasUyarisi(e.target.checked)} />
+                    18 yaş uyarısı <span className="font-normal text-gray-400">(kalın değil, en altta)</span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* Alt not / uyarı — serbest metin (afişin altına işlenir, canlı) */}
             {markaModu && (
