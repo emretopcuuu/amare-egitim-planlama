@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, RotateCcw, CheckCircle2, Plus, X, Dices, Save, Undo2, Redo2 } from 'lucide-react';
+import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, RotateCcw, CheckCircle2, Plus, X, Dices, Save, Undo2, Redo2, ChevronUp, ChevronDown } from 'lucide-react';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
@@ -163,6 +163,24 @@ export default function GorselStudyo() {
   const [vurguKelime, setVurguKelime] = useState(1); // iki renkli başlıkta vurgulu kelime sayısı
   const [vurguYon, setVurguYon] = useState('son');   // 'son' | 'bas'
   const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
+  // Program satırı düzenleme yardımcıları.
+  // Saha isteği (11 Kas 2026, Gamze): "+ satır ekle" yalnızca listenin SONUNA
+  // ekliyordu. Akışın ortasına ya da en başına bir oturum girmesi gerektiğinde
+  // (program hazırlanırken sık oluyor) listeyi baştan yazmak gerekiyordu.
+  // Artık her satırın üstünde "buraya ekle" şeridi ve satır taşıma okları var.
+  const BOS_PROGRAM_SATIRI = { saat: '', baslik: '', konusmaciAd: '', notlar: '' };
+  const programSatirAra = (i) => setProgramSatir(prev => {
+    const y = [...prev];
+    y.splice(i, 0, { ...BOS_PROGRAM_SATIRI });
+    return y;
+  });
+  const programSatirTasi = (i, yon) => setProgramSatir(prev => {
+    const h = i + yon;
+    if (h < 0 || h >= prev.length) return prev;
+    const y = [...prev];
+    [y[i], y[h]] = [y[h], y[i]];
+    return y;
+  });
   // Haftalık Program: gösterilecek haftanın pazartesisi. Varsayılan GELECEK hafta —
   // afiş pazar akşamı paylaşılıyor (Eğitim Komisyonu isteği, Eki 2026).
   const [haftaBasi, setHaftaBasi] = useState(() => hpPazartesi(hpGunEkle(new Date(), 7)));
@@ -961,35 +979,72 @@ export default function GorselStudyo() {
                 {programSatir.map((r, i) => {
                   const upd = (alan, val) => setProgramSatir(prev => prev.map((x, idx) => idx === i ? { ...x, [alan]: val } : x));
                   return (
-                    <div key={i} className="border border-gray-200 rounded-lg p-2 space-y-1.5 relative">
-                      <button onClick={() => setProgramSatir(prev => prev.filter((_, idx) => idx !== i))} title="Satırı sil" className="absolute top-1 right-1 text-gray-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
-                      <div className="flex gap-1.5">
-                        <input value={r.saat} onChange={(e) => upd('saat', e.target.value)} placeholder="12:20 - 13:30"
-                          className="w-28 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
-                        <input value={r.baslik} onChange={(e) => upd('baslik', e.target.value)} placeholder="Aktivite başlığı"
-                          className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                    <React.Fragment key={i}>
+                      {/* Araya ekleme şeridi — bu satırın ÜSTÜNE boş satır açar.
+                          İlk satırın da üstünde olduğu için listenin başına eklemek mümkün;
+                          eskiden tek yol sona eklemekti ve baştaki bir oturum için
+                          bütün akışı yeniden yazmak gerekiyordu. */}
+                      <button onClick={() => programSatirAra(i)} title={`${i + 1}. satırın üstüne yeni satır ekle`}
+                        className="w-full group flex items-center gap-2 py-0.5 text-gray-300 hover:text-amare-purple focus:text-amare-purple transition-colors">
+                        <span className="h-px flex-1 bg-current opacity-40" />
+                        <span className="text-[10px] font-semibold inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
+                          <Plus className="w-3 h-3" />buraya ekle
+                        </span>
+                        <span className="h-px flex-1 bg-current opacity-40" />
+                      </button>
+                      <div className="border border-gray-200 rounded-lg p-2 space-y-1.5">
+                        {/* Satır araç çubuğu. Düğmeler eskiden kartın sağ üstünde absolute
+                            duruyordu; üçe çıkınca başlık kutusunun sağını kapatacaklardı. */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-gray-400 tabular-nums">{i + 1}. satır</span>
+                          <div className="flex items-center gap-0.5">
+                            <button onClick={() => programSatirTasi(i, -1)} disabled={i === 0} title="Yukarı taşı"
+                              className="p-0.5 rounded text-gray-400 hover:text-amare-purple hover:bg-purple-50 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-400"><ChevronUp className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => programSatirTasi(i, 1)} disabled={i === programSatir.length - 1} title="Aşağı taşı"
+                              className="p-0.5 rounded text-gray-400 hover:text-amare-purple hover:bg-purple-50 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-400"><ChevronDown className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => setProgramSatir(prev => prev.filter((_, idx) => idx !== i))} title="Satırı sil"
+                              className="p-0.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50"><X className="w-3.5 h-3.5" /></button>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <input value={r.saat} onChange={(e) => upd('saat', e.target.value)} placeholder="12:20 - 13:30"
+                            className="w-28 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                          <input value={r.baslik} onChange={(e) => upd('baslik', e.target.value)} placeholder="Aktivite başlığı"
+                            className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                        </div>
+                        <select value={r.konusmaciAd} onChange={(e) => upd('konusmaciAd', e.target.value)}
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30">
+                          <option value="">— Konuşmacı (opsiyonel) —</option>
+                          {speakers.map(s => <option key={'s' + s.ad} value={s.ad}>{s.ad}</option>)}
+                          {tumKonusmacilar.filter(k => !speakers.some(s => makeCoreId(s.ad) === makeCoreId(k.ad))).map(k => <option key={k.ad} value={k.ad}>{k.ad}{k.fotoURL ? ' ★' : ''}</option>)}
+                        </select>
+                        {r.konusmaciAd && (
+                          <>
+                            {/* Unvan/meslek — ELLE gir; boş bırakınca otomatik Amare kariyeri/etiket kullanılır */}
+                            <input value={r.unvan || ''} onChange={(e) => upd('unvan', e.target.value)}
+                              placeholder={`Unvan / meslek — boş = otomatik (${etiketSec(konusmaciBul(r.konusmaciAd), afisTuru(egitim)) || '—'})`}
+                              className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                            <textarea value={r.notlar} onChange={(e) => upd('notlar', e.target.value)} rows={2}
+                              placeholder="Alt isimler (panelistler), her satıra bir isim — opsiyonel"
+                              className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                          </>
+                        )}
                       </div>
-                      <select value={r.konusmaciAd} onChange={(e) => upd('konusmaciAd', e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30">
-                        <option value="">— Konuşmacı (opsiyonel) —</option>
-                        {speakers.map(s => <option key={'s' + s.ad} value={s.ad}>{s.ad}</option>)}
-                        {tumKonusmacilar.filter(k => !speakers.some(s => makeCoreId(s.ad) === makeCoreId(k.ad))).map(k => <option key={k.ad} value={k.ad}>{k.ad}{k.fotoURL ? ' ★' : ''}</option>)}
-                      </select>
-                      {r.konusmaciAd && (
-                        <>
-                          {/* Unvan/meslek — ELLE gir; boş bırakınca otomatik Amare kariyeri/etiket kullanılır */}
-                          <input value={r.unvan || ''} onChange={(e) => upd('unvan', e.target.value)}
-                            placeholder={`Unvan / meslek — boş = otomatik (${etiketSec(konusmaciBul(r.konusmaciAd), afisTuru(egitim)) || '—'})`}
-                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
-                          <textarea value={r.notlar} onChange={(e) => upd('notlar', e.target.value)} rows={2}
-                            placeholder="Alt isimler (panelistler), her satıra bir isim — opsiyonel"
-                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
-                        </>
-                      )}
-                    </div>
+                    </React.Fragment>
                   );
                 })}
-                <p className="text-[10px] text-gray-400">Saat boş bırakılan satır (örn. "Etkinlik Sorumlusu") başlıkla gösterilir. Sağda canlı işlenir.</p>
+                {/* Listenin SONUNA ekleme şeridi — üstteki şeritlerin simetriği. */}
+                {programSatir.length > 0 && (
+                  <button onClick={() => programSatirAra(programSatir.length)} title="Sona yeni satır ekle"
+                    className="w-full group flex items-center gap-2 py-0.5 text-gray-300 hover:text-amare-purple focus:text-amare-purple transition-colors">
+                    <span className="h-px flex-1 bg-current opacity-40" />
+                    <span className="text-[10px] font-semibold inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
+                      <Plus className="w-3 h-3" />buraya ekle
+                    </span>
+                    <span className="h-px flex-1 bg-current opacity-40" />
+                  </button>
+                )}
+                <p className="text-[10px] text-gray-400">Saat boş bırakılan satır (örn. "Etkinlik Sorumlusu") başlıkla gösterilir. Sağda canlı işlenir.<br />Satır aralarındaki çizgiye tıklayarak <b>araya</b> satır ekleyebilir, <b>↑ ↓</b> ile sırayı değiştirebilirsin.</p>
               </div>
             )}
 
