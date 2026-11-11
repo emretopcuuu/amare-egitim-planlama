@@ -985,9 +985,9 @@ export default function GorselStudyo() {
                           eskiden tek yol sona eklemekti ve baştaki bir oturum için
                           bütün akışı yeniden yazmak gerekiyordu. */}
                       <button onClick={() => programSatirAra(i)} title={`${i + 1}. satırın üstüne yeni satır ekle`}
-                        className="w-full group flex items-center gap-2 py-0.5 text-gray-300 hover:text-amare-purple focus:text-amare-purple transition-colors">
+                        className="w-full group flex items-center gap-2 py-1 text-gray-400 hover:text-amare-purple focus:text-amare-purple transition-colors">
                         <span className="h-px flex-1 bg-current opacity-40" />
-                        <span className="text-[10px] font-semibold inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-semibold inline-flex items-center gap-0.5 whitespace-nowrap">
                           <Plus className="w-3 h-3" />buraya ekle
                         </span>
                         <span className="h-px flex-1 bg-current opacity-40" />
@@ -1036,9 +1036,9 @@ export default function GorselStudyo() {
                 {/* Listenin SONUNA ekleme şeridi — üstteki şeritlerin simetriği. */}
                 {programSatir.length > 0 && (
                   <button onClick={() => programSatirAra(programSatir.length)} title="Sona yeni satır ekle"
-                    className="w-full group flex items-center gap-2 py-0.5 text-gray-300 hover:text-amare-purple focus:text-amare-purple transition-colors">
+                    className="w-full group flex items-center gap-2 py-1 text-gray-400 hover:text-amare-purple focus:text-amare-purple transition-colors">
                     <span className="h-px flex-1 bg-current opacity-40" />
-                    <span className="text-[10px] font-semibold inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
+                    <span className="text-[10px] font-semibold inline-flex items-center gap-0.5 whitespace-nowrap">
                       <Plus className="w-3 h-3" />buraya ekle
                     </span>
                     <span className="h-px flex-1 bg-current opacity-40" />

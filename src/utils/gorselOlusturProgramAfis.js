@@ -78,7 +78,13 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   const M = Math.round(W * 0.06);
   // Haftalık afişte 11-17 satır olabiliyor → satırlar sıkışır, başlık bloğu kısalır,
   // yoksa afiş 1:2.6 orana çıkıp WhatsApp'ta okunamaz hale geliyor.
-  const headerH = Math.round(W * (haftalik ? 0.34 : 0.62));
+  // headerH yalnızca TUVAL YÜKSEKLİĞİ hesabında kullanılan bir tahmindir (çizimde
+  // kullanılmaz; gerçek header sonu aşağıdaki `rowsTop`).
+  // 12 Kas 2026'da ölçüldü: program modunda tahmin 0.62*W = 670px, gerçeği 400px.
+  // Aradaki 270px tuvale fazladan ekleniyor ve satırlar bitince AFİŞİN ALTINDA
+  // SİYAH BOŞLUK olarak kalıyordu (Gamze bildirdi). Tahmin ölçülen orana çekildi.
+  // Tahminin küçük kalması güvenli yön: o durumda aşağıdaki sıkıştırma devreye girer.
+  const headerH = Math.round(W * (haftalik ? 0.34 : 0.38));
   const rowH = Math.round(W * (haftalik ? 0.10 : 0.135));
   const gunH = Math.round(W * 0.058);   // gün başlığı bandı (yalnız haftalık)
   const footerH = Math.round(W * 0.11);
@@ -115,7 +121,10 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
     ? gunH
     : rowH + (haftalik ? Math.round(((r._unvanSatir || 1) - 1) * unvanFont0 * 1.35) : 0));
   const satirlarH = rows.reduce((t, r) => t + satirH(r), 0) || rowH;
-  const H = Math.max(1350, headerH + satirlarH + footerH);
+  // Taban 1350 iken az satırlı programlar (3-4 satır) tabana yuvarlanıp altta
+  // boşluk bırakıyordu. Kare (1080) tabana indirildi; kalan küçük farkı aşağıdaki
+  // çift yönlü esneme satır aralarına yayıyor.
+  const H = Math.max(1080, headerH + satirlarH + footerH);
 
   canvas.height = H;   // ctx durumu sıfırlanır; çizim bundan sonra
 
@@ -188,8 +197,12 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   // ── SATIRLAR ──
   const rowsTop = y;
   const kullanilabilir = H - footerH - rowsTop;
-  // Az satırda afiş 1350'ye yuvarlandığı için satırlar gerekirse kısalır (eski davranış).
-  const sikistir = !haftalik && satirlarH > kullanilabilir ? kullanilabilir / satirlarH : 1;
+  // Satır ölçeği çift yönlü: içerik taşarsa küçültür, altta boşluk kalırsa
+  // (tavana kadar) büyütüp boşluğu satır aralarına yayar. Eskiden yalnız
+  // küçültüyordu, bu yüzden boşluk hiç kapanmıyordu.
+  const SATIR_ESNEME_TAVANI = 1.35;
+  const oran = !haftalik && satirlarH > 0 ? kullanilabilir / satirlarH : 1;
+  const sikistir = !haftalik ? Math.min(Math.max(oran, 0), SATIR_ESNEME_TAVANI) : 1;
   const solW = Math.round(W * (haftalik ? 0.40 : 0.34));
   const fotoCap = Math.round(rowH * (haftalik ? 0.46 : 0.5) * sikistir);
   const zebra = palet.acik ? 'rgba(0,0,0,0.045)' : 'rgba(255,255,255,0.04)';
