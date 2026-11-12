@@ -248,7 +248,10 @@ export default function GorselStudyo() {
   // Yalnız ETKİNLİK değişince çalışır (konuşmacı verisi geç gelince yazılanları silmesin).
   useEffect(() => {
     const vz = vizyonGunuMu(egitim);
-    setKutular(vz ? [{ konu: '', saat: '' }, { konu: '', saat: '' }, { konu: '', saat: '' }] : []);
+    // Vizyon Günü'nde 3 boş kutucuk hazır gelir (yazılınca afişte altın saat hapı olur); diğerlerinde yok.
+    // NOT: etkinliğin kendi programAkışı'ndan ön doldurma BİLEREK yok — studio `egitim`i LIGHT veriden
+    // alıyor (TAKVIM_LIGHT_FIELDS'te programAkisi yok) ve 12 Kas 2026'da 60 kaydın 0'ında dolu.
+    setKutular(vz ? [0, 1, 2].map(() => ({ konu: '', saat: '' })) : []);
     setGirisKapanisAcik(vz); setGirisKapanisSaat(''); setYasUyarisi(vz);
     /* eslint-disable-next-line */
   }, [egitimId, egitim?.id]);
@@ -1236,17 +1239,22 @@ export default function GorselStudyo() {
                   return (
                     <div key={i} className="flex items-center gap-1.5">
                       <input value={k.konu} onChange={(e) => upd('konu', e.target.value)} maxLength={40}
-                        placeholder={['Seminer', 'Soru & Cevap', 'Özel Eğitim'][i] || 'Konu'}
+                        placeholder={'örn. ' + (['Seminer', 'Soru & Cevap', 'Özel Eğitim'][i] || 'Konu')}
                         className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
                       <input value={k.saat} onChange={(e) => upd('saat', e.target.value)} maxLength={20}
-                        placeholder={['15:30-17:00', '17:00-17:30', '12:00-13:00'][i] || '00:00-00:00'}
+                        placeholder={'örn. ' + (['15:30-17:00', '17:00-17:30', '12:00-13:00'][i] || '00:00-00:00')}
                         className="w-32 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
                       <button onClick={() => setKutular(prev => prev.filter((_, idx) => idx !== i))} title="Kutucuğu sil"
                         className="p-0.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50"><X className="w-3.5 h-3.5" /></button>
                     </div>
                   );
                 })}
-                <p className="text-[10px] text-gray-400">Boş bırakılan kutucuk afişe yazılmaz. Konu otomatik BÜYÜK harfe çevrilir.</p>
+                {kutular.length > 0 && kutular.every(x => !String(x.konu || '').trim() && !String(x.saat || '').trim()) && (
+                  <p className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5">
+                    ⚠️ Kutucuklar boş — soluk "örn." yazıları yalnız örnek, afişte görünmez. Konu ve saati yazınca afişte altın saat hapı olarak çıkar.
+                  </p>
+                )}
+                <p className="text-[10px] text-gray-400">Afişte altın saat hapı + altında konu olarak görünür. Boş bırakılan kutucuk yazılmaz. Konu otomatik BÜYÜK harfe çevrilir.</p>
 
                 <div className="border-t border-gray-100 pt-2 space-y-2">
                   <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">

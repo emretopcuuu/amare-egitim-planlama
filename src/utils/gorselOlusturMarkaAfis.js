@@ -935,17 +935,22 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'cokgenis' ? 1.5 : ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
   // Alt not / uyarı satırları (Enter → alt satır; en fazla 6). 2'den fazlaysa afiş AŞAĞI uzasın → taşma yok, hep sığar.
   const serbestNotlar = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
-  // Vizyon Günü bilgi kutucukları (saha isteği, 12 Kas 2026, Gamze): "SEMİNER: 15:30-17:00"
-  // gibi konu + saat aralığı satırları (en fazla 3, boş olanlar çizilmez), ardından otomatik
-  // "Saat X'dan sonra salona giriş yapılamayacaktır." (kalın) ve en altta "18 yaşından küçükler
-  // katılamaz" (kalın DEĞİL, yarım satır boşlukla daha aşağıda). Hepsi aynı alt-not bloğunda
-  // olduğu için tuval yüksekliği ve footer payı mevcut mekanizmayla (satır sayısı) uzar.
-  const kutuSatirlari = (Array.isArray(programKutulari) ? programKutulari : []).slice(0, 3)
-    .map(k => [String(k?.konu || '').trim().toLocaleUpperCase('tr-TR'), String(k?.saat || '').trim()].filter(Boolean).join(': '))
-    .filter(Boolean);
+  // Vizyon Günü bilgi kutucukları (saha isteği, 12 Kas 2026, Gamze): konu + saat aralığı en fazla 3 kutucuk
+  // (boş olanlar çizilmez) ALTIN SAAT HAPI bandı olarak çizilir; ardından otomatik "Saat X'dan sonra salona giriş
+  // yapılamayacaktır." (kalın) ve en altta "18 yaşından küçükler katılamaz" (kalın DEĞİL, yarım satır boşlukla
+  // daha aşağıda) alt-not bloğunda yazılır; tuval yüksekliği mevcut satır-sayısı mekanizmasıyla uzar.
+  // Kutucuklar mevcut ALTIN SAAT HAPI bandına beslenir (referans afiş: altın çerçeveli saat +
+  // altında konu). "15:30-17:00" → başlangıç/bitiş; ayrılamazsa metnin tamamı saat sayılır.
+  // Kutucuk varsa etkinliğin kendi programAkışı yerine GEÇER; yoksa eski davranış aynen sürer.
+  const kutuProg = (Array.isArray(programKutulari) ? programKutulari : []).slice(0, 3)
+    .map(k => {
+      const konu = String(k?.konu || '').trim();
+      const parcalar = String(k?.saat || '').split(/\s*[-–—]\s*/).map(x => x.trim()).filter(Boolean);
+      return { baslik: konu, baslangic: parcalar[0] || '', bitis: parcalar[1] || '' };
+    })
+    .filter(k => k.baslik || k.baslangic);
   const girisSatiri = girisKapanis ? girisKapanisMetni(girisKapanis) : null;
   const notSatirlari = [
-    ...kutuSatirlari.map(t => ({ t, kalin: true })),
     ...(girisSatiri ? [{ t: girisSatiri, kalin: true }] : []),
     ...serbestNotlar.map(t => ({ t, kalin: true })),
     ...(yasUyarisi ? [{ t: YAS_UYARISI_METNI, kalin: false, ayri: true }] : []),
@@ -1090,7 +1095,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   }
 
   // ── ZONE: program bandı + footer rezervi ──
-  const prog = (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
+  const prog = kutuProg.length ? kutuProg : (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
   // notSatirlari yukarıda (canvas yüksekliği için) hesaplandı.
   // Footer: (üstte) program saatleri + (altta) adres + logo → iki blok için pay.
   const footerH = Math.round(H * (0.15 + (notSatirlari.length ? 0.038 * notSatirlari.length : 0)));
