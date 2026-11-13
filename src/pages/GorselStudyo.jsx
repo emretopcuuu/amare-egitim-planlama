@@ -8,6 +8,9 @@ import { auth, db } from '../utils/firebase';
 import { doc, getDoc, deleteField } from 'firebase/firestore';
 import { gorselOlusturMarkaAfis, KONUSMACI_CAP } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
+import { gorselOlusturSablonAfis } from '../utils/gorselOlusturSablonAfis';
+import SablonAfisPaneli, { BOS_KISI, sablonaUydur } from '../components/SablonAfisPaneli';
+import { yuzOdak } from '../utils/yuzOdak';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
 import { saatCoz, girisKapanisMetni } from '../utils/trEk';
@@ -89,6 +92,7 @@ const METOTLAR = [
   { id: 'kamp-afis', ad: '⛺ Kamp Afişi', not: 'Çok günlü · tarih serbest · saat opsiyonel', stil: null, ai: false },
   { id: 'program-icerigi', ad: '📋 Program İçeriği', not: 'Zaman çizelgesi · siyah & altın', stil: null, ai: false },
   { id: 'haftalik-program', ad: '🗓️ Haftalık Program', not: 'Haftanın tüm eğitimleri · takvimden otomatik', stil: null, ai: false },
+  { id: 'sablon-afis', ad: '🧩 Şablonlu Afiş', not: 'Söyleşi · tek · panel · kendi fotoğrafın', stil: null, ai: false },
   { id: 'ai-afis', ad: '🎨 AI Afiş', not: 'Gemini · ~$0.08 · yavaş', stil: null, ai: true },
   { id: 'dosya-yukle', ad: '📎 Dosya Yükle', not: 'Kendi afişini yükle · bağla', stil: null, ai: false },
 ];
@@ -211,6 +215,41 @@ export default function GorselStudyo() {
   const [kampTarih, setKampTarih] = useState('');
   const [kampSaat, setKampSaat] = useState('');
   const [kampBitis, setKampBitis] = useState('');
+  // Şablonlu Afiş (saha isteği 13 Kas 2026): "Retorik Sanatı" gibi farklı düzenli afişler — foto yükle, motor kırpar.
+  const [sablonDurum, setSablonDurum] = useState({
+    sablon: 'soylesi', renk: '#e8312f', tema: 'acik', baslik: '', altBaslik: '', rozet: '',
+    kisiler: [BOS_KISI(), BOS_KISI()], tarih: '', saat: '', yer: '', sifre: '',
+  });
+  const sablonGuncelle = (patch) => setSablonDurum(p => ({ ...p, ...patch }));
+  const odakDizi = (ad) => {
+    const k = konusmaciBul(ad);
+    const m = String(yuzOdak(k?.id, makeSafeId(ad), makeCoreId(ad))).match(/(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/);
+    return m ? [+m[1], +m[2]] : [50, 25];
+  };
+  const sablonKadroBul = (ad) => {
+    const adT = String(ad || '').trim().toLocaleUpperCase('tr-TR');
+    const k = adT ? konusmaciBul(adT) : null;
+    return k ? { fotoURL: k.fotoURL || null, odak: odakDizi(adT), unvan: etiketSec(k, afisTuru(egitim)) } : null;
+  };
+  const sablonDoldu = useRef('');
+  useEffect(() => {
+    if (!egitim) return;
+    // Etkinlik değişince (ve kadro ilk yüklenince) bir kez doldurur; düzenlemeleri ezmesin.
+    const anahtar = egitim.id + ':' + (konusmacilar.length > 0);
+    if (sablonDoldu.current === anahtar) return;
+    sablonDoldu.current = anahtar;
+    const ks = cozEgitmenler(egitim).slice(0, 4).map(sp => ({ ...BOS_KISI(), ad: sp.ad, unvan: sp.unvan || '', fotoURL: sp.fotoURL || null, odak: odakDizi(sp.ad) }));
+    const sid = ks.length >= 3 ? 'panel' : ks.length === 1 ? 'tek' : 'soylesi';
+    const t = String(egitim.tarih || '').split('.');
+    const tarihMetni = t.length === 3 && HP_AYLAR[+t[1] - 1]
+      ? `${+t[0]} ${HP_AYLAR[+t[1] - 1]}${egitim.gun ? ' ' + egitim.gun : ''}` : (egitim.tarih || '');
+    setSablonDurum(p => ({
+      ...p, sablon: sid, baslik: String(egitim.egitim || '').toLocaleUpperCase('tr-TR'), altBaslik: '', rozet: '', sifre: '',
+      kisiler: sablonaUydur(ks, sid), tarih: tarihMetni,
+      saat: String(egitim.saat || '').trim().replace(/^\.$/, ''), yer: String(egitim.yer || '').trim(),
+    }));
+    /* eslint-disable-next-line */
+  }, [egitimId, konusmacilar]);
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
   const dosyaRef = useRef(null);       // Dosya Yükle: seçilen File (base64 yerine bunu bağlarız)
@@ -385,9 +424,10 @@ export default function GorselStudyo() {
   const markaModu = aiModel === 'marka-afis' || kampModu;
   const programModu = aiModel === 'program-icerigi';
   const haftalikModu = aiModel === 'haftalik-program';
+  const sablonModu = aiModel === 'sablon-afis';
   const aiModu = aiModel === 'ai-afis';
   const dosyaModu = aiModel === 'dosya-yukle';
-  const canliModu = markaModu || programModu || haftalikModu; // deterministik → otomatik canlı önizleme
+  const canliModu = markaModu || programModu || haftalikModu || sablonModu; // deterministik → otomatik canlı önizleme
   // Kampta afişe giden tarih/saat serbest alanlardan gelir (boşsa eğitimin kendisi).
   // Serbest tarih girildiyse gün adı anlamını yitirir → temizlenir.
   const afisEgitim = (!egitim || !kampModu) ? egitim : {
@@ -628,6 +668,8 @@ export default function GorselStudyo() {
           return { saat: r.saat, baslik: r.baslik, konusmaci: k };
         });
         res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim), baslik: baslikOzel });
+      } else if (sablonModu) {
+        res = await gorselOlusturSablonAfis(sablonDurum);
       } else if (haftalikModu) {
         // Tek etkinlik yok — afişin başlığı haftanın kendisi. Şehir/saat alanları
         // boş geçilir ki üst blokta tek etkinlik bilgisi görünmesin.
@@ -692,7 +734,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, JSON.stringify(kutular), girisSaatiEtkin, yasUyarisi, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftalikModu ? JSON.stringify(haftaSon) : '']);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan, s.buyuk, s.grup])), altNot, altNotRenk, JSON.stringify(kutular), girisSaatiEtkin, yasUyarisi, baslikOzel, vurguKelime, vurguYon, grupModu, JSON.stringify(grupBaslik), JSON.stringify(programSatir), kampTarih, kampSaat, kampBitis, haftalikModu ? +haftaBasi : 0, haftalikModu ? JSON.stringify(haftaSon) : '', sablonModu ? JSON.stringify(sablonDurum) : '']);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -772,6 +814,9 @@ export default function GorselStudyo() {
                 </div>
               )}
             </div>
+
+            {/* Şablonlu Afiş paneli */}
+            {sablonModu && <SablonAfisPaneli durum={sablonDurum} guncelle={sablonGuncelle} kadroBul={sablonKadroBul} />}
 
             {/* Haftalık Program — hafta seçici. Satırlar takvimden otomatik gelir. */}
             {haftalikModu && (
@@ -896,7 +941,7 @@ export default function GorselStudyo() {
             )}
 
             {/* Özel başlık (boş = otomatik) — Marka + Program */}
-            {canliModu && (
+            {canliModu && !sablonModu && (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
                 <label className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1.5">✏️ Başlık <span className="text-[10px] font-normal text-gray-400">(boş = otomatik)</span></label>
                 <input value={baslikOzel} onChange={(e) => setBaslikOzel(e.target.value)}
