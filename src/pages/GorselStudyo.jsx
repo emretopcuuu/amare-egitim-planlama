@@ -219,7 +219,7 @@ export default function GorselStudyo() {
   // Şablonlu Afiş (saha isteği 13 Kas 2026): "Retorik Sanatı" gibi farklı düzenli afişler — foto yükle, motor kırpar.
   const [sablonDurum, setSablonDurum] = useState({
     sablon: 'soylesi', renk: '#e8312f', tema: 'acik', baslik: '', altBaslik: '', rozet: '',
-    kisiler: [BOS_KISI(), BOS_KISI()], tarih: '', saat: '', yer: '', sifre: '', arkaPlan: '',
+    kisiler: [BOS_KISI(), BOS_KISI()], tarih: '', saat: '', yer: '', sifre: '', arkaPlan: '', dekor: { stil: 'isik', tohum: 1 }, zeminRenk: '',
   });
   const sablonGuncelle = (patch) => setSablonDurum(p => ({ ...p, ...patch }));
   const odakDizi = (ad) => {

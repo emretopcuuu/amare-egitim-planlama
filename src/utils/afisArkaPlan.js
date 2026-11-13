@@ -30,7 +30,8 @@ const gorselPrompt = ({ renk, tema, konu, istek }) => [
 
 const hata = async (res, ad) => {
   const e = await res.json().catch(() => ({}));
-  const m = String(e?.error || `${ad} ${res.status}`);
+  // Hata metni anahtarın bir parçasını içerebilir (sk-proj-…) → ekrana/ekran görüntüsüne sızmasın
+  const m = String(e?.error || `${ad} ${res.status}`).replace(/sk-[A-Za-z0-9_*.\-]{4,}/g, 'sk-…');
   if (/credits are depleted|billing|quota|insufficient/i.test(m) || res.status === 429) {
     throw new Error(`${ad} hesabının kredisi/kotası bitmiş. Başka bir yapay zekâyı seç ya da ${ad} hesabına kredi yükle.`);
   }
@@ -53,10 +54,16 @@ export const arkaPlanUret = async ({ saglayici, idToken, renk, tema, konu, istek
 
   const prompt = gorselPrompt({ renk, tema, konu, istek });
   if (saglayici === 'openai') {
-    const res = await fetch('/.netlify/functions/openai-gorsel', {
+    const dene = (apiKey) => fetch('/.netlify/functions/openai-gorsel', {
       method: 'POST', headers: yetki,
-      body: JSON.stringify({ apiKey: openaiApiKey || undefined, prompt, size: '1024x1536', quality: 'low' }),
+      body: JSON.stringify({ apiKey: apiKey || undefined, prompt, size: '1024x1536', quality: 'low' }),
     });
+    // Ayarlar'daki kişisel anahtar geçersizse (eski/yanlış) sunucudaki anahtarla bir kez daha dene.
+    let res = await dene(openaiApiKey);
+    if (!res.ok && openaiApiKey && (res.status === 401 || res.status === 400 || res.status === 502)) {
+      const yedek = await dene('');
+      if (yedek.ok) res = yedek;
+    }
     if (!res.ok) await hata(res, 'OpenAI');
     const d = await res.json();
     if (!d?.b64) throw new Error('OpenAI görsel döndürmedi.');

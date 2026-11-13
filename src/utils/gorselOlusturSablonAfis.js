@@ -9,6 +9,7 @@
 // Yeni şablon = SABLONLAR'a bir satır + (gerekirse) geometri dalı.
 import { imgYukle } from './imgYukle';
 import { afisFontYukle } from './afisFontlari';
+import { dekorCiz } from './afisDekor';
 
 export const SABLONLAR = [
   { id: 'soylesi', ad: 'Söyleşi', not: '2 kişi · boy portre', min: 2, max: 2 },
@@ -123,14 +124,17 @@ export const gorselOlusturSablonAfis = async (ayar) => {
   const {
     sablon = 'soylesi', renk = '#e8312f', tema = 'acik',
     baslik = '', altBaslik = '', rozet = '', kisiler = [], tarih = '', saat = '', yer = '', sifre = '', arkaPlan = '',
+    dekor = null, zeminRenk = '',
   } = ayar;
-  const koyu = tema === 'koyu';
-  const zemin = koyu ? '#121212' : '#eeeeee';
+  // zeminRenk seçildiyse açık/koyu tema o rengin parlaklığından çıkar (okunurluk garanti)
+  const koyu = /^#[0-9a-f]{6}$/i.test(zeminRenk) ? parlak(zeminRenk) < 0.5 : tema === 'koyu';
+  const zemin = /^#[0-9a-f]{6}$/i.test(zeminRenk) ? zeminRenk : (koyu ? '#121212' : '#eeeeee');
+  const arkaVar = !!arkaPlan || !!dekor?.stil;
   const yazi = koyu ? '#f4f4f4' : '#111111';
   // Koyu temada çok koyu aksan (siyah vb.) zeminde kaybolur → başlık ve isim bandı açık renge döner.
   const aksanKayboldu = koyu && parlak(renk) < 0.28;
   // YZ arka planı aksan renginde olur; koyu temada aksan yazı zeminle karışır → başlık beyaz, vurgu altın.
-  const zeminAksanli = koyu && !!arkaPlan;
+  const zeminAksanli = koyu && arkaVar;
   const baslikRenk = (aksanKayboldu || zeminAksanli) ? '#ffffff' : renk;
   const vurguRenk = zeminAksanli ? '#ffd166' : baslikRenk;
   const bandRenk = aksanKayboldu ? '#f4f4f4' : renk;
@@ -142,13 +146,17 @@ export const gorselOlusturSablonAfis = async (ayar) => {
   ctx.fillStyle = zemin; ctx.fillRect(0, 0, W, H);
 
   // ── YZ arka planı (isteğe bağlı) + okunurluk perdeleri ──
-  if (arkaPlan) {
+  if (arkaVar) {
     try {
-      const bg = await imgYukle(arkaPlan);
-      const bw = bg.width || W, bh = bg.height || H;
-      const k = Math.max(W / bw, H / bh);
-      ctx.drawImage(bg, (W - bw * k) / 2, (H - bh * k) / 2, bw * k, bh * k);
-      const [zr, zg, zb] = hexRGB(zemin);
+      if (arkaPlan) {
+        const bg = await imgYukle(arkaPlan);
+        const bw = bg.width || W, bh = bg.height || H;
+        const k = Math.max(W / bw, H / bh);
+        ctx.drawImage(bg, (W - bw * k) / 2, (H - bh * k) / 2, bw * k, bh * k);
+      } else {
+        dekorCiz(ctx, W, H, { stil: dekor.stil, renk, tema: koyu ? 'koyu' : 'acik', tohum: dekor.tohum || 1 });
+      }
+      const [zr, zg, zb] = koyu ? [10, 10, 10] : [250, 250, 250];
       const ust = ctx.createLinearGradient(0, 0, 0, H * 0.36);
       ust.addColorStop(0, `rgba(${zr},${zg},${zb},0.62)`); ust.addColorStop(1, `rgba(${zr},${zg},${zb},0)`);
       ctx.fillStyle = ust; ctx.fillRect(0, 0, W, H * 0.36);
@@ -202,25 +210,51 @@ export const gorselOlusturSablonAfis = async (ayar) => {
   const fotoH = bandY - fotoY;
   const n = Math.max(1, Math.min(kisiler.length, 4)) || 1;
 
+  // KART modu (arka plan varken): fotoğraflar kenardan kenara değil, boşluklu yuvarlak kartlar → arka plan görünür kalır.
+  const kart = arkaVar;
+  const kenar = kart ? 46 : 0, aralik = kart ? 26 : 0;
   let kutular; // [{x, w}]
   if (sablon === 'tek') {
-    const bw = W * 0.66;
+    const bw = W * (kart ? 0.74 : 0.66);
     kutular = [{ x: (W - bw) / 2, w: bw }];
   } else {
-    const kw = W / n;
-    kutular = Array.from({ length: n }, (_, i) => ({ x: i * kw, w: kw }));
+    const kw = (W - kenar * 2 - aralik * (n - 1)) / n;
+    kutular = Array.from({ length: n }, (_, i) => ({ x: kenar + i * (kw + aralik), w: kw }));
   }
 
+  // İsim yazısı (bant ya da kart etiketi içinde)
+  const isimYaz = (k, b, ust) => {
+    const cx = b.x + b.w / 2;
+    const yaziMax = (sablon === 'tek' ? W * 0.8 : b.w) * 0.9;
+    const adPx = n >= 3 ? H * 0.0185 : H * 0.0255;
+    const adT = String(k.ad || '').toLocaleUpperCase('tr-TR');
+    if (k.unvan) {
+      metin(ctx, adT, cx, ust + bandH * 0.47, { px: adPx, agirlik: 600, renk: bandYazi, maxW: yaziMax, harf: 1 });
+      metin(ctx, String(k.unvan).toLocaleUpperCase('tr-TR'), cx, ust + bandH * 0.82, { px: adPx * 0.62, agirlik: 500, renk: bandYazi, maxW: yaziMax, harf: 0.5 });
+    } else {
+      metin(ctx, adT, cx, ust + bandH * 0.62, { px: adPx, agirlik: 600, renk: bandYazi, maxW: yaziMax, harf: 1 });
+    }
+  };
+
   // Arkada hafif gri blok (derinlik hissi) — söyleşi/tek
-  if (sablon !== 'panel') {
-    ctx.fillStyle = koyu ? '#1d1d1d' : '#dcdcdc';
+  if (sablon !== 'panel' && !kart) {
+    ctx.fillStyle = arkaVar ? (koyu ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)') : (koyu ? '#1d1d1d' : '#dcdcdc');
     ctx.fillRect(sablon === 'tek' ? W * 0.12 : W / 2, bandY - H * 0.1, sablon === 'tek' ? W * 0.76 : W / 2, H * 0.1 + bandH + H * 0.026);
   }
 
   for (let i = 0; i < kutular.length; i++) {
     const k = kisiler[i] || {};
     const b = kutular[i];
-    const kutuY = fotoY, kutuH = fotoH;
+    const kutuY = fotoY, kutuH = kart ? fotoH + bandH : fotoH;
+    if (kart) {
+      // Kart: gölge + yuvarlak köşe kırpma
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.roundRect(b.x, kutuY, b.w, kutuH, 34); ctx.fill();
+      ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(b.x, kutuY, b.w, kutuH, 34); ctx.clip();
+    }
     if (k.fotoURL) {
       try {
         const im = await imgYukle(k.fotoURL);
@@ -232,34 +266,34 @@ export const gorselOlusturSablonAfis = async (ayar) => {
       ctx.fillStyle = koyu ? '#2a2a2a' : '#cfcfcf'; ctx.fillRect(b.x, kutuY, b.w, kutuH);
       metin(ctx, 'FOTOĞRAF', b.x + b.w / 2, kutuY + kutuH / 2, { px: H * 0.02, agirlik: 700, renk: koyu ? '#777' : '#999' });
     }
+    if (kart) {
+      // Alt karartma + kartın içinde isim etiketi (kırpma içinde → alt köşeler yuvarlak)
+      const kg = ctx.createLinearGradient(0, kutuY + kutuH - bandH - H * 0.09, 0, kutuY + kutuH - bandH);
+      kg.addColorStop(0, 'rgba(0,0,0,0)'); kg.addColorStop(1, 'rgba(0,0,0,0.42)');
+      ctx.fillStyle = kg; ctx.fillRect(b.x, kutuY + kutuH - bandH - H * 0.09, b.w, H * 0.09);
+      ctx.fillStyle = bandRenk; ctx.fillRect(b.x, kutuY + kutuH - bandH, b.w, bandH);
+      isimYaz(k, b, kutuY + kutuH - bandH);
+      ctx.restore();
+      ctx.beginPath(); ctx.roundRect(b.x, kutuY, b.w, kutuH, 34);
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 2.5; ctx.stroke();
+    }
     // Panelde sütunlar arası ince ayraç
-    if (sablon === 'panel' && i > 0) { ctx.fillStyle = zemin; ctx.fillRect(b.x - 3, kutuY, 6, kutuH); }
+    if (!kart && sablon === 'panel' && i > 0) { ctx.fillStyle = zemin; ctx.fillRect(b.x - 3, kutuY, 6, kutuH); }
   }
 
-  // Fotoğrafların alt kenarına yumuşak karartma → isim bandına derinlikle oturur
-  const kar = ctx.createLinearGradient(0, bandY - H * 0.09, 0, bandY);
-  kar.addColorStop(0, 'rgba(0,0,0,0)'); kar.addColorStop(1, 'rgba(0,0,0,0.38)');
-  ctx.fillStyle = kar; ctx.fillRect(0, bandY - H * 0.09, W, H * 0.09);
+  if (!kart) {
+    // Fotoğrafların alt kenarına yumuşak karartma → isim bandına derinlikle oturur
+    const kar = ctx.createLinearGradient(0, bandY - H * 0.09, 0, bandY);
+    kar.addColorStop(0, 'rgba(0,0,0,0)'); kar.addColorStop(1, 'rgba(0,0,0,0.38)');
+    ctx.fillStyle = kar; ctx.fillRect(0, bandY - H * 0.09, W, H * 0.09);
 
-  // ── İsim bandı ──
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
-  ctx.fillStyle = bandRenk; ctx.fillRect(0, bandY, W, bandH);
-  ctx.restore();
-  ctx.fillStyle = bandRenk; ctx.fillRect(0, bandY, W, bandH);
-  for (let i = 0; i < kutular.length; i++) {
-    const k = kisiler[i] || {};
-    const b = kutular[i];
-    const cx = b.x + b.w / 2;
-    const yaziMax = (sablon === 'tek' ? W * 0.8 : b.w) * 0.9;
-    const adPx = n >= 3 ? H * 0.0185 : H * 0.0255;
-    const adT = String(k.ad || '').toLocaleUpperCase('tr-TR');
-    if (k.unvan) {
-      metin(ctx, adT, cx, bandY + bandH * 0.47, { px: adPx, agirlik: 600, renk: bandYazi, maxW: yaziMax, harf: 1 });
-      metin(ctx, String(k.unvan).toLocaleUpperCase('tr-TR'), cx, bandY + bandH * 0.82, { px: adPx * 0.62, agirlik: 500, renk: bandYazi, maxW: yaziMax, harf: 0.5 });
-    } else {
-      metin(ctx, adT, cx, bandY + bandH * 0.62, { px: adPx, agirlik: 600, renk: bandYazi, maxW: yaziMax, harf: 1 });
-    }
+    // ── İsim bandı (tam genişlik) ──
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+    ctx.fillStyle = bandRenk; ctx.fillRect(0, bandY, W, bandH);
+    ctx.restore();
+    ctx.fillStyle = bandRenk; ctx.fillRect(0, bandY, W, bandH);
+    for (let i = 0; i < kutular.length; i++) isimYaz(kisiler[i] || {}, kutular[i], bandY);
   }
 
   // ── Alt bilgi: tarih · saat | yer · şifre ──

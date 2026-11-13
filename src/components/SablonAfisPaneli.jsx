@@ -1,8 +1,23 @@
 // Görsel Stüdyo → "Şablonlu Afiş" kontrol paneli.
 // Durum Stüdyo'da tutulur (canlı önizleme oradaki effect'le yenilenir); burası yalnız form.
-import React, { useState } from 'react';
-import { Plus, X, Loader2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, X, Loader2, Sparkles, Shuffle } from 'lucide-react';
 import { YZ_SAGLAYICILAR } from '../utils/afisArkaPlan';
+import { DEKOR_STILLERI, dekorCiz } from '../utils/afisDekor';
+
+// Küçük canlı önizleme: seçili renk/tema ile stilin kendisi çizilir.
+function DekorKucuk({ stil, renk, tema, tohum }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const c = ref.current; if (!c) return;
+    const ctx = c.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.scale(c.width / 1080, c.height / 1920);
+    dekorCiz(ctx, 1080, 1920, { stil, renk, tema, tohum });
+  }, [stil, renk, tema, tohum]);
+  return <canvas ref={ref} width={72} height={128} className="w-full h-full block" />;
+}
 import { SABLONLAR, RENK_HAZIR } from '../utils/gorselOlusturSablonAfis';
 
 const GIRDI = 'w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
@@ -94,6 +109,37 @@ export default function SablonAfisPaneli({ durum, guncelle, kadroBul, arkaPlanUr
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Hazır arka plan (kodla çizilir, ücretsiz) + zemin rengi */}
+      <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-gray-700">🎨 Hazır arka plan <span className="font-normal text-gray-400">(ücretsiz, anında)</span></span>
+          <button onClick={() => guncelle({ dekor: { stil: durum.dekor?.stil || 'isik', tohum: (durum.dekor?.tohum || 1) + 1 }, arkaPlan: '' })}
+            className="text-[11px] text-amare-purple hover:underline flex items-center gap-1" title="Aynı stilde farklı bir varyasyon">
+            <Shuffle className="w-3 h-3" /> varyasyon
+          </button>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          <button onClick={() => guncelle({ dekor: null, arkaPlan: '' })}
+            className={`rounded-lg border-2 overflow-hidden text-[10px] font-semibold text-gray-500 flex items-center justify-center h-[92px] ${!durum.dekor && !arkaPlan ? 'border-amare-purple bg-purple-50' : 'border-gray-200'}`}>Düz</button>
+          {DEKOR_STILLERI.map(s => (
+            <button key={s.id} onClick={() => guncelle({ dekor: { stil: s.id, tohum: durum.dekor?.tohum || 1 }, arkaPlan: '' })} title={s.ad}
+              className={`rounded-lg border-2 overflow-hidden relative h-[92px] ${durum.dekor?.stil === s.id && !arkaPlan ? 'border-amare-purple' : 'border-gray-200'}`}>
+              <DekorKucuk stil={s.id} renk={renk} tema={tema} tohum={durum.dekor?.tohum || 1} />
+              <span className="absolute bottom-0 inset-x-0 text-[9px] font-bold text-white bg-black/50 py-0.5">{s.ad}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Zemin rengi</span>
+          <input type="color" value={durum.zeminRenk || (tema === 'koyu' ? '#121212' : '#eeeeee')} onChange={(e) => guncelle({ zeminRenk: e.target.value })} className="w-7 h-7 p-0 border-0 bg-transparent cursor-pointer" />
+          {['#ffffff', '#f4efe6', '#0f172a', '#1b0a2e', '#0b3d2e'].map(c => (
+            <button key={c} onClick={() => guncelle({ zeminRenk: c })} className="w-5 h-5 rounded-full ring-1 ring-gray-300" style={{ background: c }} title={c} />
+          ))}
+          {durum.zeminRenk && <button onClick={() => guncelle({ zeminRenk: '' })} className="text-[11px] text-gray-400 hover:text-red-500 ml-auto">otomatik</button>}
+        </div>
+        <p className="text-[10px] text-gray-400">Seçtiğin renkten zemin, ışık ve gölgeler türetilir. Zemin rengi, arka planın altındaki ve fotoğrafların çevresindeki alanı boyar.</p>
       </div>
 
       {/* Yapay zekâ arka plan */}
