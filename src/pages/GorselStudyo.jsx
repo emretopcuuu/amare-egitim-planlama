@@ -11,6 +11,7 @@ import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturSablonAfis } from '../utils/gorselOlusturSablonAfis';
 import SablonAfisPaneli, { BOS_KISI, sablonaUydur } from '../components/SablonAfisPaneli';
 import { yuzOdak } from '../utils/yuzOdak';
+import { arkaPlanUret } from '../utils/afisArkaPlan';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
 import { saatCoz, girisKapanisMetni } from '../utils/trEk';
@@ -218,7 +219,7 @@ export default function GorselStudyo() {
   // Şablonlu Afiş (saha isteği 13 Kas 2026): "Retorik Sanatı" gibi farklı düzenli afişler — foto yükle, motor kırpar.
   const [sablonDurum, setSablonDurum] = useState({
     sablon: 'soylesi', renk: '#e8312f', tema: 'acik', baslik: '', altBaslik: '', rozet: '',
-    kisiler: [BOS_KISI(), BOS_KISI()], tarih: '', saat: '', yer: '', sifre: '',
+    kisiler: [BOS_KISI(), BOS_KISI()], tarih: '', saat: '', yer: '', sifre: '', arkaPlan: '',
   });
   const sablonGuncelle = (patch) => setSablonDurum(p => ({ ...p, ...patch }));
   const odakDizi = (ad) => {
@@ -816,7 +817,11 @@ export default function GorselStudyo() {
             </div>
 
             {/* Şablonlu Afiş paneli */}
-            {sablonModu && <SablonAfisPaneli durum={sablonDurum} guncelle={sablonGuncelle} kadroBul={sablonKadroBul} />}
+            {sablonModu && <SablonAfisPaneli durum={sablonDurum} guncelle={sablonGuncelle} kadroBul={sablonKadroBul}
+              arkaPlanUret={async (saglayici, istek) => arkaPlanUret({
+                saglayici, istek, idToken: await auth?.currentUser?.getIdToken?.().catch(() => null),
+                renk: sablonDurum.renk, tema: sablonDurum.tema, konu: sablonDurum.baslik, openaiApiKey,
+              })} />}
 
             {/* Haftalık Program — hafta seçici. Satırlar takvimden otomatik gelir. */}
             {haftalikModu && (

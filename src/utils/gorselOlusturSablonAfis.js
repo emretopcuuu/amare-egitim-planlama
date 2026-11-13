@@ -122,14 +122,17 @@ export const gorselOlusturSablonAfis = async (ayar) => {
   await afisFontYukle();
   const {
     sablon = 'soylesi', renk = '#e8312f', tema = 'acik',
-    baslik = '', altBaslik = '', rozet = '', kisiler = [], tarih = '', saat = '', yer = '', sifre = '',
+    baslik = '', altBaslik = '', rozet = '', kisiler = [], tarih = '', saat = '', yer = '', sifre = '', arkaPlan = '',
   } = ayar;
   const koyu = tema === 'koyu';
   const zemin = koyu ? '#121212' : '#eeeeee';
   const yazi = koyu ? '#f4f4f4' : '#111111';
   // Koyu temada çok koyu aksan (siyah vb.) zeminde kaybolur → başlık ve isim bandı açık renge döner.
   const aksanKayboldu = koyu && parlak(renk) < 0.28;
-  const baslikRenk = aksanKayboldu ? '#ffffff' : renk;
+  // YZ arka planı aksan renginde olur; koyu temada aksan yazı zeminle karışır → başlık beyaz, vurgu altın.
+  const zeminAksanli = koyu && !!arkaPlan;
+  const baslikRenk = (aksanKayboldu || zeminAksanli) ? '#ffffff' : renk;
+  const vurguRenk = zeminAksanli ? '#ffd166' : baslikRenk;
   const bandRenk = aksanKayboldu ? '#f4f4f4' : renk;
   const bandYazi = parlak(bandRenk) > 0.62 ? '#161616' : '#ffffff';
 
@@ -137,6 +140,23 @@ export const gorselOlusturSablonAfis = async (ayar) => {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = zemin; ctx.fillRect(0, 0, W, H);
+
+  // ── YZ arka planı (isteğe bağlı) + okunurluk perdeleri ──
+  if (arkaPlan) {
+    try {
+      const bg = await imgYukle(arkaPlan);
+      const bw = bg.width || W, bh = bg.height || H;
+      const k = Math.max(W / bw, H / bh);
+      ctx.drawImage(bg, (W - bw * k) / 2, (H - bh * k) / 2, bw * k, bh * k);
+      const [zr, zg, zb] = hexRGB(zemin);
+      const ust = ctx.createLinearGradient(0, 0, 0, H * 0.36);
+      ust.addColorStop(0, `rgba(${zr},${zg},${zb},0.62)`); ust.addColorStop(1, `rgba(${zr},${zg},${zb},0)`);
+      ctx.fillStyle = ust; ctx.fillRect(0, 0, W, H * 0.36);
+      const alt = ctx.createLinearGradient(0, H * 0.8, 0, H);
+      alt.addColorStop(0, `rgba(${zr},${zg},${zb},0)`); alt.addColorStop(0.35, `rgba(${zr},${zg},${zb},0.78)`); alt.addColorStop(1, `rgba(${zr},${zg},${zb},0.9)`);
+      ctx.fillStyle = alt; ctx.fillRect(0, H * 0.8, W, H * 0.2);
+    } catch { /* arka plan yüklenemedi → düz zemin, afiş bozulmaz */ }
+  }
 
   // ── Başlık (aksan renkli, kondanse, çok satırlı) ──
   let y = H * 0.032;
@@ -152,7 +172,7 @@ export const gorselOlusturSablonAfis = async (ayar) => {
   const aSatir = String(altBaslik).split('\n').map(s => s.trim()).filter(Boolean);
   const aPx = H * 0.039;
   for (const s of aSatir) {
-    const p = kondanse(ctx, s, W / 2, y + aPx * 0.78, { px: aPx, maxW: W * 0.9, sx: 0.5, renk: yazi, vurgu: baslikRenk, agirlik: 800 });
+    const p = kondanse(ctx, s, W / 2, y + aPx * 0.78, { px: aPx, maxW: W * 0.9, sx: 0.5, renk: yazi, vurgu: vurguRenk, agirlik: 800 });
     y += (p || aPx) * 1.08;
   }
   y += H * 0.012;
@@ -216,7 +236,16 @@ export const gorselOlusturSablonAfis = async (ayar) => {
     if (sablon === 'panel' && i > 0) { ctx.fillStyle = zemin; ctx.fillRect(b.x - 3, kutuY, 6, kutuH); }
   }
 
+  // Fotoğrafların alt kenarına yumuşak karartma → isim bandına derinlikle oturur
+  const kar = ctx.createLinearGradient(0, bandY - H * 0.09, 0, bandY);
+  kar.addColorStop(0, 'rgba(0,0,0,0)'); kar.addColorStop(1, 'rgba(0,0,0,0.38)');
+  ctx.fillStyle = kar; ctx.fillRect(0, bandY - H * 0.09, W, H * 0.09);
+
   // ── İsim bandı ──
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = bandRenk; ctx.fillRect(0, bandY, W, bandH);
+  ctx.restore();
   ctx.fillStyle = bandRenk; ctx.fillRect(0, bandY, W, bandH);
   for (let i = 0; i < kutular.length; i++) {
     const k = kisiler[i] || {};

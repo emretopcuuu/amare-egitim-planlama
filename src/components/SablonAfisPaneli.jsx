@@ -1,7 +1,8 @@
 // Görsel Stüdyo → "Şablonlu Afiş" kontrol paneli.
 // Durum Stüdyo'da tutulur (canlı önizleme oradaki effect'le yenilenir); burası yalnız form.
-import React from 'react';
-import { Plus, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, X, Loader2, Sparkles } from 'lucide-react';
+import { YZ_SAGLAYICILAR } from '../utils/afisArkaPlan';
 import { SABLONLAR, RENK_HAZIR } from '../utils/gorselOlusturSablonAfis';
 
 const GIRDI = 'w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
@@ -16,9 +17,26 @@ export const sablonaUydur = (kisiler, sablonId) => {
   return yeni;
 };
 
-export default function SablonAfisPaneli({ durum, guncelle, kadroBul }) {
-  const { sablon, renk, tema, baslik, altBaslik, rozet, kisiler, tarih, saat, yer, sifre } = durum;
+export default function SablonAfisPaneli({ durum, guncelle, kadroBul, arkaPlanUret }) {
+  const { sablon, renk, tema, baslik, altBaslik, rozet, kisiler, tarih, saat, yer, sifre, arkaPlan } = durum;
   const sab = SABLONLAR.find(s => s.id === sablon) || SABLONLAR[0];
+
+  // YZ arka plan: sağlayıcı seç → üret → adaylar arasından seç (adaylar bu oturumda kalır)
+  const [saglayici, setSaglayici] = useState('claude');
+  const [yzIstek, setYzIstek] = useState('');
+  const [yzDurum, setYzDurum] = useState('');   // '' | 'uretiyor'
+  const [yzHata, setYzHata] = useState('');
+  const [adaylar, setAdaylar] = useState([]);   // [{url, saglayici}] en fazla 6
+  const yzUret = async () => {
+    if (yzDurum) return;
+    setYzDurum('uretiyor'); setYzHata('');
+    try {
+      const url = await arkaPlanUret(saglayici, yzIstek);
+      setAdaylar(a => [{ url, saglayici }, ...a].slice(0, 6));
+      guncelle({ arkaPlan: url });
+    } catch (e) { setYzHata(e?.message || String(e)); }
+    finally { setYzDurum(''); }
+  };
 
   const kisiGuncelle = (i, patch) => guncelle({ kisiler: kisiler.map((k, idx) => idx === i ? { ...k, ...patch } : k) });
 
@@ -76,6 +94,42 @@ export default function SablonAfisPaneli({ durum, guncelle, kadroBul }) {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Yapay zekâ arka plan */}
+      <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-amare-purple" /> Yapay zekâ arka plan</span>
+          {arkaPlan && <button onClick={() => guncelle({ arkaPlan: '' })} className="text-[11px] text-gray-400 hover:text-red-500">arka planı kaldır</button>}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {YZ_SAGLAYICILAR.map(s => (
+            <button key={s.id} onClick={() => setSaglayici(s.id)}
+              className={`p-2 rounded-lg border-2 text-left text-xs transition ${saglayici === s.id ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}>
+              <div className="font-bold leading-tight">{s.ad}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">{s.not}</div>
+              <div className="text-[10px] text-amber-700 mt-0.5">{s.tahmin}</div>
+            </button>
+          ))}
+        </div>
+        <input value={yzIstek} onChange={(e) => setYzIstek(e.target.value)} maxLength={200} className={GIRDI}
+          placeholder="İstek (isteğe bağlı): kürsü ışığı, sinematik, altın parıltı…" />
+        <button onClick={yzUret} disabled={!!yzDurum}
+          className="w-full py-2 rounded-lg text-xs font-bold text-white bg-amare-purple hover:bg-amare-dark transition flex items-center justify-center gap-1.5 disabled:opacity-50">
+          {yzDurum ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Üretiliyor…</> : <><Sparkles className="w-3.5 h-3.5" /> {adaylar.length ? 'Yeni arka plan üret' : 'Arka plan üret'}</>}
+        </button>
+        {yzHata && <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg p-2">{yzHata}</p>}
+        {adaylar.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap">
+            {adaylar.map((a, i) => (
+              <button key={a.url} onClick={() => guncelle({ arkaPlan: a.url })} title={YZ_SAGLAYICILAR.find(s => s.id === a.saglayici)?.ad}
+                className={`w-12 h-[85px] rounded-md overflow-hidden border-2 ${arkaPlan === a.url ? 'border-amare-purple' : 'border-gray-200'}`}>
+                <img src={a.url} alt={`aday ${i + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+        <p className="text-[10px] text-gray-400">Yapay zekâ yalnız arka planı çizer; fotoğraflar, isimler ve tarih gerçek haliyle üstüne yerleşir. Her üretim ücretlidir, sadece düğmeye basınca çalışır.</p>
       </div>
 
       {/* Yazılar */}
