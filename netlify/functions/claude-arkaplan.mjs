@@ -39,8 +39,9 @@ Kurallar:
 - YALNIZ dekoratif arka plan: gradyanlar, ışık huzmeleri, geometrik/organik şekiller, ince çizgiler, dokular, parıltılar.
 - ASLA metin (<text>), insan, yüz, logo, simge, harf çizme.
 - <script>, <foreignObject>, <image>, harici href/url, olay özniteliği (onload vb.) YASAK.
-- Kompozisyon: üst %30 ve alt %25 SAKİN olsun (başlık ve bilgi yazısı oraya binecek); ortadaki %45 (fotoğraf bölgesi) yarı saydam ve düşük kontrastlı kalsın.
-- Derinlik ve sinematik his ver: katmanlı yarı saydam şekiller, yumuşak ışık, hafif vinyet.
+- Kompozisyon: üst %25 ve alt %20 sade olsun (başlık ve bilgi yazısı oraya binecek). Orta bölgede fotoğraf olacak, ama KENARLARDA ve köşelerde güçlü, doygun, dramatik şekiller kullan: büyük ışık huzmeleri, çapraz bantlar, iç içe daireler, parlak lekeler.
+- Soluk ve pastel KAÇIN: ana rengin koyu ve parlak tonlarını yüksek kontrastla kullan, zeminle belirgin ayrışan en az 4 katman olsun.
+- Derinlik ve sinematik his ver: katmanlı yarı saydam şekiller, güçlü ışık odağı, vinyet.
 - Verilen ana rengin tonlarını kullan; zemin tema "koyu" ise koyu, "acik" ise açık ton ağırlıklı çalış.
 - Dosya 12 KB'ı geçmesin.`;
 

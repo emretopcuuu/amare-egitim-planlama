@@ -30,7 +30,11 @@ const gorselPrompt = ({ renk, tema, konu, istek }) => [
 
 const hata = async (res, ad) => {
   const e = await res.json().catch(() => ({}));
-  throw new Error(e?.error || `${ad} ${res.status}`);
+  const m = String(e?.error || `${ad} ${res.status}`);
+  if (/credits are depleted|billing|quota|insufficient/i.test(m) || res.status === 429) {
+    throw new Error(`${ad} hesabının kredisi/kotası bitmiş. Başka bir yapay zekâyı seç ya da ${ad} hesabına kredi yükle.`);
+  }
+  throw new Error(m);
 };
 
 export const arkaPlanUret = async ({ saglayici, idToken, renk, tema, konu, istek, openaiApiKey }) => {

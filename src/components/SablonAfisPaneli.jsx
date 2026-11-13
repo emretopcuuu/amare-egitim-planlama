@@ -104,7 +104,7 @@ export default function SablonAfisPaneli({ durum, guncelle, kadroBul, arkaPlanUr
         </div>
         <div className="grid grid-cols-3 gap-2">
           {YZ_SAGLAYICILAR.map(s => (
-            <button key={s.id} onClick={() => setSaglayici(s.id)}
+            <button key={s.id} onClick={() => { setSaglayici(s.id); setYzHata(''); }}
               className={`p-2 rounded-lg border-2 text-left text-xs transition ${saglayici === s.id ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}>
               <div className="font-bold leading-tight">{s.ad}</div>
               <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">{s.not}</div>
