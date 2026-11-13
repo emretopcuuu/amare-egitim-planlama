@@ -853,6 +853,11 @@ export const gorselOlusturMarkaAfis = async (params) => {
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
 };
 
+// Afişe çizilecek EN FAZLA konuşmacı. Aşılırsa fazlası SESSİZCE düşerdi — Gamze bildirdi (13 Kas 2026):
+// 28 kişilik afişe 4 kişi daha eklemek istedi, sınır 30'du. 12 → 24 → 30 → 48. Boy uzadığı için sığar
+// (her satır tuvali aşağı uzatır). Stüdyo, sınır aşılınca kullanıcıyı AÇIKÇA uyarır (bu sabiti içe aktarır).
+export const KONUSMACI_CAP = 48;
+
 const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' }, grupBasliklari = [], kampModu = false, programKutulari = [], girisKapanis = '', yasUyarisi = false }, ekstraH = 0) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
@@ -888,7 +893,6 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const fiziki = isFiziki(egitim);
 
   // ── Konuşmacı satır sayısını ÖNCEDEN hesapla → çok kişide afiş AŞAĞI uzar (kesilme yok) ──
-  const KONUSMACI_CAP = 30; // 12→24→30 (Kas 2026: 25 liderlik afiş; boy uzadığı için sığar)
   const liste = (egitmenler || []).slice(0, KONUSMACI_CAP);
   const perMap = { iki: 2, uc: 3, dort: 4, bes: 5 };
   const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };

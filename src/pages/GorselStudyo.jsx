@@ -6,7 +6,7 @@ import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
 import { auth, db } from '../utils/firebase';
 import { doc, getDoc, deleteField } from 'firebase/firestore';
-import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
+import { gorselOlusturMarkaAfis, KONUSMACI_CAP } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
@@ -957,6 +957,11 @@ export default function GorselStudyo() {
                 ))}
                 {speakers.length === 0 && <div className="text-[11px] text-gray-400 py-1">Henüz konuşmacı yok. Aşağıdan ekle.</div>}
               </div>
+              {markaModu && speakers.length > KONUSMACI_CAP && (
+                <p className="mt-2 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5">
+                  ⚠️ Afişe en fazla {KONUSMACI_CAP} konuşmacı çizilir. Listede {speakers.length} kişi var; son {speakers.length - KONUSMACI_CAP} kişi afişte GÖRÜNMEZ (eğitim kaydında kalır).
+                </p>
+              )}
               {/* Ekle: mevcut konuşmacılardan seç veya yeni isim */}
               <div className="mt-2.5 pt-2.5 border-t border-gray-100 space-y-1.5">
                 <div className="flex items-center gap-1.5">
