@@ -1,6 +1,19 @@
 <!doctype html>
 <html lang="tr">
   <head>
+    <script>
+      /* HIZLI AÇILIŞ: takvim/konuşmacı listesini JavaScript paketleri inerken PARALEL başlat.
+         Adresler src/context/DataContext.jsx'teki fetchLightCollection ile BİREBİR aynı olmalı
+         (alan listeleri değişirse ikisini birlikte güncelle; uyuşmazlık zararsız: kod normal fetch'e düşer). */
+      (function () {
+        try {
+          var w = window.__ilkVeri = {};
+          ['https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/takvim?mask.fieldPaths=egitim&mask.fieldPaths=gun&mask.fieldPaths=tarih&mask.fieldPaths=saat&mask.fieldPaths=bitisSaati&mask.fieldPaths=sure&mask.fieldPaths=egitmen&mask.fieldPaths=yer&mask.fieldPaths=hafta&mask.fieldPaths=kategori&mask.fieldPaths=sehir&mask.fieldPaths=aciklama&mask.fieldPaths=katilimSayisi&mask.fieldPaths=tamamlandi&mask.fieldPaths=katilTiklamaSayisi&mask.fieldPaths=zoomGercekKatilim&mask.fieldPaths=zoomOrtDakika&mask.fieldPaths=zoomEgri&mask.fieldPaths=canliKisi&mask.fieldPaths=biletLink&mask.fieldPaths=gizli&mask.fieldPaths=gorselGizli&pageSize=300',
+           'https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/konusmacilar?mask.fieldPaths=ad&mask.fieldPaths=unvan&mask.fieldPaths=biyografi&mask.fieldPaths=linkedin&mask.fieldPaths=meslek&mask.fieldPaths=amareKariyer&mask.fieldPaths=doktorBrans&pageSize=300'
+          ].forEach(function (url) { var p = fetch(url); p.catch(function () {}); w[url] = p; });
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
