@@ -10,7 +10,12 @@
 //   - Replay: %0 (gizlilik — kayıt yok)
 // ─────────────────────────────────────────────────────────────────────────
 
-import * as Sentry from '@sentry/react';
+// Yalnız KULLANILAN işlevler adıyla alınır: `import * as Sentry` ekran kaydı (replay, ~260 KB) ve kullanılmayan
+// tüm parçaları da pakete sokuyordu (ilk açılışta indirilen JS ~%10 şişiyordu). Yeni işlev gerekirse buraya ekle.
+import {
+  init, ErrorBoundary, captureMessage, captureException, addBreadcrumb, browserTracingIntegration,
+} from '@sentry/react';
+const Sentry = { init, ErrorBoundary, captureMessage, captureException, addBreadcrumb, browserTracingIntegration };
 
 const DSN = import.meta.env.VITE_SENTRY_DSN || '';
 const ENVIRONMENT = import.meta.env.MODE || 'development';

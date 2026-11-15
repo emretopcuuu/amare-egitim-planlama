@@ -65,8 +65,10 @@ export default defineConfig({
               return 'icons-vendor';
             }
             // Confetti — küçük, kalsın
-            // Diğer vendor
-            return 'vendor';
+            // Diğer paketler: 'vendor' torbasına ATMA. Torba ilk açılışta iniyordu ve yalnız tembel kodun
+            // kullandığı kütüphaneleri de (re2js, pako, core-js...) içine çekiyordu. Rollup kendi bölsün:
+            // tembel kodun kütüphanesi tembel pakete gider.
+            return undefined;
           }
         },
       },
