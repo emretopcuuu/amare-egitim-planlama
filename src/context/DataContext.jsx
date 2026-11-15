@@ -260,12 +260,21 @@ export const DataProvider = ({ children }) => {
 
     // 1. AŞAMA: LIGHT fetch — REST API + field mask, gorselUrl/fotoURL hariç
     //    Her şey paralel, ~500ms-1sn'de bitti
-    const [takvimLight, settingsResult, konusmacilarLight, sablonlarResult] = await Promise.allSettled([
+    // sablonlar (~1,9 MB, yalnız AdminPanel kullanır) ilk çizimi BEKLETMEZ: 3. aşamada arka planda gelir.
+    // settings: önce REST (Firebase SDK'nın App Check + anonim giriş zincirini beklemez), olmazsa SDK.
+    const settingsRestOku = async () => {
+      const res = await fetch('https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/settings');
+      if (!res.ok) throw new Error(`settings REST ${res.status}`);
+      const data = await res.json();
+      const docs = (data.documents || []).map(d => ({ data: () => parseFields(d.fields) }));
+      return { empty: docs.length === 0, docs };
+    };
+    const [takvimLight, settingsResult, konusmacilarLight] = await Promise.allSettled([
       fetchLightCollection('takvim', TAKVIM_LIGHT_FIELDS),
-      guvenliGetDocs(collection(db, 'settings')),
+      settingsRestOku().catch(() => guvenliGetDocs(collection(db, 'settings'))),
       fetchLightCollection('konusmacilar', KONUSMACI_LIGHT_FIELDS),
-      guvenliGetDocs(collection(db, 'sablonlar')),
     ]);
+    let sablonlarResult = { status: 'pending' };
 
     // Light data'yı state'e koy
     let lightTakvimData = [];
@@ -324,10 +333,6 @@ export const DataProvider = ({ children }) => {
       const snap = settingsResult.value;
       setTakvimYayinlandi(snap.empty ? false : snap.docs[0].data().takvimYayinlandi === true);
     }
-    if (sablonlarResult.status === 'fulfilled') {
-      setSablonlar(sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() })));
-    }
-
     // 🎯 SAYFA AÇILMADAN ÖNCE: Top 10 konuşmacı fotosu yüklen (StoryStrip için)
     // Kullanıcı talebi: 'önümüzdeki konuşmacıların 10 adedini sayfa açmadan yükle'
     if (lightKonusmacilarData.length > 0 && lightTakvimData.length > 0) {
@@ -424,10 +429,15 @@ export const DataProvider = ({ children }) => {
 
       // 3. AŞAMA: Geri kalan herkes (background full fetch)
       setTimeout(async () => {
-        const [takvimFull, konusmacilarFull] = await Promise.allSettled([
+        const [takvimFull, konusmacilarFull, sablonlarFull] = await Promise.allSettled([
           getDocsRetry(collection(db, 'takvim')),
           getDocsRetry(collection(db, 'konusmacilar')),
+          getDocsRetry(collection(db, 'sablonlar')),
         ]);
+        sablonlarResult = sablonlarFull;
+        if (sablonlarFull.status === 'fulfilled') {
+          setSablonlar(sablonlarFull.value.docs.map(d => ({ id: d.id, ...d.data() })));
+        }
 
         let freshTakvim = null;
         let freshKonusmacilar = null;
