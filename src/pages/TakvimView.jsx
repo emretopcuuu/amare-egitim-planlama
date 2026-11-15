@@ -363,7 +363,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && !sonSaatDev && (
               <div className="flex gap-1.5 md:gap-2 mt-3">
                 {[{v:gun,l:t('cd_day'),k:'g'},{v:saat,l:t('cd_hour'),k:'s'},{v:dakika,l:t('cd_min'),k:'d'},{v:saniye,l:t('cd_sec'),k:'sn'}].map(({v,l,k})=>(
-                  <div key={l} className={`flex-1 md:flex-none bg-white/10 backdrop-blur rounded-xl ${isFirst ? 'py-2 md:py-4 px-2 md:px-5 lg:px-6' : 'py-1 px-1.5 md:px-2'} text-center border border-white/10`}>
+                  <div key={l} className={`flex-1 min-w-0 md:max-w-[130px] bg-white/10 backdrop-blur rounded-xl ${isFirst ? 'py-2 md:py-4 px-2 md:px-2 lg:px-4' : 'py-1 px-1.5 md:px-2'} text-center border border-white/10`}>
                     <div className={`font-extrabold text-white tabular-nums font-display ${isFirst ? 'text-2xl md:text-4xl lg:text-6xl' : 'text-[15px] md:text-[18px]'}`}><span key={`${k}-${v}`} className="cd-digit">{String(v).padStart(2,'0')}</span></div>
                     <div className="text-[13px] text-amber-300 uppercase tracking-wider">{l}</div>
                   </div>
