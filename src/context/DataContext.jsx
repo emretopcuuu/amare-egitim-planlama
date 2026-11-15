@@ -206,7 +206,14 @@ export const DataProvider = ({ children }) => {
     let sonHata;
     for (let i = 0; i < deneme; i++) {
       try {
-        const res = await fetch(url);
+        // index.html'de önceden başlatılmış istek varsa onu kullan (bir kez); yoksa/başarısızsa normal fetch.
+        let res;
+        const onceden = i === 0 && typeof window !== 'undefined' && window.__ilkVeri && window.__ilkVeri[url];
+        if (onceden) {
+          delete window.__ilkVeri[url];
+          try { res = await onceden; } catch { res = null; }
+        }
+        if (!res || !res.ok) res = await fetch(url);
         if (!res.ok) throw new Error(`Firestore REST ${res.status}`);
         const data = await res.json();
         return (data.documents || []).map(d => ({ id: d.name.split('/').pop(), ...parseFields(d.fields) }));
