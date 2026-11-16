@@ -270,7 +270,15 @@ export const DataProvider = ({ children }) => {
     // sablonlar (~1,9 MB, yalnız AdminPanel kullanır) ilk çizimi BEKLETMEZ: 3. aşamada arka planda gelir.
     // settings: önce REST (Firebase SDK'nın App Check + anonim giriş zincirini beklemez), olmazsa SDK.
     const settingsRestOku = async () => {
-      const res = await fetch('https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/settings');
+      // index.html'de önceden başlatılmış istek varsa onu kullan (bir kez); yoksa/başarısızsa normal fetch.
+      const SETTINGS_URL = 'https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/settings';
+      let res = null;
+      const onceden = typeof window !== 'undefined' && window.__ilkVeri && window.__ilkVeri[SETTINGS_URL];
+      if (onceden) {
+        delete window.__ilkVeri[SETTINGS_URL];
+        try { res = await onceden; } catch { res = null; }
+      }
+      if (!res || !res.ok) res = await fetch(SETTINGS_URL);
       if (!res.ok) throw new Error(`settings REST ${res.status}`);
       const data = await res.json();
       const docs = (data.documents || []).map(d => ({ data: () => parseFields(d.fields) }));
