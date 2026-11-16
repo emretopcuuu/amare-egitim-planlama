@@ -361,17 +361,23 @@ export const DataProvider = ({ children }) => {
         .filter(Boolean);
 
       if (top10Ids.length > 0) {
-        // SENKRON paralel fetch — sayfa açılışından ÖNCE bekle
-        const results = await Promise.allSettled(
-          top10Ids.map(id => fetchSingleDoc('konusmacilar', id))
-        );
+        // Paralel fetch; sayfa açılışından önce EN ÇOK 1 sn beklenir (yavaş telefonda 10 kayıt ~2 sn sürüyordu,
+        // sayfa bunun için boş ekranda tutuluyordu). Gelmeyenler geldikçe listeye işlenir — fotoğraflar sonradan belirir.
         const top10Map = new Map();
-        results.forEach(r => {
-          if (r.status === 'fulfilled' && r.value) top10Map.set(r.value.id, r.value);
-        });
-        // Light data ile birleştir
-        const updated = lightKonusmacilarData.map(k => top10Map.get(k.id) || k);
-        setKonusmacilar(updated);
+        const birlestir = (liste) => liste.map(k => top10Map.get(k.id) || k);
+        const hepsi = Promise.allSettled(
+          top10Ids.map(id => fetchSingleDoc('konusmacilar', id).then(v => {
+            if (v) top10Map.set(v.id, v);
+            return v;
+          }))
+        );
+        let zamanAsimi = false;
+        await Promise.race([hepsi, new Promise(r => setTimeout(() => { zamanAsimi = true; r(); }, 1000))]);
+        setKonusmacilar(birlestir(lightKonusmacilarData));
+        if (zamanAsimi) {
+          // Süre dolduysa kalanlar geldiğinde (ya da hiç gelmezse sessizce) listeyi bir kez daha güncelle
+          hepsi.then(() => setKonusmacilar(prev => birlestir(prev)));
+        }
       }
     }
 
