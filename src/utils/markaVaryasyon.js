@@ -3,6 +3,7 @@
 // Hem Görsel Stüdyo sayfası hem (eski) modal bu listeyi kullanır.
 export const MARKA_VARYASYON = [
   { grup: 'Yazı', tekil: true, secenekler: [
+    { key: 'yazi-sohbet', label: 'Çok büyük · sohbette okunur', cmd: 'yazıları çok büyüt' },
     { key: 'yazi-buyuk', label: 'Büyük', cmd: 'yazıları büyüt' },
     { key: 'yazi-kucuk', label: 'Küçük', cmd: 'yazıları küçült' },
     { key: 'yazi-cokkucuk', label: 'Çok küçük', cmd: 'yazıları çok küçült' },

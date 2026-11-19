@@ -959,8 +959,12 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     ...serbestNotlar.map(t => ({ t, kalin: true })),
     ...(yasUyarisi ? [{ t: YAS_UYARISI_METNI, kalin: false, ayri: true }] : []),
   ];
+  // "Çok büyük yazı" (sohbette okunur): alt notlar + adres de ölçeklenir → alta pay eklenir (13-19 Kas 2026, Gamze:
+  // WhatsApp sohbetinde afiş küçük görünüyor, tıklamadan okunmuyor). yazi ≤ 1 iken hiçbir şey değişmez.
+  const fy = Math.max(1, ayar.yazi);
+  const fExtra = Math.round((fy - 1) * H * 0.12);
   const notExtra = Math.max(0, notSatirlari.length - 2) * Math.round(H * 0.045);
-  const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow + notExtra;
+  const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow + notExtra + fExtra;
   // ekstraH: ilk geçişte konuşmacı alanı dar kaldıysa ikinci geçişin uzatma payı
   const CANVAS_H = H + extra + ekstraH; // fiziksel yükseklik; oranlar hâlâ H=1350 tabanlı
 
@@ -1102,7 +1106,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   const prog = kutuProg.length ? kutuProg : (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
   // notSatirlari yukarıda (canvas yüksekliği için) hesaplandı.
   // Footer: (üstte) program saatleri + (altta) adres + logo → iki blok için pay.
-  const footerH = Math.round(H * (0.15 + (notSatirlari.length ? 0.038 * notSatirlari.length : 0)));
+  const footerH = Math.round(H * (0.15 + (notSatirlari.length ? 0.038 * notSatirlari.length : 0))) + fExtra;
   const footerTop = CANVAS_H - footerH; // uzayan canvas'ın altına otur
   // Program girilmişse her afişte göster (online dahil) — fiziki şartı kaldırıldı.
   const bandH = (prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
@@ -1345,15 +1349,15 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     // soluk pembe küçük yazı telefondan okunmuyordu).
     const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#8f1f1f' : '#ff9d9d') };
     const uyariRenk = altNotRenkMap[altNotRenk] || altNotRenkMap.kirmizi;
-    const nlH = Math.round(W * 0.03);
+    const nlH = Math.round(W * 0.03 * fy);
     // Satır satır: kalın uyarı satırları (700) + isteğe bağlı kalın olmayan alt satır (400).
     // Kalın olmayan "ayrı" satır, üstündeki satırlarla arasında yarım satır boşlukla DAHA AŞAĞIDA durur.
     let ny = footerTop + Math.round(H * 0.032);
     notSatirlari.forEach((o, idx) => {
       if (o.ayri && idx > 0) ny += Math.round(nlH * 0.55);
       ctx.font = o.kalin
-        ? `700 ${Math.round(W * 0.024)}px ${FF.govde}`
-        : `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
+        ? `700 ${Math.round(W * 0.024 * fy)}px ${FF.govde}`
+        : `400 ${Math.round(W * 0.021 * fy)}px ${FF.govde}`;
       ctx.fillStyle = o.kalin ? uyariRenk : (palet.alt || palet.metin);
       ctx.fillText(o.t, adresCX, ny, adresW);
       ny += nlH;
@@ -1361,19 +1365,19 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
   }
   // ── 2) ADRES (fiziki) / ZOOM (online) — EN ALTTA, amare logosunun hemen üstünde (boşlukla) ──
   const logoUstu = CANVAS_H - Math.round(H * 0.032) - Math.round(H * 0.018); // logonun üst kenarı
-  const adresBlokTop = logoUstu - Math.round(H * 0.028) - Math.round(H * 0.085); // gap + blok payı
+  const adresBlokTop = logoUstu - Math.round(H * 0.028) - Math.round(H * 0.085) - Math.round((fy - 1) * H * 0.07); // gap + blok payı (+ büyük yazıda yukarı)
   if (fiziki) {
     // Mekan adı (gold). Şehir üstte rozette zaten var → burada TEKRAR ETME.
     const mekan = (egitim.mekanAdi || '').toLocaleUpperCase('tr-TR');
     const adresMetni = (egitim.acikAdres || egitim.yer || '').trim();
     if (mekan) {
-      ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
-      ctx.fillText(mekan, adresCX, adresBlokTop + Math.round(H * 0.028), adresW);
+      ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03 * fy)}px ${FF.govde}`;
+      ctx.fillText(mekan, adresCX, adresBlokTop + Math.round(H * 0.028 * fy), adresW);
     }
     if (adresMetni) {
-      ctx.fillStyle = palet.alt; ctx.font = `500 ${Math.round(W * 0.023)}px ${FF.govde}`;
-      const adresY = adresBlokTop + Math.round(H * (mekan ? 0.056 : 0.04));
-      wrapText(ctx, adresMetni, adresCX, adresY, adresW, Math.round(W * 0.028), 2);
+      ctx.fillStyle = palet.alt; ctx.font = `500 ${Math.round(W * 0.023 * fy)}px ${FF.govde}`;
+      const adresY = adresBlokTop + Math.round(H * (mekan ? 0.056 : 0.04) * fy);
+      wrapText(ctx, adresMetni, adresCX, adresY, adresW, Math.round(W * 0.028 * fy), 2);
     }
   } else {
     const zoom = (egitim.yer || '').replace(/zoom\s*salon\s*id[:\s]*/i, '').trim();
