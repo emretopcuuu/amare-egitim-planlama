@@ -258,6 +258,7 @@ export default function GorselStudyo() {
   const [aiGecmis, setAiGecmis] = useState([]); // AI Afiş: son üretilenler {url, b64} — seçip bağla
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [afisOran, setAfisOran] = useState(0); // üretilen afişin yükseklik/genişlik oranı (WhatsApp ~1,4'ten uzunu kırpar)
   const [baglandi, setBaglandi] = useState(false);
   const [baglaniyor, setBaglaniyor] = useState(false);
   const [hedefSlot, setHedefSlot] = useState('1'); // '1' Ana Afiş | '2' Program İçeriği — hangi görsel yuvasına bağlanacak
@@ -694,6 +695,13 @@ export default function GorselStudyo() {
       }
       dosyaRef.current = null; // üretilen görsel bağlanacak (yüklü dosya varsa iptal)
       sonB64.current = res.base64;
+      // PNG başlığından yükseklik/genişlik (IHDR: bayt 16-19 genişlik, 20-23 yükseklik) → WhatsApp kırpma uyarısı
+      try {
+        const bt = atob(res.base64.slice(0, 32));
+        const dw = (bt.charCodeAt(16) << 24 | bt.charCodeAt(17) << 16 | bt.charCodeAt(18) << 8 | bt.charCodeAt(19)) >>> 0;
+        const dh = (bt.charCodeAt(20) << 24 | bt.charCodeAt(21) << 16 | bt.charCodeAt(22) << 8 | bt.charCodeAt(23)) >>> 0;
+        setAfisOran(dw && dh ? dh / dw : 0);
+      } catch { setAfisOran(0); }
       const yeniUrl = b64ToUrl(res.base64, res.mimeType);
       // AI geçmişindeki URL'ler thumbnail'de duruyor → onları revoke etme (yalnız geçmişte olmayanı)
       if (resultUrl && !aiGecmis.some(g => g.url === resultUrl)) URL.revokeObjectURL(resultUrl);
@@ -1376,6 +1384,12 @@ export default function GorselStudyo() {
                   </div>
                 )}
               </div>
+              {markaModu && afisOran > 1.42 && resultUrl && (
+                <div className="mt-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                  💬 <b>WhatsApp'ta kırpılır.</b> Bu afiş uzun (oran {afisOran.toFixed(2).replace('.', ',')}); sohbet balonunda üstü ve altı kesilir, tıklayınca tam görünür.
+                  Kırpılmasın istersen Varyasyon → <b>"💬 WhatsApp boyu"</b> hazır stilini seç (3-6 kişi için), ya da fotoğrafları küçült / "Tek sıra" yap, alt notları kısalt.
+                </div>
+              )}
               {error && (
                 <div className="mt-2 text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 flex items-start gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />{error}

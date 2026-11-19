@@ -139,6 +139,11 @@ export const MARKA_PRESETLER = [
   { ad: '🌊 Kurumsal Lacivert', keys: ['tema-lacivert', 'font-modern'] },
   { ad: '🍷 Bordo Klasik', keys: ['tema-bordo', 'font-times', 'baslik-cift'] },
   { ad: '🥈 Sade Gümüş', keys: ['tema-gumus', 'sade'] },
+  // WhatsApp sohbet balonu ~1:1,4'ten uzun görseli ÜST+ALTTAN KIRPAR (Gamze, 19 Kas 2026: başlık ve adres kesiliyordu).
+  // Tek sıra + sıkı aralık + büyük yazı + küçük foto: Vizyon Günü (3 kutucuk + giriş/18 yaş notu) ile ölçüldü →
+  // 3 kişi 1,40 · 4-6 kişi 1,36 (1-2 kişide ~1,5, fotoğraf zaten az; stüdyo uyarısı çıkar).
+  // Sona eklendi: Tasarımcı Masası ilk 3 hazır stili kullanır. Tema seçimi korunmaz (preset seçimi tümden değiştirir).
+  { ad: '💬 WhatsApp boyu (3-6 kişi)', keys: ['foto-teksira', 'foto-kucuk', 'aralik-siki', 'yazi-buyuk'] },
 ];
 
 // Tema kilitli yöntemlerde (marka-koyu/marka-acik) Tema grubu gizlenir
