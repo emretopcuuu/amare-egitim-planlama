@@ -756,6 +756,30 @@ export default function GorselStudyo() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
+  // 💬 WhatsApp kartı — tek tıkla sade + büyük yazılı sürümü üretip indirir (19 Kas 2026, Gamze: "telefonda küçük").
+  // WhatsApp telefonda görsel YÜKSEKLİĞİNİ sınırlar: afiş uzadıkça balon daralır (oran 2,2 → ekranın %38'i).
+  // Kart oranı ~1,3-1,45 → balon ~1,5 kat geniş, yazı ×1,32. Tema/font seçimleri korunur; düzen/boyut çipleri
+  // kartın kendi düzeniyle değiştirilir. Çip aramak gerekmez (hazır stil gözden kaçıyordu).
+  const [kartUretiyor, setKartUretiyor] = useState(false);
+  const whatsappKartiIndir = async () => {
+    if (!egitim || !markaModu || kartUretiyor) return;
+    setKartUretiyor(true); setError(null);
+    try {
+      const tema = Object.fromEntries(Object.entries(markaSecim).filter(([k, v]) => v && !/^(duzen-|foto-|aralik-|yazi-|no-|sohbet-)/.test(k)));
+      const duzen = speakers.length >= 4 ? 'tek sıra' : 'fotoları küçült, sıkı aralık';
+      const ek = [markaEkIstek(tema), 'sohbet kartı', duzen].filter(Boolean).join(', ');
+      const res = await gorselOlusturMarkaAfis({ egitim: afisEgitim, kampModu, egitmenler: speakers.map(s => ({ ...s, grup: 1 })), format: 'portrait', ekPrompt: ek, stil: aktifMetot.stil, altNot, altNotRenk, programKutulari: [], girisKapanis: '', yasUyarisi: false, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon }, grupBasliklari: [] });
+      const url = b64ToUrl(res.base64, res.mimeType);
+      const a = document.createElement('a');
+      a.href = url;
+      const ad = (egitim?.egitim || 'gorsel').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      a.download = `${ad}_${egitim?.tarih || ''}_whatsapp.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) { setError('WhatsApp kartı üretilemedi: ' + (e?.message || e)); }
+    finally { setKartUretiyor(false); }
+  };
+
   const bagla = async () => {
     if (!egitim) return;
     // Kaynak: yüklenen dosya (File) veya üretilen görsel (base64)
@@ -1417,6 +1441,15 @@ export default function GorselStudyo() {
                   {baglandi ? <><CheckCircle2 className="w-4 h-4" /> Bağlandı</> : baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" /> …</> : <><Link2 className="w-4 h-4" /> {hedefSlot==='2' ? '2. Görsel Olarak Bağla' : 'Eğitime Bağla'}</>}
                 </button>
               </div>
+              {markaModu && (
+                <div className="mt-2">
+                  <button onClick={whatsappKartiIndir} disabled={!resultUrl || kartUretiyor}
+                    className="w-full py-2.5 rounded-lg font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-40">
+                    {kartUretiyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} 💬 WhatsApp kartı indir
+                  </button>
+                  <p className="text-[10px] text-gray-500 mt-1">Telefonda sohbette büyük görünen sade sürüm: başlık, tarih-saat, isimler, alt notun ilk 3 satırı, mekân. Ayrıntılı tam afiş için üstteki <b>İndir</b>.</p>
+                </div>
+              )}
               {/* Görünürlük — afiş ve eğitim ayrı ayrı yayınlanır/gizlenir */}
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                 {[

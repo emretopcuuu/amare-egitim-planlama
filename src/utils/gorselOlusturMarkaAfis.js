@@ -958,7 +958,9 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     })
     .filter(k => k.baslik || k.baslangic);
   const girisSatiri = girisKapanis ? girisKapanisMetni(girisKapanis) : null;
-  const notSatirlari = ayar.sade ? [] : [
+  // Sade kart: alt notun yalnız İLK 3 satırı kalır (Gamze'nin kullanımı: "ÖZEL EĞİTİM: 12:20-13:40" gibi saat satırları);
+  // katılımcı listesi, giriş/18 yaş uyarısı tam afişte kalır.
+  const notSatirlari = ayar.sade ? serbestNotlar.slice(0, 3).map(t => ({ t, kalin: true })) : [
     ...(girisSatiri ? [{ t: girisSatiri, kalin: true }] : []),
     ...serbestNotlar.map(t => ({ t, kalin: true })),
     ...(yasUyarisi ? [{ t: YAS_UYARISI_METNI, kalin: false, ayri: true }] : []),
