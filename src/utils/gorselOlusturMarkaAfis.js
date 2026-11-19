@@ -660,6 +660,10 @@ export const ayarCikar = (ek) => {
   // dil
   if (has('ingilizce', 'english', 'en dil')) a.dil = 'en';
   if (has('türkçe', 'turkce')) a.dil = 'tr';
+  // SOHBET KARTI (Gamze, 19 Kas 2026: "telefonda küçük"): telefonda WhatsApp balonu ~150-200px; 4 konuşmacı + 3 kutucuk +
+  // notlar + adres + QR aynı afişe sığmaz. Sade kart: yalnız başlık, şehir, tarih-saat, konuşmacı isimleri BÜYÜK; kutucuk,
+  // alt notlar, QR kaldırılır (ayrıntı mesaj metnine yazılır). Yazı ×1,32 en az.
+  if (has('sohbet kartı')) { a.sade = true; a.qr = false; a.program = false; a.yazi = Math.max(a.yazi, 1.32); }
   return a;
 };
 
@@ -954,7 +958,7 @@ const markaAfisCiz = async ({ egitim, egitmenler = [], format = 'portrait', ekPr
     })
     .filter(k => k.baslik || k.baslangic);
   const girisSatiri = girisKapanis ? girisKapanisMetni(girisKapanis) : null;
-  const notSatirlari = [
+  const notSatirlari = ayar.sade ? [] : [
     ...(girisSatiri ? [{ t: girisSatiri, kalin: true }] : []),
     ...serbestNotlar.map(t => ({ t, kalin: true })),
     ...(yasUyarisi ? [{ t: YAS_UYARISI_METNI, kalin: false, ayri: true }] : []),

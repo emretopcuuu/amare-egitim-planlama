@@ -124,6 +124,7 @@ export const MARKA_VARYASYON = [
     { key: 'no-qr', label: 'QR yok', cmd: 'qr kaldır' },
     { key: 'no-program', label: 'Program yok', cmd: 'program gizle' },
     { key: 'no-tarih', label: 'Tarih yok', cmd: 'tarih gizle' },
+    { key: 'sohbet-karti', label: 'Sohbet kartı (sade)', cmd: 'sohbet kartı' },
   ] },
 ];
 
@@ -144,6 +145,10 @@ export const MARKA_PRESETLER = [
   // 3 kişi 1,40 · 4-6 kişi 1,36 (1-2 kişide ~1,5, fotoğraf zaten az; stüdyo uyarısı çıkar).
   // Sona eklendi: Tasarımcı Masası ilk 3 hazır stili kullanır. Tema seçimi korunmaz (preset seçimi tümden değiştirir).
   { ad: '💬 WhatsApp boyu (3-6 kişi)', keys: ['foto-teksira', 'foto-kucuk', 'aralik-siki', 'yazi-buyuk'] },
+  // SOHBET KARTI (19 Kas, Gamze: "telefonda küçük"): kutucuk + alt notlar + QR yok, yazı ×1,32 → telefon balonunda okunur.
+  // Ayrıntı (saatler, giriş uyarısı) mesaj metnine yazılır. Ölçüm (4 konuşmacı): 1-3 kişi 1,30-1,38 · 4+ kişi tek sıra 1,30.
+  { ad: '💬 Sohbet kartı (1-3 kişi)', keys: ['sohbet-karti', 'foto-kucuk', 'aralik-siki'] },
+  { ad: '💬 Sohbet kartı (4-6 kişi)', keys: ['sohbet-karti', 'foto-teksira'] },
 ];
 
 // Tema kilitli yöntemlerde (marka-koyu/marka-acik) Tema grubu gizlenir
