@@ -9,6 +9,17 @@ const BATCH_SIZE = 20; // Her API çağrısında max metin sayısı
 const BATCH_DELAY = 1500; // İstekler arası bekleme (ms)
 
 function getInitialLang() {
+  // 0. Mağaza (26 Kas 2026): OneTeam uygulamasının çerçevesinde (gomulu=1) dil UYGULAMANINDIR — uygulama ?lang= ile
+  //    kendi dilini yollar (ARAC_DILLERI). Aksi hâlde takvimde bir kez seçilmiş eski dil uygulamanın dilini ezerdi
+  //    (İngilizce cihazdaki incelemeci Türkçe takvim görüyordu). Firebase giriş bağlantısı gomulu taşımaz: kural ona dokunmaz.
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const gl = p.get('lang');
+    if (p.get('gomulu') === '1' && gl && SUPPORTED_LANGS.includes(gl)) {
+      localStorage.setItem('ot_lang', gl);
+      return gl;
+    }
+  } catch { /* yoksay */ }
   // 1. ÖNCE localStorage — kullanıcı zaten tercih ettiyse buna saygı duy
   // (Firebase magic link'i URL'e lang=en ekliyor, bunu yoksay)
   const stored = localStorage.getItem('ot_lang');

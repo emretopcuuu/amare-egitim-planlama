@@ -20,6 +20,17 @@
 
 const ANAHTAR = 'ot_gomulu';
 
+/** OneTeam uygulamasının İÇİNDE miyiz? Gömülü çerçeve ya da (çerçeve bayrağı düşmüş olsa bile) iPhone/Android
+ *  kabuğunun web görünümü (UA'da "OTKabuk/").
+ *  🔴 Mağaza (26 Kas 2026, ret denetimi): uygulamanın içinde Google ile giriş (Apple 4.8: Sign in with Apple ister;
+ *  WKWebView'de açılır pencere Safari'ye gider, geri dönmez), yönetici girişi ve başka araçlara Safari'den çıkan
+ *  ekip yönetim paneli gösterilmez. Bu bütün uygulama kullanıcıları için geçerli; yalnız incelemeciden gizlemek
+ *  ayrı ret sebebidir (Apple 2.5.19). */
+export function uygulamaIcindeMi() {
+  if (gomuluMu()) return true;
+  try { return /OTKabuk\//.test(navigator.userAgent || ''); } catch { return false; }
+}
+
 /** Uygulama çerçevesinin içinde miyiz? */
 export function gomuluMu() {
   try {

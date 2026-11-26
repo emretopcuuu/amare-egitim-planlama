@@ -22,6 +22,7 @@ import { getKomisyon, canEditKomisyon } from '../utils/komisyonlar';
 import { useSmartBack } from '../utils/navigation';
 
 import { yuzOdak } from '../utils/yuzOdak';
+import { uygulamaIcindeMi } from '../utils/gomulu';
 const I18N = {
   tr: {
     komisyonlar: 'Komisyonlar',
@@ -715,8 +716,9 @@ const KomisyonDetay = () => {
             {/* İletişim / Soru Formu — düşük eşik etkileşim */}
             <KomisyonSoruFormu komisyonId={id} komisyonAd={k.ad} />
 
-            {/* Komisyon Admin Girişi — TÜM komisyonlar için, 3 duruma göre */}
-            {!duzenleyebilir && (
+            {/* Komisyon Admin Girişi — TÜM komisyonlar için, 3 duruma göre.
+                Uygulamanın içinde YOK (mağaza: Google girişi Apple 4.8; bkz. utils/gomulu.js uygulamaIcindeMi). */}
+            {!duzenleyebilir && !uygulamaIcindeMi() && (
               <section className="mb-8 bg-gradient-to-br from-amber-400/15 to-amber-600/5 border border-amber-300/30 rounded-2xl p-6 shadow-xl">
                 <div className="flex items-start gap-4 flex-wrap">
                   <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center flex-shrink-0">
