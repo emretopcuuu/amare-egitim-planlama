@@ -188,7 +188,7 @@ const StoryStrip = ({ takvim, konusmacilar, onEgitmenSec }) => {
         <div className="flex items-center gap-2 mb-2 text-purple-200 text-[13px] uppercase tracking-wider font-semibold">
           <span>{t('cal_upcoming_trainers')}</span>
           <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full text-[13px] normal-case tracking-normal">
-            En aktif {konusmaciListesi.length}
+            {t('cal_most_active').replace('{n}', konusmaciListesi.length)}
           </span>
         </div>
         <div className="relative group">

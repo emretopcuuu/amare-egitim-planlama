@@ -3,12 +3,13 @@
 // İleride başka modüller eklenecek (sponsor zinciri, organizasyon ağacı, S&S takip vb)
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy, Award, TrendingUp, Gift, Lightbulb, Gem } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useSmartBack } from '../utils/navigation';
+import { uygulamaIcindeMi } from '../utils/gomulu';
 
 // Çok dilli metinler
 const I18N = {
@@ -317,6 +318,9 @@ const EkipYonetimSayfasi = () => {
   };
   // Görsel href: SSO için # (gerçek URL onClick'te üretilir)
   const linkOlustur = (m) => (m.sso ? '#' : m.link);
+
+  // Mağaza (26 Kas 2026): bu panel araçları Safari'de açar; uygulamanın içinde araçlar zaten kendi yuvarlağında.
+  if (uygulamaIcindeMi()) return <Navigate to="/takvim" replace />;
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">

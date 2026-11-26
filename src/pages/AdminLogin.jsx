@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { uygulamaIcindeMi } from '../utils/gomulu';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { Shield, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
@@ -33,6 +34,9 @@ const AdminLogin = () => {
       setLoading(false);
     }
   };
+
+  // Mağaza (26 Kas 2026): uygulamanın içinde Google ile yönetici girişi yok (Apple 4.8) — takvime dön.
+  if (uygulamaIcindeMi()) return <Navigate to="/takvim" replace />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center p-4">
