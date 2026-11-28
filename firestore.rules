@@ -421,6 +421,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Video yorum bildirimleri (mağaza O3) — yalnız server (yorum-bildir function,
+    // admin SDK) yazar/okur; yönetici paneli de function üzerinden görür
+    match /yorum_bildirimleri/{bildirimId} {
+      allow read, write: if false;
+    }
+
     // Email düzeltme talepleri — kullanıcı talep yazar (server)
     // Admin okur ve onaylar/reddeder
     match /email_duzeltme_talepleri/{talepId} {

@@ -1,6 +1,13 @@
 // netlify/functions/uye-giris-kod-dogrula.mjs
 // ─────────────────────────────────────────────────────────────────────────
-// POST { email: string, kod: string (6 hane) }
+// POST { girisJetonu: string, kod: string (6 hane) }   ← yeni (KVKK O8)
+// POST { email: string, kod: string }                  ← eski istemciler (geriye uyum)
+// POST { islem: 'link-email', linkJetonu: string }     ← /giris-tamamla
+//
+// KVKK O8: uye-giris-link artık tam email döndürmez. İstemci elindeki opak
+// girisJetonu ile kodu doğrular; email sunucuda giris_otp dokümanından okunur.
+// Maildeki linkin ?gt= jetonu (yalnız posta kutusu sahibinde) email'e çevrilir
+// çünkü Firebase signInWithEmailLink email ister.
 //
 // 1. Firestore giris_otp koleksiyonunda email + kod eşleşmesi ara
 // 2. Süre dolmuş mu, kullanılmış mı, 5 yanlış deneme aşıldı mı kontrol et
@@ -15,6 +22,7 @@
 import admin from 'firebase-admin';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 import { hashOtp, safeEqual } from './_otpHash.mjs';
+import { jetonGecerliBicim, jetonHash } from './_girisToken.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -27,6 +35,27 @@ if (!admin.apps.length) {
 }
 
 const MAX_DENEME = 5;
+const JSON_H = { 'Content-Type': 'application/json' };
+const GENEL_HATA = 'Kod yanlış veya süresi dolmuş. Yeniden iste.';
+
+function zamanMs(t) {
+  if (!t) return 0;
+  if (typeof t.toMillis === 'function') return t.toMillis();
+  return ((t._seconds ?? t.seconds) || 0) * 1000;
+}
+
+// Maildeki linkin jetonu → email. Yalnız link sahibi bu jetona sahip.
+async function linkEmailCoz(db, linkJetonu) {
+  if (!jetonGecerliBicim(linkJetonu)) return null;
+  const snap = await db.collection('giris_otp')
+    .where('linkJetonHash', '==', jetonHash(linkJetonu))
+    .limit(1)
+    .get();
+  if (snap.empty) return null;
+  const d = snap.docs[0].data();
+  if (zamanMs(d.linkJetonSon) < Date.now()) return null;
+  return d.email || null;
+}
 
 export default async (req) => {
   if (req.method !== 'POST') {
@@ -41,44 +70,71 @@ export default async (req) => {
     if (!limit.ok) return rateLimitResponse(limit);
 
     const body = await req.json();
-    const email = String(body.email || '').trim().toLowerCase();
-    const kod = String(body.kod || '').replace(/\D/g, ''); // sadece sayı bırak
-
-    if (!email || !email.includes('@')) {
-      return new Response(JSON.stringify({ ok: false, error: 'Email gerekli' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (kod.length !== 6) {
-      return new Response(JSON.stringify({ ok: false, error: '6 haneli kod gir' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
     const db = admin.firestore();
 
-    // Email'e ait, kullanılmamış OTP doc'larını ara — composite index'siz çalışır
-    // (where eşitlikleri otomatik index'lenir; orderBy eklemiyoruz, server-side sıralarız)
-    const snap = await db.collection('giris_otp')
-      .where('email', '==', email)
-      .where('kullanildi', '==', false)
-      .limit(20)
-      .get();
+    // ── Link tamamlama: maildeki ?gt= jetonu → email ──
+    if (body.islem === 'link-email') {
+      const email = await linkEmailCoz(db, String(body.linkJetonu || ''));
+      if (!email) {
+        return new Response(JSON.stringify({ ok: false, error: 'Link süresi dolmuş veya geçersiz.' }), {
+          status: 404, headers: JSON_H,
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, email }), {
+        status: 200, headers: { ...JSON_H, 'Cache-Control': 'no-store' },
+      });
+    }
+
+    const kod = String(body.kod || '').replace(/\D/g, ''); // sadece sayı bırak
+    const girisJetonu = String(body.girisJetonu || '');
+    if (kod.length !== 6) {
+      return new Response(JSON.stringify({ ok: false, error: '6 haneli kod gir' }), {
+        status: 400, headers: JSON_H,
+      });
+    }
+
+    let email = '';
+    let snapDocs = [];
+    if (girisJetonu) {
+      // Yeni yol: jeton tek bir OTP dokümanını gösterir, email oradan gelir
+      if (!jetonGecerliBicim(girisJetonu)) {
+        return new Response(JSON.stringify({ ok: false, error: GENEL_HATA }), { status: 401, headers: JSON_H });
+      }
+      const jsnap = await db.collection('giris_otp')
+        .where('istemciJetonHashleri', 'array-contains', jetonHash(girisJetonu))
+        .limit(1)
+        .get();
+      const jd = jsnap.empty ? null : jsnap.docs[0].data();
+      if (!jd || jd.kullanildi || zamanMs(jd.istemciJetonSon) < Date.now()) {
+        return new Response(JSON.stringify({ ok: false, error: GENEL_HATA }), { status: 401, headers: JSON_H });
+      }
+      email = String(jd.email || '').trim().toLowerCase();
+      snapDocs = jsnap.docs;
+    } else {
+      // Eski istemci (önbellekteki eski paket): email + kod
+      email = String(body.email || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        return new Response(JSON.stringify({ ok: false, error: 'Email gerekli' }), {
+          status: 400, headers: JSON_H,
+        });
+      }
+      // Email'e ait, kullanılmamış OTP doc'larını ara — composite index'siz çalışır
+      // (where eşitlikleri otomatik index'lenir; orderBy eklemiyoruz, server-side sıralarız)
+      const snap = await db.collection('giris_otp')
+        .where('email', '==', email)
+        .where('kullanildi', '==', false)
+        .limit(20)
+        .get();
+      snapDocs = snap.docs;
+    }
 
     // En yeniden eskiye sırala (client/server tarafı)
-    snap.docs.sort((a, b) => {
-      const at = a.data().olusturulma?._seconds || a.data().olusturulma?.seconds || 0;
-      const bt = b.data().olusturulma?._seconds || b.data().olusturulma?.seconds || 0;
-      return bt - at;
-    });
+    snapDocs.sort((a, b) => zamanMs(b.data().olusturulma) - zamanMs(a.data().olusturulma));
 
     // Email enumeration koruması: "kod yok" demeyiz — sızıntı yapar
     // Aynı generic hata mesajı, attacker email'in sistemde olup olmadığını anlayamaz
-    if (snap.empty) {
-      return new Response(JSON.stringify({
-        ok: false,
-        error: 'Kod yanlış veya süresi dolmuş. Yeniden iste.',
-      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (snapDocs.length === 0) {
+      return new Response(JSON.stringify({ ok: false, error: GENEL_HATA }), { status: 401, headers: JSON_H });
     }
 
     // Gelen kodu hash'le, doc'taki hash ile constant-time karşılaştır
@@ -87,7 +143,7 @@ export default async (req) => {
     // Doğru kod hangi doc'ta?
     let dogruDoc = null;
     let kontrolEdilenler = [];
-    for (const d of snap.docs) {
+    for (const d of snapDocs) {
       const data = d.data();
       // Süresi geçmiş mi?
       if (data.sonGecerlilik && data.sonGecerlilik.toMillis() < Date.now()) continue;
@@ -164,11 +220,11 @@ export default async (req) => {
       girisYolu: 'otp',
     });
 
+    // email cevaba girmez — istemcinin ihtiyacı yok (KVKK O8)
     return new Response(JSON.stringify({
       ok: true,
       customToken,
-      email,
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }), { status: 200, headers: JSON_H });
 
   } catch (err) {
     console.error('[uye-giris-kod-dogrula] hata:', err.message, err.stack);

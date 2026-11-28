@@ -240,7 +240,7 @@ const CountdownBadge = ({ egitim }) => {
   if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-medium bg-white/10 text-purple-300/80">{t('cd_completed')}</span>;
   // 1 dakika kala — dev rozet + altın halka
   const oneMinuteAway = cd.durum === 'yakin' && cd.gun === 0 && cd.sa === 0 && cd.dakika <= 1;
-  if (oneMinuteAway) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-bold bg-amber-400 text-gray-900 imminent-pulse ring-4 ring-amber-300/60 gold-glow"><Timer className="w-4 h-4" />Birazdan başlıyor!</span>;
+  if (oneMinuteAway) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-bold bg-amber-400 text-gray-900 imminent-pulse ring-4 ring-amber-300/60 gold-glow"><Timer className="w-4 h-4" />{t('cal_starting_soon')}</span>;
   // < 1 saat — orta boy + turuncu (acil)
   if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-orange-500 text-white ring-2 ring-orange-300/40"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
   // < 24 saat — küçük + altın (yakın)
@@ -560,6 +560,7 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
 // kaydırmak demekti. Burada ay tek ekranda: masaüstünde hücrede başlıklar,
 // mobilde gün + nokta, seçilen günün eşitimleri altta.
 const AyIzgarasi = ({ egitimler, ilkAy, onEgitim, renderEgitim }) => {
+  const { t: ceviri } = useTranslation(); // 't' aşağıda tarih değişkeni olarak kullanılıyor
   const [ay, setAy] = useState(() => {
     const t = ilkAy || new Date();
     return new Date(t.getFullYear(), t.getMonth(), 1);
@@ -672,7 +673,7 @@ const AyIzgarasi = ({ egitimler, ilkAy, onEgitim, renderEgitim }) => {
             </button>
           </div>
           {secilenler.length === 0
-            ? <p className="text-purple-300/80 text-[15px]">Bu günde eğitim yok.</p>
+            ? <p className="text-purple-300/80 text-[15px]">{ceviri('cal_no_training_day')}</p>
             : <div className="space-y-3">{secilenler.map(renderEgitim)}</div>}
         </div>
       )}
@@ -1695,7 +1696,7 @@ const TakvimView = () => {
                         </button>
                         <Link to="/ara" onClick={() => setMobilMenuAcik(false)}
                           className="w-full flex items-center gap-2 bg-white/10 text-white px-3 py-2.5 rounded-xl text-[15px] font-semibold">
-                          <Search className="w-4 h-4" />Derin Ara
+                          <Search className="w-4 h-4" />{t('cal_deep_search')}
                         </Link>
                       </div>
                     </>
