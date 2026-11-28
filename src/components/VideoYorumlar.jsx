@@ -1,13 +1,18 @@
 // Video yorumları — basit threading (parent + reply)
 // Firestore: kayitli_egitimler/{vimeoId}/yorumlar/{yorumId}
-//   { uid, ad, fotoURL, metin, tarih, parentId? }
+//   { uid, ad, fotoURL, metin, tarih, parentId?, gizli?, bildirimSayisi? }
+// Moderasyon (mağaza O3, Apple 1.2): her yorumda Bildir (yöneticiye kayıt,
+// netlify/functions/yorum-bildir.mjs; 3 bildirimde yorum otomatik gizlenir) +
+// Engelle (yazarın yorumları bu cihazda gizlenir) + yazarken yasaklı kelime süzgeci.
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { MessageSquare, Send, Loader2, Trash2, CornerDownRight, X, Clock } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Trash2, CornerDownRight, X, Clock, Flag, Ban } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, orderBy, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/LanguageContext';
+import { uygunsuzMu, engelliYazarlar, yazariEngelle, engelleriKaldir } from '../utils/yorumFiltre';
 
 const COOLDOWN_MS = 5000; // 5 saniye yorumlar arası min süre — spam koruma
 
@@ -31,6 +36,10 @@ const VideoYorumlar = ({ vimeoId }) => {
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [cooldownKalan, setCooldownKalan] = useState(0);
   const sonGonderimRef = useRef(0);
+  const { t } = useTranslation();
+  const [engelliler, setEngelliler] = useState(() => engelliYazarlar());
+  const [bildirilenler, setBildirilenler] = useState(() => new Set());
+  const [uyari, setUyari] = useState('');
 
   const load = useCallback(async () => {
     if (!vimeoId) { setYukleniyor(false); return; }
@@ -49,6 +58,8 @@ const VideoYorumlar = ({ vimeoId }) => {
 
   async function gonder() {
     if (!currentUser || isAnonymous || !yeniMetin.trim()) return;
+    if (uygunsuzMu(yeniMetin)) { setUyari(t('yorum_uygunsuz')); return; }
+    setUyari('');
     // Cooldown kontrolü — 5sn arası min süre
     const kalan = COOLDOWN_MS - (Date.now() - sonGonderimRef.current);
     if (kalan > 0) {
@@ -97,10 +108,40 @@ const VideoYorumlar = ({ vimeoId }) => {
     }
   }
 
+  async function bildir(y) {
+    if (!currentUser || isAnonymous) { setUyari(t('yorum_giris_gerek')); return; }
+    const sebep = window.prompt(t('yorum_bildir_sor'), '');
+    if (sebep === null) return; // vazgeçti
+    try {
+      const token = await currentUser.getIdToken();
+      const res = await fetch('/.netlify/functions/yorum-bildir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ islem: 'bildir', vimeoId: String(vimeoId), yorumId: y.id, sebep }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setBildirilenler(s => new Set(s).add(y.id));
+      setUyari(t('yorum_bildirildi'));
+    } catch (e) {
+      console.warn('[yorum] bildir err:', e.message);
+      setUyari(t('yorum_bildir_hata'));
+    }
+  }
+
+  function engelle(y) {
+    if (!y.uid || !window.confirm(t('yorum_engelle_onay'))) return;
+    setEngelliler(yazariEngelle(y.uid));
+  }
+
+  // Görünür yorumlar: yönetici incelemesine kadar gizlenenler + engellenen yazarlar dışarıda
+  const engelSet = new Set(engelliler);
+  const gorunur = yorumlar.filter(y => !y.gizli && !engelSet.has(y.uid));
+  const engelliSayisi = yorumlar.filter(y => !y.gizli && engelSet.has(y.uid)).length;
+
   // Threading — parent yorumlar + her birinin yanıtları
-  const parentlar = yorumlar.filter(y => !y.parentId);
+  const parentlar = gorunur.filter(y => !y.parentId);
   const yanitMap = {};
-  yorumlar.forEach(y => {
+  gorunur.forEach(y => {
     if (y.parentId) {
       if (!yanitMap[y.parentId]) yanitMap[y.parentId] = [];
       yanitMap[y.parentId].push(y);
@@ -114,12 +155,12 @@ const VideoYorumlar = ({ vimeoId }) => {
           <MessageSquare className="w-5 h-5 text-emerald-300" />
           <span className="text-white font-extrabold text-sm sm:text-base">
             💬 Yorumlar
-            {yorumlar.length > 0 && (
-              <span className="text-emerald-300 text-xs font-normal ml-1.5">({yorumlar.length})</span>
+            {gorunur.length > 0 && (
+              <span className="text-emerald-300 text-xs font-normal ml-1.5">({gorunur.length})</span>
             )}
           </span>
         </div>
-        {yorumlar.length === 0 && currentUser && !isAnonymous && (
+        {gorunur.length === 0 && currentUser && !isAnonymous && (
           <span className="text-emerald-200/70 text-[10px] italic">İlk yorumu sen yaz! 👇</span>
         )}
       </div>
@@ -153,6 +194,10 @@ const VideoYorumlar = ({ vimeoId }) => {
         <p className="text-white/40 text-[11px] mb-3 text-center">Yorum yazmak için <span className="text-amber-300">Marka Ortağı girişi</span> yap.</p>
       )}
 
+      {uyari && (
+        <p className="text-amber-200 text-[11px] mb-2 text-center" role="status">{uyari}</p>
+      )}
+
       {yukleniyor && <Loader2 className="w-5 h-5 animate-spin text-white/40 mx-auto" />}
 
       {!yukleniyor && parentlar.length === 0 && (
@@ -162,22 +207,33 @@ const VideoYorumlar = ({ vimeoId }) => {
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {parentlar.map(y => (
           <div key={y.id}>
-            <YorumKart y={y} onYanit={() => setYanitVeren(y.id)} onSil={sil} currentUser={currentUser} />
+            <YorumKart y={y} onYanit={() => setYanitVeren(y.id)} onSil={sil} onBildir={bildir} onEngelle={engelle}
+              bildirildi={bildirilenler.has(y.id)} currentUser={currentUser} t={t} />
             {yanitMap[y.id]?.length > 0 && (
               <div className="ml-7 mt-2 space-y-2">
                 {yanitMap[y.id].map(yan => (
-                  <YorumKart key={yan.id} y={yan} onSil={sil} currentUser={currentUser} yanit />
+                  <YorumKart key={yan.id} y={yan} onSil={sil} onBildir={bildir} onEngelle={engelle}
+                    bildirildi={bildirilenler.has(yan.id)} currentUser={currentUser} t={t} yanit />
                 ))}
               </div>
             )}
           </div>
         ))}
       </div>
+
+      {engelliSayisi > 0 && (
+        <p className="text-white/40 text-[10px] mt-2 text-center">
+          {t('yorum_engelli_gizli').replace('{n}', engelliSayisi)}{' '}
+          <button onClick={() => setEngelliler(engelleriKaldir())} className="underline hover:text-white/70">
+            {t('yorum_engel_kaldir')}
+          </button>
+        </p>
+      )}
     </div>
   );
 };
 
-const YorumKart = ({ y, onYanit, onSil, currentUser, yanit = false }) => {
+const YorumKart = ({ y, onYanit, onSil, onBildir, onEngelle, bildirildi, currentUser, t, yanit = false }) => {
   const initials = (y.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
   const benim = currentUser?.uid === y.uid;
   return (
@@ -204,6 +260,20 @@ const YorumKart = ({ y, onYanit, onSil, currentUser, yanit = false }) => {
             <button onClick={() => onSil(y.id)} className="text-white/50 hover:text-rose-300 spring-tap inline-flex items-center gap-0.5">
               <Trash2 className="w-2.5 h-2.5" />Sil
             </button>
+          )}
+          {!benim && (
+            <>
+              <button onClick={() => onBildir(y)} disabled={bildirildi}
+                className="text-white/50 hover:text-amber-300 spring-tap inline-flex items-center gap-0.5 disabled:opacity-50">
+                <Flag className="w-2.5 h-2.5" />{bildirildi ? t('yorum_bildirildi_kisa') : t('yorum_bildir')}
+              </button>
+              {y.uid && (
+                <button onClick={() => onEngelle(y)}
+                  className="text-white/50 hover:text-rose-300 spring-tap inline-flex items-center gap-0.5">
+                  <Ban className="w-2.5 h-2.5" />{t('yorum_engelle')}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

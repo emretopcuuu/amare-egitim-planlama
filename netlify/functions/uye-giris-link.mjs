@@ -5,11 +5,14 @@
 // 1. Supabase RPC `amare_uye_lookup` ile üye doğrula
 // 2. Firebase Admin: generateSignInWithEmailLink (magic link)
 // 3. Resend ile branded email yolla
-// 4. Response: { sent: true, emailMask: "a***@g***.com", ad: "Ahmet" }
+// 4. Response: { sent: true, emailMask: "a***@g***.com", girisJetonu: "<opak>" }
 //
 // Güvenlik:
 //   - Supabase RPC `SECURITY DEFINER` ile çalışır, tabloya direkt erişim yok
-//   - Email response'ta maskeli — tam adres asla dönmez
+//   - Email response'ta maskeli — tam adres asla dönmez (KVKK O8: eskiden
+//     emailReal dönüyordu, ID'yi bilen email'i öğreniyordu). Kod doğrulama
+//     girisJetonu ile, link tamamlama maildeki ?gt= jetonuyla yapılır
+//     (bkz. _girisToken.mjs).
 //   - Firebase token 1 saat geçerli, tek kullanımlık
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -20,6 +23,10 @@ import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 import { metinTemizle } from './_metinTemizle.mjs';
 import { hashOtp } from './_otpHash.mjs';
 import { turnstileVerify } from './_turnstileVerify.mjs';
+import {
+  jetonUret, jetonHash, maskEmail,
+  ISTEMCI_JETON_SURE_MS, LINK_JETON_SURE_MS,
+} from './_girisToken.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -37,20 +44,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 // (Supabase tarafı anon GRANT değişikliği). service_role öncelikli → RPC her zaman çalışır.
 // Backend-only, güvenli — uye-email-lookup ile aynı kanıtlanmış pattern.
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
-
-// E-posta maskele: "ahmet@gmail.com" → "ah***@g***.com"
-function maskEmail(email) {
-  if (!email || !email.includes('@')) return '***';
-  const [local, domain] = email.split('@');
-  const dotIdx = domain.lastIndexOf('.');
-  const domainHead = dotIdx > 0 ? domain.slice(0, dotIdx) : domain;
-  const tld = dotIdx > 0 ? domain.slice(dotIdx) : '';
-  const lh = local.length;
-  const localMasked = lh <= 2 ? local[0] + '*' : local.slice(0, Math.min(2, lh - 2)) + '***';
-  const dh = domainHead.length;
-  const domainMasked = dh <= 1 ? domainHead + '***' : domainHead[0] + '***';
-  return `${localMasked}@${domainMasked}${tld}`;
-}
 
 // Magic link'i kısalt — uzun Firebase URL'ini /d/abc12345'a dönüştür
 async function kisaltUrl(tamUrl) {
@@ -323,7 +316,8 @@ export default async (req) => {
       return new Response(JSON.stringify({
         found: false,
         message: uye.email
-          ? `Bu Marka Ortağı'nın kayıtlı email adresi geçersiz formatlı (${uye.email.slice(0, 30)}...). Sponsorundan veya Amare Backoffice'tan düzelt.`
+          // Ham (bozuk) adres DÖNMEZ — maskeli bile değil (KVKK O8)
+          ? "Bu Marka Ortağı'nın kayıtlı email adresi geçersiz formatlı. Sponsorundan veya Amare Backoffice'tan düzelt."
           : 'Marka Ortağı bulundu ama kayıtlı email yok. Sponsorundan email güncelle.',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
@@ -336,28 +330,43 @@ export default async (req) => {
       if (idemSnap.exists) {
         const sonGonderim = idemSnap.data().sonGonderim?._seconds || 0;
         const gecen = Math.floor(Date.now() / 1000) - sonGonderim;
-        if (gecen < 60) {
+        const sonOtpDocId = idemSnap.data().sonOtpDocId;
+        if (gecen < 60 && sonOtpDocId) {
+          // Aynı OTP dokümanına yeni bir istemci jetonu ekle (öncekini iptal
+          // ETMEZ — saldırgan tekrar tetikleyip gerçek kullanıcının jetonunu
+          // düşüremesin). Email yine cevaba girmez.
+          const girisJetonu = jetonUret();
+          await admin.firestore().doc(`giris_otp/${sonOtpDocId}`).update({
+            istemciJetonHashleri: admin.firestore.FieldValue.arrayUnion(jetonHash(girisJetonu)),
+          });
           return new Response(JSON.stringify({
             found: true,
             sent: true,
             cached: true,
             emailMask: maskEmail(uye.email),
-            emailReal: uye.email,
+            girisJetonu,
+            otpAktif: true,
             // adKisa response'ta DÖNDÜRÜLMEZ — isim sızıntısı engellenir (saldırgan
-      // Amare ID dener, response'tan kişinin adını öğrenemez). Frontend
-      // generic "Selam!" gösterir.
+            // Amare ID dener, response'tan kişinin adını öğrenemez). Frontend
+            // generic "Selam!" gösterir.
             mesaj: `Geçen ${gecen} sn önce gönderdik. Spam'i kontrol et.`,
             kalanSn: 60 - gecen,
           }), { status: 200, headers: { 'Content-Type': 'application/json' } });
         }
       }
     } catch (e) {
+      // Jeton eklenemediyse (eski log, silinmiş doc) normal gönderime düş
       console.warn('[uye-giris-link] idempotency check err:', e.message);
     }
 
     // 2. Firebase magic link üret
+    // linkJetonu YALNIZ maile giden linkin içinde: /giris-tamamla bunu sunucuda
+    // email'e çevirir (localStorage'a ham email yazma ihtiyacı kalmadı, farklı
+    // cihazda açılan link de çalışır). İstemci cevabına asla girmez.
+    const linkJetonu = jetonUret();
+    const girisJetonu = jetonUret();
     const actionCodeSettings = {
-      url: `https://egitimtakvimi.oneteamglobal.ai/giris-tamamla?uye=${encodeURIComponent(uye.amare_id || '')}`,
+      url: `https://egitimtakvimi.oneteamglobal.ai/giris-tamamla?uye=${encodeURIComponent(uye.amare_id || '')}&gt=${linkJetonu}`,
       handleCodeInApp: true,
     };
     const tamLink = await admin.auth().generateSignInWithEmailLink(uye.email, actionCodeSettings);
@@ -392,6 +401,7 @@ export default async (req) => {
     const kodHash = hashOtp(kod, uye.email);
     const otpDocId = `${uye.amare_id}_${Date.now()}`;
     const sonGeçerlilik = Date.now() + 24 * 60 * 60 * 1000;
+    let otpKaydedildi = false;
     try {
       await admin.firestore().doc(`giris_otp/${otpDocId}`).set({
         email: uye.email,
@@ -401,7 +411,13 @@ export default async (req) => {
         sonGecerlilik: admin.firestore.Timestamp.fromMillis(sonGeçerlilik),
         denemeSayisi: 0,
         kullanildi: false,
+        // KVKK O8: email istemciye dönmez; kod doğrulama bu jetonla yapılır
+        istemciJetonHashleri: [jetonHash(girisJetonu)],
+        istemciJetonSon: admin.firestore.Timestamp.fromMillis(Date.now() + ISTEMCI_JETON_SURE_MS),
+        linkJetonHash: jetonHash(linkJetonu),
+        linkJetonSon: admin.firestore.Timestamp.fromMillis(Date.now() + LINK_JETON_SURE_MS),
       });
+      otpKaydedildi = true;
     } catch (e) {
       console.warn('[uye-giris-link] OTP kaydetme hatası:', e.message);
     }
@@ -434,6 +450,7 @@ export default async (req) => {
         sonGonderim: admin.firestore.FieldValue.serverTimestamp(),
         emailMask: maskEmail(uye.email),
         resendId: sendData.id,
+        sonOtpDocId: otpKaydedildi ? otpDocId : null,
         sayaclar: admin.firestore.FieldValue.increment(1),
       }, { merge: true });
     } catch (e) { console.warn('[uye-giris-link] log err:', e.message); }
@@ -442,11 +459,12 @@ export default async (req) => {
       found: true,
       sent: true,
       emailMask: maskEmail(uye.email),
-      emailReal: uye.email,  // Tam email — frontend localStorage'a yazar (signInWithEmailLink gerektirir)
+      // KVKK O8: tam email DÖNMEZ. Kod doğrulama bu opak jetonla yapılır.
+      girisJetonu: otpKaydedildi ? girisJetonu : null,
       // adKisa response'ta DÖNDÜRÜLMEZ — isim sızıntısı engellenir (saldırgan
       // Amare ID dener, response'tan kişinin adını öğrenemez). Frontend
       // generic "Selam!" gösterir.
-      otpAktif: true,  // Frontend OTP input ekranı göstersin
+      otpAktif: otpKaydedildi,  // Frontend OTP input ekranı göstersin
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   } catch (err) {

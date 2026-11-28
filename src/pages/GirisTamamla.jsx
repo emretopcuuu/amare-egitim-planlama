@@ -30,7 +30,40 @@ const GirisTamamla = () => {
       setMesaj('Geçersiz giriş linki. Lütfen yeni link iste.');
       return;
     }
+    const params = new URLSearchParams(window.location.search);
+    const linkJetonu = params.get('gt');
     const emailIcin = window.localStorage.getItem('amare_giris_email');
+    const uyeId = params.get('uye');
+
+    // KVKK O8: giriş isteği artık tam email döndürmüyor. Maildeki link kendi
+    // jetonunu (?gt=) taşır; jeton yalnız posta kutusu sahibinde olduğu için
+    // sunucu onu email'e çevirir. Farklı cihazda açılan link de böyle çalışır.
+    if (linkJetonu) {
+      (async () => {
+        try {
+          const res = await fetch('/.netlify/functions/uye-giris-kod-dogrula', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ islem: 'link-email', linkJetonu }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.ok && data.email) {
+            setSavedEmail(data.email);
+            setDurum('hazir');
+            return;
+          }
+        } catch {}
+        if (emailIcin) {
+          setSavedEmail(emailIcin);
+          setDurum('hazir');
+          return;
+        }
+        setDurum('email_iste');
+        setMesaj('Hangi adrese link gönderdik? Doğrulamak için email yaz.');
+      })();
+      return;
+    }
+
     if (emailIcin) {
       setSavedEmail(emailIcin);
       setDurum('hazir');
@@ -39,8 +72,6 @@ const GirisTamamla = () => {
 
     // localStorage'da yok → URL'den ?uye=X ile backend'den email lookup dene
     // (Email farklı cihazda açıldığında çalışsın diye)
-    const params = new URLSearchParams(window.location.search);
-    const uyeId = params.get('uye');
     if (uyeId) {
       (async () => {
         try {

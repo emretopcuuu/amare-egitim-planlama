@@ -17,7 +17,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
   const [durum, setDurum] = useState('giris'); // giris | gonderildi | talepFormu | talepGonderildi
   const [mesaj, setMesaj] = useState('');
   const [emailMask, setEmailMask] = useState('');
-  const [emailReal, setEmailReal] = useState(''); // OTP doğrulama için gerekli
+  const [girisJetonu, setGirisJetonu] = useState(''); // OTP doğrulama için opak jeton (email istemciye gelmez — KVKK O8)
   const [adKisa, setAdKisa] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
   // Turnstile state
@@ -157,12 +157,11 @@ const UyeGirisModal = ({ acik, onClose }) => {
         return;
       }
       // Başarılı — email gönderildi
-      // Magic link callback için tam email lazım (signInWithEmailLink gerektirir)
-      // localStorage same-origin only, aynı tarayıcıda güvenli
-      if (data.emailReal) {
-        try { window.localStorage.setItem('amare_giris_email', data.emailReal); } catch {}
-        setEmailReal(data.emailReal);
-      }
+      // KVKK O8: tam email artık gelmez. Kod doğrulama opak jetonla; maildeki
+      // link kendi jetonunu taşır (/giris-tamamla email'i sunucudan çözer).
+      // Eski sürümden kalmış başka kişinin email'i durmasın diye temizle.
+      try { window.localStorage.removeItem('amare_giris_email'); } catch {}
+      setGirisJetonu(data.girisJetonu || '');
       setEmailMask(data.emailMask || '');
       // adKisa artık backend'den dönmüyor (security: isim sızıntısı engellendi)
       setAdKisa('');
@@ -183,7 +182,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
     setDurum('giris');
     setMesaj('');
     setEmailMask('');
-    setEmailReal('');
+    setGirisJetonu('');
     setAdKisa('');
     setOtpKod(['', '', '', '', '', '']);
     setOtpHata('');
@@ -236,8 +235,8 @@ const UyeGirisModal = ({ acik, onClose }) => {
       setOtpHata('6 hane gir');
       return;
     }
-    if (!emailReal) {
-      setOtpHata('Email bilgisi kayıp. Yeniden başla.');
+    if (!girisJetonu) {
+      setOtpHata('Kod oturumu bulunamadı. Maildeki linki kullan veya yeniden başla.');
       return;
     }
     setOtpKontrol(true);
@@ -246,7 +245,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
       const res = await fetch('/.netlify/functions/uye-giris-kod-dogrula', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailReal, kod }),
+        body: JSON.stringify({ girisJetonu, kod }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {

@@ -71,6 +71,22 @@ class ErrorBoundary extends React.Component {
           </div>
         );
       }
+      // Mağaza (28 Kas 2026): üretimde ham hata/stack dökümü kullanıcıya gösterilmez
+      // (hata konsola düşer). Döküm yalnız yerel geliştirmede.
+      if (!import.meta.env.DEV) {
+        return (
+          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3b1772', color: '#fff', textAlign: 'center', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
+            <div style={{ maxWidth: 360 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Bir şeyler ters gitti</h2>
+              <p style={{ fontSize: 14, opacity: .75, marginBottom: 20 }}>Sayfayı yenileyip tekrar dene.</p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{ background: '#fbbf24', color: '#3b1772', fontWeight: 700, padding: '12px 28px', borderRadius: 12, border: 'none', fontSize: 15 }}
+              >Yeniden dene</button>
+            </div>
+          </div>
+        );
+      }
       return (
         <div style={{ padding: 20, fontFamily: 'monospace', background: '#fee', color: '#900', whiteSpace: 'pre-wrap', fontSize: 13 }}>
           <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>UI Hatası</h2>

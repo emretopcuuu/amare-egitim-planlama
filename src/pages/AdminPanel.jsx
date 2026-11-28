@@ -13,7 +13,7 @@ import {
   CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
   Users2, TrendingUp, ExternalLink as CanvaIcon, Bell as BellIcon,
   Video, Play, Award, ChevronUp, ChevronDown, BarChart3,
-  Mail, MapPin,
+  Mail, MapPin, Flag,
 } from 'lucide-react';
 import { auth } from '../utils/firebase';
 import DuyuruModal from '../components/DuyuruModal';
@@ -24,6 +24,7 @@ import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
 import AdminAnalyticsTab from '../components/AdminAnalyticsTab';
 import AdminAuditLogTab from '../components/AdminAuditLogTab';
 import AdminEmailDuzeltTab from '../components/AdminEmailDuzeltTab';
+import AdminYorumBildirimTab from '../components/AdminYorumBildirimTab';
 import AdminGlobalSearch from '../components/AdminGlobalSearch';
 import { auditLogYaz } from '../utils/auditLog';
 import { confirm } from '../components/ConfirmDialog';
@@ -1187,6 +1188,7 @@ const AdminPanel = () => {
               { key: 'egitim_yollari', label: 'Eğitim Yolları', Icon: Award },
               { key: 'analytics', label: 'Sistem Karnesi', Icon: BarChart3 },
               { key: 'email_duzelt', label: 'Email Düzeltme', Icon: Mail },
+              { key: 'yorum_bildirim', label: 'Yorum Bildirimleri', Icon: Flag },
               { key: 'audit', label: 'Audit Log', Icon: FileText },
               { key: 'ayarlar', label: 'Ayarlar', Icon: Settings },
             ].map(({ key, label, Icon }) => (
@@ -1757,6 +1759,7 @@ const AdminPanel = () => {
         {activeTab === 'egitim_yollari' && <AdminEgitimYollariTab />}
         {activeTab === 'analytics' && <AdminAnalyticsTab />}
         {activeTab === 'email_duzelt' && <AdminEmailDuzeltTab />}
+        {activeTab === 'yorum_bildirim' && <AdminYorumBildirimTab />}
         {activeTab === 'audit' && <AdminAuditLogTab />}
 
         {/* ===== AYARLAR ===== */}
